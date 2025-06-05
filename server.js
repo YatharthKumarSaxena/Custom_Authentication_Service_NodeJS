@@ -7,7 +7,9 @@ const serverConfigs = require("./Configs/server.config");
 const app = express(); // App is an Express Function
 const dbConfigs = require("./Configs/db.config");
 const UserModel = require("./Models/User.model");
-const bcryptjs = require("bcryptjs");
+// There are so many methods for Hashing , in this project I used SALT Based Hashing
+const bcryptjs = require("bcryptjs"); // SALT is bascially a Random Text (Can be String or Number) is added to password 
+// And password + random text are encrypted to make password more complicated to crack
 const userID_Model = require("./Configs/userID.config");
 
 /*
@@ -47,7 +49,7 @@ async function init(){ // To use await we need to make function Asynchronous
                 // Password is Encypted to make the Password more complicated to crack
                 // When Someone by Chance get access to Database if password is stored in Encrypted format
                 // It makes it complicated to decode and hence it increases the security of User Data Privacy
-                password: bcryptjs.hashSync("yatharth@123",8),
+                password: bcryptjs.hashSync("yatharth@123",8), // 8 is used as a SALT 
                 emailID: "yatharthsaxena5667@gmail.com",
                 address: [
                             {localAddress: "Sasni Gate",
