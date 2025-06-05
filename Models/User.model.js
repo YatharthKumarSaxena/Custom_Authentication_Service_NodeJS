@@ -17,6 +17,7 @@ const mongoose = require("mongoose");
  * verificationToken
 */
 
+// Defined Document Structure of a User
 const userSchema = mongoose.Schema({
     name:{
         type: String,
@@ -87,3 +88,8 @@ const userSchema = mongoose.Schema({
         type: String // for OTP / email verification link
     }
 },{timestamps:true,versionKey:false})
+
+// Creating a Collection named Users that will Include User Documents / Records
+// module.exports convert the whole file into a Module
+module.exports = mongoose.model("User",userSchema); 
+// By Default Mongoose Convert User into Plural Form i.e Users
