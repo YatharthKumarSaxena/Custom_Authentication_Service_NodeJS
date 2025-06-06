@@ -14,6 +14,9 @@ const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
 const errorMessage = functionModel.errorMessage;
 
+// Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
+app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
+
 /*
  * Create an Admin User if not Exits at the Start of the Application
 */
@@ -64,9 +67,6 @@ async function init(){ // To use await we need to make function Asynchronous
 
 // Connect Server to the Router
 require("./Routers/auth.routes")(app)
-
-// Converts the JSON Object Requests into JavaScript Object
-app.use(express.json());
 
 // Initializing Server by Express
 app.listen(serverConfigs.PORT_NUMBER,()=>{

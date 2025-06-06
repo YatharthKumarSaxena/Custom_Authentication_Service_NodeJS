@@ -36,7 +36,6 @@ const userSchema = mongoose.Schema({
     },
     userID:{
         type: String,
-        required: true,
         unique: true
     },
     emailID:{

@@ -105,6 +105,35 @@ async function makeUserID(){
     }
 }
 
+// ✅ SRP: This function only checks for existing users via phoneNumber or emailID
+async function checkUserExists(request_body){
+    try{
+        let count = 0;
+        const phoneNumber = request_body.phoneNumber;
+        const emailID = request_body.emailID;
+        let user1 = await UserModel.findOne({phoneNumber: phoneNumber})
+        let reason = "";
+        if(user1){
+            console.log("Invalid Registration");
+            console.log("User Already Exists with Phone Number: "+phoneNumber);
+            reason = "Phone Number: "+phoneNumber;
+            count++;
+        }
+        user1 = await UserModel.findOne({emailID: emailID});
+        if(user1){
+            console.log("Invalid Registration");
+            console.log("User Already Exists with Email ID: "+emailID);
+            if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
+            else reason = "Email ID: "+emailID;
+        }
+        return reason;
+    }catch(err){
+        console.log("An Error occured while Checking whether User Exists or not");
+        errorMessage(err);
+        return;
+    }
+}
+
 /*
   ✅ Template Method Pattern:
   The `signUp()` function acts as a template that:
@@ -125,9 +154,21 @@ async function makeUserID(){
 exports.signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
+
+    // Checking User already exists or not 
+    const userExistReason = await checkUserExists(request_body);
+    if(userExistReason !== ""){
+        res.send({
+            message: "User Already Exists with "+userExistReason,
+            warning: "Use different Email ID or Phone Number or both based on Message"
+        })
+        return;
+    }
+
     /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
+    let generatedUserID; // To resolve Scope Resolution Issue
     try{
-        const generatedUserID= await makeUserID(); // Generating Customer ID 
+        generatedUserID= await makeUserID(); // Generating Customer ID 
         if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
             return res.status(507).send({
                 message: "User limit reached. Cannot register more users at this time."
@@ -148,7 +189,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
-        emailId: request_body.emailId,
+        emailID: request_body.emailID,
         password: bcryptjs.hashSync(request_body.password,8), // Password is Encrypted
         address: request_body.address,
         userID: generatedUserID
@@ -158,7 +199,8 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         console.log("User Created Successfully, Registration Successfull");
     /* 3. Return the response back to the User */
         res.status(201).send({
-            message: "Congratulations, Your Registration is Done Successfully\n Here is your Basic Profile Details:- ",
+            message: "Congratulations, Your Registration is Done Successfully :- ",
+            details:"Here is your Basic Profile Details given below:-", 
             name: user.name,
             userID: user.userID,
             emailId: user.emailID,
