@@ -1,19 +1,97 @@
-/* Logic to Create User i.e User Registration*/
+/* Logic to Create User i.e User Registration */
+
+/*  
+  ✅ This file handles the logic for User Registration in the backend.
+  It follows key principles of SOLID and DRY along with usage of important Design Patterns like:
+  - Factory Pattern
+  - Template Method Pattern
+  - Singleton Pattern (via Mongo Document logic)
+*/
+
+// Extracting the required modules
 const impConstraints = require("./Configs/userID.config");
 const UserModel = require("./Models/User.model");
 const bcryptjs = require("bcryptjs")
 const CounterModel = require("./Models/ID_Generator.model");
+
+/*
+  ✅ DRY Principle: 
+  This utility function is reused to print detailed error logs.
+  Helps avoid repeating error console logic multiple times.
+*/
 
 function errorMessage(err){
     console.log("Error occurred is given below:- ");
     console.log(err);
 }
 
+/*
+  ✅ DRY Principle: 
+  Generic error response logic abstracted here to avoid duplication across try/catch blocks.
+*/
+
 function throwErrorResponse(res){
     res.status(500).send({ // Error 500 Indicate Internal Server Error
         message: "An error occurred in the Server while doing your registration\nSorry for this inconvenience, please try again"
     });
 }
+
+/*
+  ✅ Single Responsibility Principle (SRP): 
+  This function only handles the responsibility of incrementing the user counter.
+  ✅ Singleton Pattern:
+  Operates on a single MongoDB document (id = "CUS"), treating it as a unique entity.
+*/
+
+async function increaseCustomerCounter(){
+    try{
+        const customerCounter = await CounterModel.findOneAndUpdate(
+            { _id: "CUS" },
+            { $inc: { seq: 1 } },
+            { new: true } // This will force Mongo DB to return updated document
+            // By Default MongoDB returns old documents even after updation
+        );
+        return customerCounter.seq;
+    }catch(err){
+        console.log("An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
+        errorMessage(err);
+        return;
+    }
+}
+
+/*
+  ✅ SRP: This function only creates the customer counter if it doesn't exist.
+  ✅ Singleton Pattern:
+  Ensures only one counter document exists with ID "CUS" — maintaining global user count.
+*/
+
+async function createCustomerCounter(){
+// Create Customer Counter Document with seq value 1 
+    try{
+        const customerCounter = await CounterModel.create({
+            _id: "CUS",
+            seq: 1
+            // totalCustomers is by default 1 taken so not need to reassign same value
+        });
+        return customerCounter.seq;
+    }catch(err){
+        errorMessage(err);
+        return;
+    } 
+}
+
+/*
+  ✅ Factory Pattern:
+  This function encapsulates the logic to "create" a new userID based on machine code and total customers.
+  The logic varies dynamically depending on counter state but the output structure is consistent — like a factory.
+  
+  ✅ Open-Closed Principle (OCP):
+  The function is closed for modification but open for extension.
+  In future, more logic can be added to generate userIDs differently for different user types without modifying this logic directly.
+  
+  ✅ SRP:
+  It only deals with userID creation and nothing else — clean separation.
+*/
 
 // User ID Creation
 async function makeUserID(){
@@ -27,32 +105,10 @@ async function makeUserID(){
         return;
     }
     if(customerCounter){ // Means Customer Counter Exist so Just increase Counter
-        try{
-            customerCounter = await CounterModel.findOneAndUpdate(
-                { _id: "CUS" },
-                { $inc: { seq: 1 } },
-                { new: true } // This will force Mongo DB to return updated document
-                // By Default MongoDB returns old documents even after updation
-            );
-            totalCustomers = customerCounter.seq;
-        }catch(err){
-            console.log("An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
-            errorMessage(err);
-            return;
-        }
+        totalCustomers = await increaseCustomerCounter();
     }
     else{ // Means Customer Counter does not exist 
-        // Create Customer Counter Document with seq value 1 
-        try{
-            const customerCounter = await CounterModel.create({
-                _id: "CUS",
-                seq: 1
-                // totalCustomers is by default 1 taken so not need to reassign same value
-            });
-        }catch(err){
-            errorMessage(err);
-            return;
-        }      
+         totalCustomers = await createCustomerCounter();   
     }
     let newID = totalCustomers;
     if(newID>=impConstraints.userRegistrationCapacity){
@@ -68,12 +124,29 @@ async function makeUserID(){
     }
 }
 
+/*
+  ✅ Template Method Pattern:
+  The `signUp()` function acts as a template that:
+    1. Extracts request
+    2. Generates a user ID
+    3. Encrypts password
+    4. Saves to DB
+    5. Sends response
+  This linear fixed structure is characteristic of the Template Method Design Pattern.
+
+  ✅ SRP:
+  Handles the single responsibility of registration workflow.
+
+  ✅ DRY:
+  Uses `throwErrorResponse()` and `errorMessage()` for consistency.
+*/
+
 exports.signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
     /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
     try{
-        const generatedUserID= await makeUserID(res); // Generating Customer ID 
+        const generatedUserID= await makeUserID(); // Generating Customer ID 
         if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
             return res.status(507).send({
                 message: "User limit reached. Cannot register more users at this time."
@@ -85,6 +158,12 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         throwErrorResponse(res);
         return;
     }
+
+    /*
+      ✅ SRP: User object is composed here only once after getting all required parts.
+      ✅ DRY: Hash logic is abstracted via bcryptjs.
+    */
+
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
@@ -96,8 +175,14 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     try{
         const user = await UserModel.create(User);
         console.log("User Created Successfully, Registration Successfull");
+    /* 3. Return the response back to the User */
         res.status(201).send({
-            message: "Congratulations, Your Registration is Done Successfully\n Here is your Basic Profile Details:- "
+            message: "Congratulations, Your Registration is Done Successfully\n Here is your Basic Profile Details:- ",
+            name: user.name,
+            userID: user.userID,
+            emailId: user.emailID,
+            phoneNumber: user.phoneNumber,
+            address: user.address
         })
     }catch(err){
         console.log("Error happened while creating a new User");
@@ -105,8 +190,5 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         throwErrorResponse(res);
         return;
     }
-    
-    /* 3. Return the response back to the User */
-
 }
 
