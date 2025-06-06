@@ -9,32 +9,13 @@
 */
 
 // Extracting the required modules
-const impConstraints = require("./Configs/userID.config");
-const UserModel = require("./Models/User.model");
+const impConstraints = require("../Configs/userID.config");
+const UserModel = require("../Models/User.model");
 const bcryptjs = require("bcryptjs")
-const CounterModel = require("./Models/ID_Generator.model");
-
-/*
-  ✅ DRY Principle: 
-  This utility function is reused to print detailed error logs.
-  Helps avoid repeating error console logic multiple times.
-*/
-
-function errorMessage(err){
-    console.log("Error occurred is given below:- ");
-    console.log(err);
-}
-
-/*
-  ✅ DRY Principle: 
-  Generic error response logic abstracted here to avoid duplication across try/catch blocks.
-*/
-
-function throwErrorResponse(res){
-    res.status(500).send({ // Error 500 Indicate Internal Server Error
-        message: "An error occurred in the Server while doing your registration\nSorry for this inconvenience, please try again"
-    });
-}
+const CounterModel = require("../Models/ID_Generator.model");
+const messageModel = require("../Configs/message.configs");
+const errorMessage = messageModel.errorMessage;
+const throwErrorResponse = messageModel.throwErrorResponse;
 
 /*
   ✅ Single Responsibility Principle (SRP): 

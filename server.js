@@ -11,6 +11,8 @@ const UserModel = require("./Models/User.model");
 const bcryptjs = require("bcryptjs"); // SALT is bascially a Random Text (Can be String or Number) is added to password 
 // And password + random text are encrypted to make password more complicated to crack
 const userID_Model = require("./Configs/userID.config");
+const functionModel = require("./Configs/message.configs");
+const errorMessage = functionModel.errorMessage;
 
 /*
  * Create an Admin User if not Exits at the Start of the Application
@@ -22,10 +24,10 @@ mongoose.connect(dbConfigs.DB_URL); // Specifying where to connect
 const db = mongoose.connection; // Ordering to Connect
 
 // If MongoDB is not connected 
-db.on("err",()=>{
+db.on("error",(err)=>{
     console.log("Error Occured while Connecting to Database");
-    console.log("Error Occured is displayed below:- ");
-    console.log(err);
+    errorMessage(err);
+    return;
 })
 
 // If MongoDB is connected successfully
@@ -43,39 +45,28 @@ async function init(){ // To use await we need to make function Asynchronous
         }
         else{ // Since findOne returns null when no user found this statement will execute if no Admin User exists
             try{
-                const user = await UserModel.create({
-                name: "Yatharth",
-                phoneNumber: "7310871289",
-                // Password is Encypted to make the Password more complicated to crack
-                // When Someone by Chance get access to Database if password is stored in Encrypted format
-                // It makes it complicated to decode and hence it increases the security of User Data Privacy
-                password: bcryptjs.hashSync("yatharth@123",8), // 8 is used as a SALT 
-                emailID: "yatharthsaxena5667@gmail.com",
-                address: [
-                            {localAddress: "Sasni Gate",
-                            city: "Aligarh",
-                            pincode: "202001",
-                            state: "Uttar Pradesh",
-                            country: "India"}
-                ],
-                userType: "Admin",
-                userID: userID_Model.adminID
-                })
+                const user = await UserModel.create(userID_Model.adminUser)
                 console.log("Admin User Created Successfully");
                 console.log("Admin User details are given below:- ");
                 console.log(user);
             }catch(err){
                 console.log("Error Occured while Creating an Admin User");
-                console.log("Error occured is given below:- ");
-                console.log(err);
+                errorMessage(err);
+                return;
             }
         }
     }catch(err){
         console.log("Error Occured while Reading the Database");
-        console.log("Error occured is displayed below:- ");
-        console.log(err);
+        errorMessage(err);
+        return;
     }
 }
+
+// Connect Server to the Router
+require("./Routers/auth.routes")(app)
+
+// Converts the JSON Object Requests into JavaScript Object
+app.use(express.json());
 
 // Initializing Server by Express
 app.listen(serverConfigs.PORT_NUMBER,()=>{
