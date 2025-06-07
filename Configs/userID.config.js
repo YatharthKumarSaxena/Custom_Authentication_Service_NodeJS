@@ -11,6 +11,8 @@ module.exports = {
         // Password is Encypted to make the Password more complicated to crack
         // When Someone by Chance get access to Database if password is stored in Encrypted format
         // It makes it complicated to decode and hence it increases the security of User Data Privacy
+        // There are so many methods for Hashing , in this project I used SALT Based Hashing
+        // SALT is bascially a Random Text (Can be String or Number) is added to password
         password: bcryptjs.hashSync("yatharth@123",8), // 8 is used as a SALT 
         emailID: "yatharthsaxena5667@gmail.com",
         address: [

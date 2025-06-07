@@ -15,7 +15,7 @@ const bcryptjs = require("bcryptjs")
 const CounterModel = require("../Models/ID_Generator.model");
 const messageModel = require("../Configs/message.configs");
 const errorMessage = messageModel.errorMessage;
-const throwErrorResponse = messageModel.throwErrorResponse;
+const throwInternalServerError = messageModel.throwInternalServerError;
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -34,7 +34,7 @@ async function increaseCustomerCounter(){
         );
         return customerCounter.seq;
     }catch(err){
-        console.log("An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
+        console.log("🛑 An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
         errorMessage(err);
         return;
     }
@@ -81,7 +81,7 @@ async function makeUserID(){
     try{
         customerCounter = await CounterModel.findOne({_id: "CUS"});
     }catch(err){
-        console.log("An Error Occured while accessing the Customer Counter Document");
+        console.log("⚠️ An Error Occured while accessing the Customer Counter Document");
         errorMessage(err);
         return;
     }
@@ -102,35 +102,6 @@ async function makeUserID(){
         let idNumber = String(newID+impConstraints.adminID);
         const userID = machineCode+idNumber;
         return userID;
-    }
-}
-
-// ✅ SRP: This function only checks for existing users via phoneNumber or emailID
-async function checkUserExists(request_body){
-    try{
-        let count = 0;
-        const phoneNumber = request_body.phoneNumber;
-        const emailID = request_body.emailID;
-        let user1 = await UserModel.findOne({phoneNumber: phoneNumber})
-        let reason = "";
-        if(user1){
-            console.log("Invalid Registration");
-            console.log("User Already Exists with Phone Number: "+phoneNumber);
-            reason = "Phone Number: "+phoneNumber;
-            count++;
-        }
-        user1 = await UserModel.findOne({emailID: emailID});
-        if(user1){
-            console.log("Invalid Registration");
-            console.log("User Already Exists with Email ID: "+emailID);
-            if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
-            else reason = "Email ID: "+emailID;
-        }
-        return reason;
-    }catch(err){
-        console.log("An Error occured while Checking whether User Exists or not");
-        errorMessage(err);
-        return;
     }
 }
 
@@ -155,16 +126,6 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
 
-    // Checking User already exists or not 
-    const userExistReason = await checkUserExists(request_body);
-    if(userExistReason !== ""){
-        res.send({
-            message: "User Already Exists with "+userExistReason,
-            warning: "Use different Email ID or Phone Number or both based on Message"
-        })
-        return;
-    }
-
     /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
     let generatedUserID; // To resolve Scope Resolution Issue
     try{
@@ -175,9 +136,9 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             });
         }
     }catch(err){
-        console.log("Error Occured while making the User ID");
+        console.log("⚠️ Error Occured while making the User ID");
         errorMessage(err)
-        throwErrorResponse(res);
+        throwInternalServerError(res);
         return;
     }
 
@@ -208,10 +169,9 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             address: user.address
         })
     }catch(err){
-        console.log("Error happened while creating a new User");
+        console.log("⚠️ Error happened while creating a new User");
         errorMessage(err);
-        throwErrorResponse(res);
+        throwInternalServerError(res);
         return;
     }
 }
-

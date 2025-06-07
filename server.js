@@ -6,9 +6,7 @@ const mongoose = require("mongoose"); // Extract Mongoose Module
 const serverConfigs = require("./Configs/server.config");
 const app = express(); // App is an Express Function
 const dbConfigs = require("./Configs/db.config");
-const UserModel = require("./Models/User.model");
-// There are so many methods for Hashing , in this project I used SALT Based Hashing
-const bcryptjs = require("bcryptjs"); // SALT is bascially a Random Text (Can be String or Number) is added to password 
+const UserModel = require("./Models/User.model"); 
 // And password + random text are encrypted to make password more complicated to crack
 const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
@@ -28,7 +26,7 @@ const db = mongoose.connection; // Ordering to Connect
 
 // If MongoDB is not connected 
 db.on("error",(err)=>{
-    console.log("Error Occured while Connecting to Database");
+    console.log("⚠️ Error Occured while Connecting to Database");
     errorMessage(err);
     return;
 })
@@ -53,13 +51,13 @@ async function init(){ // To use await we need to make function Asynchronous
                 console.log("Admin User details are given below:- ");
                 console.log(user);
             }catch(err){
-                console.log("Error Occured while Creating an Admin User");
+                console.log("⚠️ Error Occured while Creating an Admin User");
                 errorMessage(err);
                 return;
             }
         }
     }catch(err){
-        console.log("Error Occured while Reading the Database");
+        console.log("⚠️ Error Occured while Reading the Database");
         errorMessage(err);
         return;
     }

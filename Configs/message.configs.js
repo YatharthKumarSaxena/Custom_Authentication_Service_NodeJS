@@ -7,17 +7,34 @@
 */
 
 exports.errorMessage = (err) => {
-    console.log("Error occurred is given below:- ");
-    console.log(err);
+    console.log("🛑 Error occurred:");
+    console.error(err);
 }
 
 /*
-  ✅ DRY Principle: 
-  Generic error response logic abstracted here to avoid duplication across try/catch blocks.
+  ✅ SRP + DRY: 
+  Handles cases where required fields are missing in the request.
 */
 
-exports.throwErrorResponse = (res) => {
-    res.status(500).send({ // Error 500 Indicate Internal Server Error
-        message: "An error occurred in the Server while doing your registration\nSorry for this inconvenience, please try again"
+exports.throwResourceNotFoundError = (res,resource) =>{
+    console.log("⚠️ Missing required fields in the request:");
+    console.log(resource);
+    res.status(400).send({
+        warning: "The following required field(s) are missing:",
+        fields: resource,
+        message: "Please provide the required fields to proceed."
+    });
+}
+
+/*
+  ✅ SRP: 
+  Handles all internal server failure responses.
+*/
+
+exports.throwInternalServerError = (res) =>{
+    console.log("💥 Internal Server Error occurred.");
+    res.status(500).send({
+        response: "An internal server error occurred while processing your request.",
+        message: "We apologize for the inconvenience. Please try again later."
     });
 }
