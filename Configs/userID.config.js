@@ -1,6 +1,6 @@
 const bcryptjs = require("bcryptjs");
-const adminUserID= "100000";
-
+const adminUserID = 100000;
+const adminID = "ADM1" + String(adminUserID);
 module.exports = {
     userRegistrationCapacity: 100000, // This Monolithic Machine can handle 1 Lakh User Data
     adminID: adminUserID, // Admin userID

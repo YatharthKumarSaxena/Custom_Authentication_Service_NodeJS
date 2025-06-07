@@ -54,7 +54,7 @@ async function createCustomerCounter(){
             seq: 1
             // totalCustomers is by default 1 taken so not need to reassign same value
         });
-        return customerCounter.seq;
+        return customerCounter;
     }catch(err){
         errorMessage(err);
         return;
@@ -89,18 +89,21 @@ async function makeUserID(){
         totalCustomers = await increaseCustomerCounter();
     }
     else{ // Means Customer Counter does not exist 
-         totalCustomers = await createCustomerCounter();   
+        customerCounter = await createCustomerCounter(); // returns object
+        totalCustomers = customerCounter.seq; // extract 'seq' field 
     }
-    let newID = totalCustomers+impConstraints.adminID;
+    let newID = totalCustomers;
     if(newID>=impConstraints.userRegistrationCapacity){
         console.log("⚠️ Machine Capacity to Store User Data is completely full");
         console.log("So User cannot be Registered");
         return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
     }
     else{
-        let machineCode = String(impConstraints.IP_Address_Code);
+        newID = newID+impConstraints.adminID
+        let machineCode = impConstraints.IP_Address_Code;
+        let identityCode = customerCounter._id+machineCode;
         let idNumber = String(newID);
-        const userID = machineCode+idNumber;
+        const userID = identityCode+idNumber;
         return userID;
     }
 }
@@ -159,7 +162,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         const user = await UserModel.create(User);
         console.log("🟢 User Created Successfully, Registration Successfull");
     /* 3. Return the response back to the User */
-        res.status(201).send({
+        return res.status(201).send({
             message: "Congratulations, Your Registration is Done Successfully :- ",
             details:"Here is your Basic Profile Details given below:-", 
             name: user.name,
