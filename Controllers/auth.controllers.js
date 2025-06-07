@@ -93,7 +93,7 @@ async function makeUserID(){
     }
     let newID = totalCustomers;
     if(newID>=impConstraints.userRegistrationCapacity){
-        console.log("Machine Capacity to Store User Data is completely full");
+        console.log("⚠️ Machine Capacity to Store User Data is completely full");
         console.log("So User cannot be Registered");
         return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
     }
@@ -157,7 +157,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     }
     try{
         const user = await UserModel.create(User);
-        console.log("User Created Successfully, Registration Successfull");
+        console.log("🟢 User Created Successfully, Registration Successfull");
     /* 3. Return the response back to the User */
         res.status(201).send({
             message: "Congratulations, Your Registration is Done Successfully :- ",

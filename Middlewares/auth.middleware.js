@@ -19,18 +19,17 @@ async function checkUserExists(emailID,phoneNumber){
         let user1 = await UserModel.findOne({phoneNumber: phoneNumber})
         let reason = "";
         if(user1){
-            console.log("Invalid Registration");
-            console.log("User Already Exists with Phone Number: "+phoneNumber);
+            console.log("⚠️ User Already Exists with Phone Number: "+phoneNumber);
             reason = "Phone Number: "+phoneNumber;
             count++;
         }
         user1 = await UserModel.findOne({emailID: emailID});
         if(user1){
-            console.log("Invalid Registration");
-            console.log("User Already Exists with Email ID: "+emailID);
+            console.log("⚠️ User Already Exists with Email ID: "+emailID);
             if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
             else reason = "Email ID: "+emailID;
         }
+        if(count!==0)console.log("⚠️ Invalid Registration");
         return reason;
     }catch(err){
         console.log("⚠️ An Error occured while Checking whether User Exists or not");

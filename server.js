@@ -1,53 +1,53 @@
-// This is the File from where the whole Project Will Start Running
+// 📁 This is the File from where the whole Project Will Start Running
+// 📁 Entry Point of the Project
 
-// Extracting Required Modules to make Our Application
+// 🔹 Extracting Required Modules to make Our Application
 const express = require("express"); // Extract Express Module
 const mongoose = require("mongoose"); // Extract Mongoose Module
 const serverConfigs = require("./Configs/server.config");
 const app = express(); // App is an Express Function
 const dbConfigs = require("./Configs/db.config");
 const UserModel = require("./Models/User.model"); 
-// And password + random text are encrypted to make password more complicated to crack
 const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
 const errorMessage = functionModel.errorMessage;
 
-// Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
+// 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
 
 /*
- * Create an Admin User if not Exits at the Start of the Application
+ * 🔹 And password + random text are encrypted to make password more complicated to crackCreate an Admin User if not Exits at the Start of the Application
 */
 
-// Connection with MongoDB
+// 🔹 And password + random text are encrypted to make password more complicated to crackConnection with MongoDB
 mongoose.connect(dbConfigs.DB_URL); // Specifying where to connect
 
 const db = mongoose.connection; // Ordering to Connect
 
-// If MongoDB is not connected 
+// 🔹 And password + random text are encrypted to make password more complicated to crackIf MongoDB is not connected 
 db.on("error",(err)=>{
     console.log("⚠️ Error Occured while Connecting to Database");
     errorMessage(err);
     return;
 })
 
-// If MongoDB is connected successfully
+// 🔹 And password + random text are encrypted to make password more complicated to crackIf MongoDB is connected successfully
 db.once("open",()=>{
-    console.log("Connection estabalished with MongoDB Succesfully");
+    console.log("✅ Connection estabalished with MongoDB Succesfully");
     init();
 })
 
-// We are keeping One Admin User for each Local Machine
+// 🔹 We are keeping One Admin User for each Local Machine
 async function init(){ // To use await we need to make function Asynchronous
     try{
         let user = await UserModel.findOne({userType: "Admin"}); // Finding the User who is Admin
         if(user){ // Means the Admin User Exists
-            console.log("Admin User already exists");
+            console.log("🟢 Admin User already exists");
         }
         else{ // Since findOne returns null when no user found this statement will execute if no Admin User exists
             try{
                 const user = await UserModel.create(userID_Model.adminUser)
-                console.log("Admin User Created Successfully");
+                console.log("👑 Admin User Created Successfully");
                 console.log("Admin User details are given below:- ");
                 console.log(user);
             }catch(err){
@@ -63,11 +63,11 @@ async function init(){ // To use await we need to make function Asynchronous
     }
 }
 
-// Connect Server to the Router
+// 🔹 Connect Server to the Router
 require("./Routers/auth.routes")(app)
 
-// Initializing Server by Express
+// 🔹 Initializing Server by Express
 app.listen(serverConfigs.PORT_NUMBER,()=>{
     // Check Server is Running or not
-    console.log("Server has Started at Port Number: "+serverConfigs.PORT_NUMBER); 
+    console.log("🚀 Server has Started at Port Number: "+serverConfigs.PORT_NUMBER); 
 });
