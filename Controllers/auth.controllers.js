@@ -91,15 +91,15 @@ async function makeUserID(){
     else{ // Means Customer Counter does not exist 
          totalCustomers = await createCustomerCounter();   
     }
-    let newID = totalCustomers;
+    let newID = totalCustomers+impConstraints.adminID;
     if(newID>=impConstraints.userRegistrationCapacity){
         console.log("⚠️ Machine Capacity to Store User Data is completely full");
         console.log("So User cannot be Registered");
         return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
     }
     else{
-        let machineCode = String(impConstraints.machineCode);
-        let idNumber = String(newID+impConstraints.adminID);
+        let machineCode = String(impConstraints.IP_Address_Code);
+        let idNumber = String(newID);
         const userID = machineCode+idNumber;
         return userID;
     }

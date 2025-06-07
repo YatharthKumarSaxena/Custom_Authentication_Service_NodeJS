@@ -9,6 +9,7 @@
 exports.errorMessage = (err) => {
     console.log("🛑 Error occurred:");
     console.error(err);
+    return;
 }
 
 /*
@@ -19,7 +20,7 @@ exports.errorMessage = (err) => {
 exports.throwResourceNotFoundError = (res,resource) =>{
     console.log("⚠️ Missing required fields in the request:");
     console.log(resource);
-    res.status(400).send({
+    return res.status(400).send({
         warning: "The following required field(s) are missing:",
         fields: resource,
         message: "Please provide the required fields to proceed."
@@ -33,7 +34,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
 
 exports.throwInternalServerError = (res) =>{
     console.log("💥 Internal Server Error occurred.");
-    res.status(500).send({
+    return res.status(500).send({
         response: "An internal server error occurred while processing your request.",
         message: "We apologize for the inconvenience. Please try again later."
     });
