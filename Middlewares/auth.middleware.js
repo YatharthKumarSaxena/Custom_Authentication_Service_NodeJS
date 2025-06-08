@@ -11,7 +11,7 @@ const messageModel = require("../Configs/message.configs");
 const errorMessage = messageModel.errorMessage;
 const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
-const logWithTime = require("../Configs/commonFeatures.config").logWithTime;
+const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
@@ -31,7 +31,7 @@ async function checkUserExists(emailID,phoneNumber){
             else reason = "Email ID: "+emailID;
             count++;
         }
-        if(count!==0)console.log("⚠️ Invalid Registration");
+        if(count!==0)logWithTime("⚠️ Invalid Registration");
         return reason;
     }catch(err){
         logWithTime("⚠️ An Error occured while Checking whether User Exists or not");

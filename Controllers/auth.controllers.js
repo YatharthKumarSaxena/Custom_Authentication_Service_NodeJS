@@ -15,8 +15,12 @@ const bcryptjs = require("bcryptjs")
 const CounterModel = require("../Models/ID_Generator.model");
 const messageModel = require("../Configs/message.configs");
 const errorMessage = messageModel.errorMessage;
+const throwInvalidResourceError = messageModel.throwInvalidResourceError
 const throwInternalServerError = messageModel.throwInternalServerError;
-const logWithTime = require("../Configs/commonFeatures.config").logWithTime;
+const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
+const jwt = require("jsonwebtoken");
+const expiryTimeOfJWTtoken = impConstraints.expiryTimeOfJWTtoken;
+const secretCode = impConstraints.secretCode;
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -127,6 +131,28 @@ async function makeUserID(){
   Uses `throwErrorResponse()` and `errorMessage()` for consistency.
 */
 
+function signInWithToken(request){
+    let token;
+    if(request.body.userID){
+        logWithTime("User is logged in by User ID");
+        token = jwt.sign({id: request.body.userID},secretCode,{
+            expiresIn: expiryTimeOfJWTtoken
+        })
+    }
+    else if(request.body.emailID){
+        logWithTime("User is logged in by Email ID");
+        token = jwt.sign({emailID: request.body.emailID},secretCode,{
+            expiresIn: expiryTimeOfJWTtoken
+        })
+    }else{
+        logWithTime("User is logged in by Phone Number");
+        token = jwt.sign({phoneNumber: request.body.phoneNumber},secretCode,{
+            expiresIn: expiryTimeOfJWTtoken
+        })
+    }
+    return token;
+}
+
 exports.signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
@@ -164,6 +190,15 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     try{
         const user = await UserModel.create(User);
         logWithTime("🟢 User Created Successfully, Registration Successfull");
+        logWithTime("👤 New User Details:- ");
+        const userGeneralDetails = {
+            name: user.name,
+            emailID: user.emailID,
+            userID: user.userID,
+            userType: user.userType,
+            createdAt: user.createdAt
+        }
+        console.log(userGeneralDetails);
     /* 3. Return the response back to the User */
         return res.status(201).send({
             message: "Congratulations, Your Registration is Done Successfully :- ",
@@ -186,19 +221,38 @@ exports.signUp = async (req,res) => { // Made this function async to use await
 
 exports.signIn = async (req,res) => {
     try{
-
-    }catch(err){
-
-    }
-    const user = await UserModel.findOne({
+        const user = await UserModel.findOne({
         $or:[
             {userID: req.body.userID},
             {phoneNumber: req.body.phoneNumber},
             {emailID: req.body.emailID}
-        ]
-    });
-    if(user === null){
-        resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
-        throwResourceNotFoundError(res,resource)
-    }
+            ]
+        });
+        if(user === null){
+            resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
+            throwInvalidResourceError(res,resource)
+        }
+        // Check Password is Correct or Not
+        let passwordIsValid = bcryptjs.compareSync(req.body.password,user.password);
+        if(passwordIsValid){ // Login the User
+            // Sign with JWT Token
+            const token = signInWithToken(req)
+            user.isVerified = true; // Marked User as Verified
+            user.lastLogin = new Date(); // Update Last Login Time of User
+            await user.save();
+            logWithTime("🔐 User with "+user.userID+" is Successfully logged in")
+            res.status(200).send({
+                message: "Welcome "+user.name+", You are successfully logged in",
+                userID: user.userID,
+                token: token
+            })
+        }
+        else{
+            logWithTime("❌ Incorrect Password")
+            throwInvalidResourceError(res,"Password");
+        }
+    }catch(err){
+        logWithTime("⚠️ Error occurred while logging the User")
+        throwInternalServerError(res);
+    }  
 }

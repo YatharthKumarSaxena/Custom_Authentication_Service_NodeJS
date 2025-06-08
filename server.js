@@ -11,8 +11,8 @@ const UserModel = require("./Models/User.model");
 const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
 const errorMessage = functionModel.errorMessage;
-const commonFeatures = require("./Configs/commonFeatures.config");
-const logWithTime = commonFeatures.logWithTime;
+const timeStamps = require("./Configs/timeStampsFunctions.config");
+const logWithTime = timeStamps.logWithTime;
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object

@@ -7,8 +7,8 @@
 */
 
 // Extracts file that include timeStamp function
-const commonFeatures = require("./commonFeatures.config");
-const logWithTime = commonFeatures.logWithTime;
+const timeStamps = require("./timeStampsFunctions.config");
+const logWithTime = timeStamps.logWithTime;
 
 exports.errorMessage = (err) => {
     logWithTime("🛑 Error occurred:");
@@ -26,7 +26,7 @@ exports.errorMessage = (err) => {
 
 exports.throwResourceNotFoundError = (res,resource) =>{
     logWithTime("⚠️ Missing required fields in the request:");
-    logWithTime(resource);
+    console.log(resource);
     return res.status(400).send({
         warning: "The following required field(s) are missing:",
         fields: resource,
@@ -53,6 +53,7 @@ exports.throwInternalServerError = (res) => {
 */
 
 exports.throwInvalidResourceError = (res,resource) => {
+    logWithTime("⚠️ Invalid "+resource);
     logWithTime("❌ Invalid Credentials! Please try again.");
     return res.status(401).send({
         type: "InvalidResource",
