@@ -150,11 +150,12 @@ exports.signUp = async (req,res) => { // Made this function async to use await
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
 
+    const SALT = impConstraints.SALT; // Extracting SALT for Encryption of Password
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
         emailID: request_body.emailID,
-        password: bcryptjs.hashSync(request_body.password,8), // Password is Encrypted
+        password: bcryptjs.hashSync(request_body.password,SALT), // Password is Encrypted
         address: request_body.address,
         userID: generatedUserID
     }
@@ -176,5 +177,26 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         errorMessage(err);
         throwInternalServerError(res);
         return;
+    }
+}
+
+// Logic to Login the Registered User
+
+exports.signIn = async (req,res) => {
+    try{
+
+    }catch(err){
+
+    }
+    const user = await UserModel.findOne({
+        $or:[
+            {userID: req.body.userID},
+            {phoneNumber: req.body.phoneNumber},
+            {emailID: req.body.emailID}
+        ]
+    });
+    if(user === null){
+        resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
+        throwResourceNotFoundError(res,resource)
     }
 }
