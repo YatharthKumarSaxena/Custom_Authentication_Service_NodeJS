@@ -12,6 +12,7 @@ const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
 const errorMessage = functionModel.errorMessage;
 const commonFeatures = require("./Configs/commonFeatures.config");
+const logWithTime = commonFeatures.logWithTime;
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
@@ -27,14 +28,14 @@ const db = mongoose.connection; // Ordering to Connect
 
 // 🔹 And password + random text are encrypted to make password more complicated to crackIf MongoDB is not connected 
 db.on("error",(err)=>{
-    console.log("⚠️ Error Occured while Connecting to Database");
+    logWithTime("⚠️ Error Occured while Connecting to Database");
     errorMessage(err);
     return;
 })
 
 // 🔹 And password + random text are encrypted to make password more complicated to crackIf MongoDB is connected successfully
 db.once("open",()=>{
-    console.log("✅ Connection estabalished with MongoDB Succesfully");
+    logWithTime("✅ Connection estabalished with MongoDB Succesfully");
     init();
 })
 
@@ -43,22 +44,22 @@ async function init(){ // To use await we need to make function Asynchronous
     try{
         let user = await UserModel.findOne({userType: "Admin"}); // Finding the User who is Admin
         if(user){ // Means the Admin User Exists
-            console.log("🟢 Admin User already exists");
+            logWithTime("🟢 Admin User already exists");
         }
         else{ // Since findOne returns null when no user found this statement will execute if no Admin User exists
             try{
-                const user = await UserModel.create(userID_Model.adminUser)
-                console.log("👑 Admin User Created Successfully");
-                console.log("Admin User details are given below:- ");
+                const user = await UserModel.create(userID_Model.adminUser);
+                logWithTime("👑 Admin User Created Successfully");
+                logWithTime("Admin User details are given below:- ");
                 console.log(user);
             }catch(err){
-                console.log("⚠️ Error Occured while Creating an Admin User");
+                logWithTime("⚠️ Error Occured while Creating an Admin User");
                 errorMessage(err);
                 return;
             }
         }
     }catch(err){
-        console.log("⚠️ Error Occured while Reading the Database");
+        logWithTime("⚠️ Error Occured while Reading the Database");
         errorMessage(err);
         return;
     }
@@ -70,5 +71,5 @@ require("./Routers/auth.routes")(app)
 // 🔹 Initializing Server by Express
 app.listen(serverConfigs.PORT_NUMBER,()=>{
     // Check Server is Running or not
-    console.log("🚀 Server has Started at Port Number: "+serverConfigs.PORT_NUMBER); 
+    logWithTime("🚀 Server has Started at Port Number: "+serverConfigs.PORT_NUMBER); 
 });

@@ -4,6 +4,7 @@ const adminID = "ADM1" + String(adminUserID);
 const SALT = 8 // For Encryption 8 is used as by default SALT
 module.exports = {
     userRegistrationCapacity: 100000, // This Monolithic Machine can handle 1 Lakh User Data
+    adminUserID:adminUserID,
     adminID: adminID, // Admin userID
     IP_Address_Code: "1", // Unique per machine
     SALT: SALT,
@@ -24,7 +25,8 @@ module.exports = {
             state: "Uttar Pradesh",
             country: "India"}
         ],
+        isVerified: true,
         userType: "Admin",
-        userID: adminUserID
+        userID: adminID
     }
 }

@@ -16,6 +16,7 @@ const CounterModel = require("../Models/ID_Generator.model");
 const messageModel = require("../Configs/message.configs");
 const errorMessage = messageModel.errorMessage;
 const throwInternalServerError = messageModel.throwInternalServerError;
+const logWithTime = require("../Configs/commonFeatures.config").logWithTime;
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -34,7 +35,7 @@ async function increaseCustomerCounter(){
         );
         return customerCounter.seq;
     }catch(err){
-        console.log("🛑 An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
+        logWithTime("🛑 An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
         errorMessage(err);
         return;
     }
@@ -56,6 +57,7 @@ async function createCustomerCounter(){
         });
         return customerCounter;
     }catch(err){
+        logWithTime("Error Occured while creating Customer Counter")
         errorMessage(err);
         return;
     } 
@@ -81,7 +83,7 @@ async function makeUserID(){
     try{
         customerCounter = await CounterModel.findOne({_id: "CUS"});
     }catch(err){
-        console.log("⚠️ An Error Occured while accessing the Customer Counter Document");
+        logWithTime("⚠️ An Error Occured while accessing the Customer Counter Document");
         errorMessage(err);
         return;
     }
@@ -94,12 +96,12 @@ async function makeUserID(){
     }
     let newID = totalCustomers;
     if(newID>=impConstraints.userRegistrationCapacity){
-        console.log("⚠️ Machine Capacity to Store User Data is completely full");
-        console.log("So User cannot be Registered");
+        logWithTime("⚠️ Machine Capacity to Store User Data is completely full");
+        logWithTime("So User cannot be Registered");
         return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
     }
     else{
-        newID = newID+impConstraints.adminID
+        newID = newID+impConstraints.adminUserID
         let machineCode = impConstraints.IP_Address_Code;
         let identityCode = customerCounter._id+machineCode;
         let idNumber = String(newID);
@@ -139,7 +141,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             });
         }
     }catch(err){
-        console.log("⚠️ Error Occured while making the User ID");
+        logWithTime("⚠️ Error Occured while making the User ID");
         errorMessage(err)
         throwInternalServerError(res);
         return;
@@ -161,7 +163,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     }
     try{
         const user = await UserModel.create(User);
-        console.log("🟢 User Created Successfully, Registration Successfull");
+        logWithTime("🟢 User Created Successfully, Registration Successfull");
     /* 3. Return the response back to the User */
         return res.status(201).send({
             message: "Congratulations, Your Registration is Done Successfully :- ",
@@ -173,7 +175,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             address: user.address
         })
     }catch(err){
-        console.log("⚠️ Error happened while creating a new User");
+        logWithTime("⚠️ Error happened while creating a new User");
         errorMessage(err);
         throwInternalServerError(res);
         return;

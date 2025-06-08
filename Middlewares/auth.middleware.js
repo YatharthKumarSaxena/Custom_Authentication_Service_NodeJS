@@ -11,6 +11,7 @@ const messageModel = require("../Configs/message.configs");
 const errorMessage = messageModel.errorMessage;
 const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
+const logWithTime = require("../Configs/commonFeatures.config").logWithTime;
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
@@ -19,13 +20,13 @@ async function checkUserExists(emailID,phoneNumber){
         let user1 = await UserModel.findOne({phoneNumber: phoneNumber})
         let reason = "";
         if(user1){
-            console.log("⚠️ User Already Exists with Phone Number: "+phoneNumber);
+            logWithTime("⚠️ User Already Exists with Phone Number: "+phoneNumber);
             reason = "Phone Number: "+phoneNumber;
             count++;
         }
         user1 = await UserModel.findOne({emailID: emailID});
         if(user1){
-            console.log("⚠️ User Already Exists with Email ID: "+emailID);
+            logWithTime("⚠️ User Already Exists with Email ID: "+emailID);
             if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
             else reason = "Email ID: "+emailID;
             count++;
@@ -33,7 +34,7 @@ async function checkUserExists(emailID,phoneNumber){
         if(count!==0)console.log("⚠️ Invalid Registration");
         return reason;
     }catch(err){
-        console.log("⚠️ An Error occured while Checking whether User Exists or not");
+        logWithTime("⚠️ An Error occured while Checking whether User Exists or not");
         errorMessage(err);
         return;
     }
@@ -124,7 +125,7 @@ const verifySignUpBody = async (req,res,next) =>{
         }
         next();  // ✅ All validations passed, forward to controller
     }catch(err){
-        console.log("⚠️ Error happened while validating the User Request");
+        logWithTime("⚠️ Error happened while validating the User Request");
         errorMessage(err);
         throwInternalServerError(res);
         return;
