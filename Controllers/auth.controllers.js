@@ -132,21 +132,23 @@ async function makeUserID(){
 */
 
 function signInWithToken(request){
+    const verifyWith = request.verifyWith;
+    const user = request.foundUser;
     let token;
-    if(request.body.userID){
+    if(verifyWith === "UserID"){
         logWithTime("User is logged in by User ID");
-        token = jwt.sign({id: request.body.userID},secretCode,{
+        token = jwt.sign({id: user.userID},secretCode,{
             expiresIn: expiryTimeOfJWTtoken
         })
     }
-    else if(request.body.emailID){
+    else if(verifyWith === "EmailID"){
         logWithTime("User is logged in by Email ID");
-        token = jwt.sign({emailID: request.body.emailID},secretCode,{
+        token = jwt.sign({emailID: user.emailID},secretCode,{
             expiresIn: expiryTimeOfJWTtoken
         })
     }else{
         logWithTime("User is logged in by Phone Number");
-        token = jwt.sign({phoneNumber: request.body.phoneNumber},secretCode,{
+        token = jwt.sign({phoneNumber: user.phoneNumber},secretCode,{
             expiresIn: expiryTimeOfJWTtoken
         })
     }
@@ -221,22 +223,12 @@ exports.signUp = async (req,res) => { // Made this function async to use await
 
 exports.signIn = async (req,res) => {
     try{
-        const user = await UserModel.findOne({
-        $or:[
-            {userID: req.body.userID},
-            {phoneNumber: req.body.phoneNumber},
-            {emailID: req.body.emailID}
-            ]
-        });
-        if(user === null){
-            resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
-            throwInvalidResourceError(res,resource);
-        }
         // Check Password is Correct or Not
+        const user = req.foundUser;
         let isPasswordValid = bcryptjs.compareSync(req.body.password,user.password);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
-            const token = signInWithToken(req)
+            const token = signInWithToken(req);
             user.isVerified = true; // Marked User as Verified
             user.lastLogin = new Date(); // Update Last Login Time of User
             await user.save();

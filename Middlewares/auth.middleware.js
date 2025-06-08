@@ -8,6 +8,7 @@
 // Extracting the Required Modules
 const UserModel = require("../Models/User.model");
 const messageModel = require("../Configs/message.configs");
+const { verify } = require("jsonwebtoken");
 const errorMessage = messageModel.errorMessage;
 const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
@@ -138,17 +139,45 @@ const verifySignInBody = async (req,res,next) =>{
         if(!req.body.password){
             throwResourceNotFoundError(res,"Password");
         }
-        let areAllResourcePresent = true;
+        let user;
+        let verifyWith;
+        let anyResourcePresent = true;
         if(req.body.userID){
+            user = await UserModel.findOne({userID: req.body.userID});
+            if(user){
+                verifyWith = "UserID";
+            }
         }else if(req.body.emailID){
+            user = await UserModel.findOne({emailID: req.body.emailID});
+            if(user){
+                verifyWith = "EmailID";
+            }
         }else if(req.body.phoneNumber){
+            user = await UserModel.findOne({phoneNumber: req.body.phoneNumber});
+            if(user){
+                verifyWith = "PhoneNumber";
+            }
         }else{
-            areAllResourcePresent = false;
+            anyResourcePresent = false;
         }
-        if(!areAllResourcePresent){
+        if(!anyResourcePresent){
             resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
-            throwResourceNotFoundError(res,resource);
+            return throwResourceNotFoundError(res,resource);
         }
+        if(user && !user.isActive){
+            logWithTime("🚫 Login Access Denied: Your account is blocked.");
+            return res.status(403).send({
+                message: "Your account has been disabled by the admin.",
+                suggestion: "Please contact support."
+            });
+        }
+        if(!user){
+            return throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
+        }
+        // Attach the verified user's identity source and the user object to the request 
+        // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
+        req.verifyWith = verifyWith;
+        req.foundUser = user;
         next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User Request");
