@@ -132,6 +132,33 @@ const verifySignUpBody = async (req,res,next) =>{
     }
 }
 
+const verifySignInBody = async (req,res,next) =>{
+    // Validating the User SignIn Body
+    try{
+        if(!req.body.password){
+            throwResourceNotFoundError(res,"Password");
+        }
+        let areAllResourcePresent = true;
+        if(req.body.userID){
+        }else if(req.body.emailID){
+        }else if(req.body.phoneNumber){
+        }else{
+            areAllResourcePresent = false;
+        }
+        if(!areAllResourcePresent){
+            resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
+            throwResourceNotFoundError(res,resource);
+        }
+        next();
+    }catch(err){
+        logWithTime("⚠️ Error happened while validating the User Request");
+        errorMessage(err);
+        throwInternalServerError(res);
+        return;
+    }
+}
+
 module.exports = {
-    verifySignUpBody: verifySignUpBody
+    verifySignUpBody: verifySignUpBody,
+    verifySignInBody: verifySignInBody
 }

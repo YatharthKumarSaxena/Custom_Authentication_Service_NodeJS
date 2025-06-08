@@ -230,11 +230,11 @@ exports.signIn = async (req,res) => {
         });
         if(user === null){
             resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
-            throwInvalidResourceError(res,resource)
+            throwInvalidResourceError(res,resource);
         }
         // Check Password is Correct or Not
-        let passwordIsValid = bcryptjs.compareSync(req.body.password,user.password);
-        if(passwordIsValid){ // Login the User
+        let isPasswordValid = bcryptjs.compareSync(req.body.password,user.password);
+        if(isPasswordValid){ // Login the User
             // Sign with JWT Token
             const token = signInWithToken(req)
             user.isVerified = true; // Marked User as Verified

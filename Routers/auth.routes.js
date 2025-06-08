@@ -8,4 +8,5 @@ const authMiddleware = require("../Middlewares/auth.middleware");
 // Connecting Router to Middleware
 module.exports = (app)=> {
     app.post(URIS.USER_SIGNUP_URI,[authMiddleware.verifySignUpBody],authController.signUp);
+    app.post(URIS.USER_SIGNIN_URI,[authMiddleware.verifySignInBody],authController.signIn);
 }
