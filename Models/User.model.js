@@ -92,6 +92,10 @@ const userSchema = mongoose.Schema({
     },
     verificationToken: {
         type: String // for OTP / email verification link
+    },
+    jwtTokenIssuedAt: {
+        type: Date,
+        default: Date.now
     }
 },{timestamps:true,versionKey:false})
 
