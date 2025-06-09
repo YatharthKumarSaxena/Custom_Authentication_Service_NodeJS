@@ -62,3 +62,32 @@ exports.throwInvalidResourceError = (res,resource) => {
         message: "Please enter a Valid "+ resource
     })
 }
+
+/*
+  ✅ SRP + DRY: 
+  Handles Access Denied or Blocked Account responses.
+*/
+
+exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
+    logWithTime("⛔️ Access Denied: " + reason);
+    return res.status(403).send({
+        type: "AccessDenied",
+        warning: reason,
+        message: "You do not have the necessary permissions to perform this action."
+    });
+}
+
+/*
+  ✅ SRP + DRY:
+  Handles Blocked Account responses.
+*/
+
+exports.throwBlockedAccountError = (res) => {
+    const reason = "Your account is currently blocked.";
+    logWithTime("⛔️ Blocked Account: " + reason);
+    return res.status(403).send({
+        type: "BlockedAccount",
+        warning: reason,
+        message: "Please contact support if you believe this is an error."
+    });
+}

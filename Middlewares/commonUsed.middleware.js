@@ -5,7 +5,7 @@ const UserModel = require("../Models/User.model");
 // Extracting Required Functions and Values
 
 const logWithTime = require("./timeStampsFunctions.config").logWithTime;
-const { errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("./message.configs");
+const { throwAccessDeniedError, throwBlockedAccountError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("./message.configs");
 const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("./userID.config");
 
 // Checking User is Blocked 
@@ -66,30 +66,33 @@ function checkUserIsNotVerified(res,user){
 // Act as middleware for verifyToken and isAdmin function
 const checkUserIsVerified = async(req,res) => {
     const result = await isUserBlocked(req,res);
-    if(result)return;
+    if(result){
+        throwBlockedAccountError(res);
+        return false;
+    }
     const userID = req.user.userID;
     if(userID === adminID){
         const result = checkUserIsNotVerified(res,adminUser);
         if(result)return;
         adminUser.isVerified = true;
-        return false;
+        return true;
     }else{
         try{
             const user = req.user;
             if(!user){
                 logWithTime("Please enter a valid userid");
                 throwInvalidResourceError(res,"User ID");
-                return true;
+                return false;
             }
             const result = checkUserIsNotVerified(res,user);
             if(result)return;
             user.isVerified = true;
-            return false;
+            return true;
         }catch(err){
             logWithTime("⚠️ An Error Occurred while finding the User in isVerified Validation");
             errorMessage(err);
             throwInternalServerError(res);
-            return true;
+            return false;
         }
     }
 }
@@ -107,9 +110,7 @@ const verifyToken = (req,res,next) => {
     // Now Verifying whether the provided JWT Token is valid token or not
     jwt.verify(token,secretCode,async (err,decoded)=>{
         if(err){
-            return res.status(401).send({
-                message: "⚠️ UnAuthorized Token Provided !"
-            })
+            return throwAccessDeniedError(res,"⚠️ UnAuthorized Token Provided !");
         }
         try{
             if (!decoded || !decoded.id) {
@@ -119,15 +120,15 @@ const verifyToken = (req,res,next) => {
             }
             // If User is admin itself skip DB Call Reduces Latency Time
             if (decoded.id === adminID) {
-                const isExpired = await checkUserIsVerified(req,res);
-                if(isExpired)return;
+                const isVerified = await checkUserIsVerified(req,res);
+                if(!isVerified)return;
                 adminUser.jwtTokenIssuedAt = Date.now();
                 logWithTime("✅ Admin token verified without DB call");
                 await adminUser.save();
                 return next();
             }
-            const isExpired = await checkUserIsVerified(req,res);
-            if(isExpired)return;
+            const isVerified = await checkUserIsVerified(req,res);
+            if(!isVerified)return;
             const user = req.user;
             user.jwtTokenIssuedAt = Date.now();
             await user.save();
