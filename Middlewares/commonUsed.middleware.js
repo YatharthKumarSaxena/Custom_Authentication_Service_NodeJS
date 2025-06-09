@@ -8,8 +8,45 @@ const logWithTime = require("./timeStampsFunctions.config").logWithTime;
 const { errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("./message.configs");
 const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("./userID.config");
 
+// Checking User is Blocked 
+isUserBlocked = async(req,res) => {
+    try{
+        let userID = req.body.userID;
+        if(!userID){ // Get request has no body 
+        userID = req.query.userID;
+        }
+        if(!userID){ // If User ID not Present
+            logWithTime("Access Denied as no User ID provided");
+            throwResourceNotFoundError(res,"User ID");
+            return true;
+        }
+        if(userID === adminID){
+            // Attached complete admin details with request, save time for controller
+            req.user = adminUser;
+            return false; // Admin can never be blocked
+        }
+        else{
+            const user = await UserModel.findOne({userID: userID});
+            if(!user){
+                logWithTime("Invalid User ID entered by you");
+                throwInvalidResourceError(res,"UserID");
+                return true;
+            }
+            if(!user.isActive)return true;
+            // Attached complete user details with request, save time for controller
+            req.user = user;
+            return false;
+        }
+    }catch(err){
+        logWithTime("An Error occurred while checking User is blocked or not");
+        errorMessage(err);
+        throwInternalServerError(res);
+        return true;
+    }
+}
+
 // DRY Principle followed by this Code
-function helperOfcheckUserIsVerified(res,user){
+function checkUserIsNotVerified(res,user){
     const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
     const currentTime = Date.now(); // In milli second current time is return
     if(currentTime > tokenIssueTime + expiryTimeOfJWTtoken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
@@ -28,35 +65,25 @@ function helperOfcheckUserIsVerified(res,user){
 // Check that User is Verified or Not
 // Act as middleware for verifyToken and isAdmin function
 const checkUserIsVerified = async(req,res) => {
-    let userID = req.body.userID;
-    if(!userID){ // Get request has no body 
-        userID = req.query.userID;
-    }
-    if(!userID){ // If User ID not Present
-        logWithTime("Access Denied as no User ID provided");
-        throwResourceNotFoundError(res,"User ID");
-        return true;
-    }
+    const result = await isUserBlocked(req,res);
+    if(result)return;
+    const userID = req.user.userID;
     if(userID === adminID){
-        const result = helperOfcheckUserIsVerified(res,adminUser);
+        const result = checkUserIsNotVerified(res,adminUser);
         if(result)return;
         adminUser.isVerified = true;
-        // Attached complete admin details with request , save time for controller
-        req.user = adminUser;
         return false;
     }else{
         try{
-            const user = await UserModel.findOne({userID:userID});
+            const user = req.user;
             if(!user){
                 logWithTime("Please enter a valid userid");
                 throwInvalidResourceError(res,"User ID");
                 return true;
             }
-            const result = helperOfcheckUserIsVerified(res,user);
+            const result = checkUserIsNotVerified(res,user);
             if(result)return;
             user.isVerified = true;
-            // Attached complete user details with request , save time for controller
-            req.user = user;
             return false;
         }catch(err){
             logWithTime("⚠️ An Error Occurred while finding the User in isVerified Validation");
