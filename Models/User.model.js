@@ -36,12 +36,19 @@ const userSchema = mongoose.Schema({
     },
     userID:{
         type: String,
-        unique: true
+        unique: true,
+        index: true // Perfect for performance in token-based auth.
     },
     emailID:{
         type: String,
         unique: true,
-        required: true
+        required: true,
+        lowercase: true,
+        // At least one character before @
+        // Exactly one @ symbol
+        // At least one character before and after the . in domain
+        // No spaces allowed
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // simple regex for basic email format
     },
     address:[
         {

@@ -1,7 +1,5 @@
-/* Logic to Create User i.e User Registration */
-
 /*  
-  ✅ This file handles the logic for User Registration in the backend.
+  ✅ This file handles the logic for User Registration and User Login in the backend.
   It follows key principles of SOLID and DRY along with usage of important Design Patterns like:
   - Factory Pattern
   - Template Method Pattern
@@ -29,6 +27,7 @@ const secretCode = impConstraints.secretCode;
   Operates on a single MongoDB document (id = "CUS"), treating it as a unique entity.
 */
 
+// Increases the value of seq field in Customer Counter Document to generate unique ID for the new user
 async function increaseCustomerCounter(){
     try{
         const customerCounter = await CounterModel.findOneAndUpdate(
@@ -51,6 +50,7 @@ async function increaseCustomerCounter(){
   Ensures only one counter document exists with ID "CUS" — maintaining global user count.
 */
 
+// Creates Customer Counter whose seq value starts with 1 initially
 async function createCustomerCounter(){
 // Create Customer Counter Document with seq value 1 
     try{
@@ -61,7 +61,7 @@ async function createCustomerCounter(){
         });
         return customerCounter;
     }catch(err){
-        logWithTime("Error Occured while creating Customer Counter")
+        logWithTime("⚠️ An Error Occured while creating Customer Counter")
         errorMessage(err);
         return;
     } 
@@ -131,23 +131,27 @@ async function makeUserID(){
   Uses `throwErrorResponse()` and `errorMessage()` for consistency.
 */
 
+/* Logic to Return JWT Token to the User */
 function signInWithToken(request){
     const verifyWith = request.verifyWith;
     const user = request.foundUser;
     let token;
     if(verifyWith === "UserID"){
         logWithTime("User is logged in by User ID");
+        // Token is generated here based on User ID and Secret Code
         token = jwt.sign({id: user.userID},secretCode,{
             expiresIn: expiryTimeOfJWTtoken
         })
     }
     else if(verifyWith === "EmailID"){
         logWithTime("User is logged in by Email ID");
+        // Token is generated here based on Email ID and Secret Code
         token = jwt.sign({emailID: user.emailID},secretCode,{
             expiresIn: expiryTimeOfJWTtoken
         })
     }else{
         logWithTime("User is logged in by Phone Number");
+        // Token is generated here based on Phone Number and Secret Code
         token = jwt.sign({phoneNumber: user.phoneNumber},secretCode,{
             expiresIn: expiryTimeOfJWTtoken
         })
@@ -155,6 +159,7 @@ function signInWithToken(request){
     return token;
 }
 
+/* Logic to Create User i.e User Registration */
 exports.signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
@@ -219,8 +224,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     }
 }
 
-// Logic to Login the Registered User
-
+/* Logic to Login the Registered User */
 exports.signIn = async (req,res) => {
     try{
         // Check Password is Correct or Not
