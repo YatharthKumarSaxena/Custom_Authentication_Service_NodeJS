@@ -19,6 +19,7 @@ const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime
 const jwt = require("jsonwebtoken");
 const expiryTimeOfJWTtoken = impConstraints.expiryTimeOfJWTtoken;
 const secretCode = impConstraints.secretCode;
+const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -55,7 +56,7 @@ async function createCustomerCounter(){
 // Create Customer Counter Document with seq value 1 
     try{
         const customerCounter = await CounterModel.create({
-            _id: "CUS",
+            _id: prefixIDforCustomer,
             seq: 1
             // totalCustomers is by default 1 taken so not need to reassign same value
         });
