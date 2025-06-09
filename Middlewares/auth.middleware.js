@@ -12,6 +12,7 @@ const { verify } = require("jsonwebtoken");
 const errorMessage = messageModel.errorMessage;
 const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
+const throwInvalidResourceError = messageModel.throwInvalidResourceError;
 const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
@@ -137,7 +138,7 @@ const verifySignInBody = async (req,res,next) =>{
     // Validating the User SignIn Body
     try{
         if(!req.body.password){
-            throwResourceNotFoundError(res,"Password");
+            return throwResourceNotFoundError(res,"Password");
         }
         let user;
         let verifyWith;
