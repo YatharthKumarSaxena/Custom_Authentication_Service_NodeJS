@@ -6,7 +6,7 @@ const UserModel = require("../Models/User.model");
 
 const logWithTime = require("./timeStampsFunctions.config").logWithTime;
 const { errorMessage, throwInternalServerError, throwResourceNotFoundError} = require("./message.configs");
-const secretCode = require("./userID.config").secretCode;
+const {secretCode,adminID,adminUser} = require("./userID.config").secretCode;
 
 const verifyToken = (req,res,next) => {
     //🔐 Bearer Token Handling	✅ Added	Supports frontend standards, avoids malformed headers.
@@ -31,6 +31,13 @@ const verifyToken = (req,res,next) => {
                 logWithTime("⚠️ Invalid Malformed token (ID missing) Provided");
                 return throwResourceNotFoundError(res,"ID");
             }
+            // If User is admin itself skip DB Call Reduces Latency Time
+            if (decoded.id === adminID) {
+                // Attach Admin in User to Reduce DB calls
+                req.user = adminUser;
+                logWithTime("✅ Admin token verified without DB call");
+                return next();
+            }
             const user = await UserModel.findOne({userID: decoded.id})
             if(!user){
                 logWithTime("⚠️ Invalid User Provided");
@@ -46,4 +53,19 @@ const verifyToken = (req,res,next) => {
             return throwInternalServerError(res);
         }
     })
+}
+
+// Checking Provided Request is given by admin or not
+const isAdmin = (req,res,next) => {
+    const userID = req.user.userID; // Fetching user ID from request body
+    if(!userID){ // If User ID not Present
+        logWithTime("Access Denied as no User ID provided");
+        return throwResourceNotFoundError(res,"User ID");
+    }
+    if(userID === adminID)next(); // Checking Provided User ID matches with Admin ID
+    else{
+        // Admin not present, access denied
+        logWithTime("Access Denied: User is not Admin");
+        return res.status(403).send({ message: "Access Denied: Admins only" });
+    }
 }
