@@ -12,7 +12,7 @@ const throwInternalServerError = messageModel.throwInternalServerError;
 async function createCategoryCounter(){
     try{
         const categoryCounter = CounterModel.create({
-            _id: "CAT",
+            _id: categoryIDPrefix,
             seq: 0
 // totalCategories is by default 0 taken so not need to reassign same value
         })
