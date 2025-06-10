@@ -9,40 +9,40 @@ const { throwAccessDeniedError, throwBlockedAccountError, errorMessage, throwInt
 const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("./userID.config");
 const { makeToken } = require("../Utils/issueToken.utils");
 
-// Checking User is Blocked 
-isUserBlocked = async(req,res) => {
+// Checking User is Blocked
+const isUserBlocked = async(req,res,next) => {
     try{
         let userID = req.body.userID;
         if(!userID){ // Get request has no body 
-        userID = req.query.userID;
+            userID = req.query.userID;
         }
         if(!userID){ // If User ID not Present
-            logWithTime("Access Denied as no User ID provided");
-            throwResourceNotFoundError(res,"User ID");
-            return true;
+            logWithTime("⚠️ Access Denied as no User ID provided");
+            return throwResourceNotFoundError(res,"User ID");
         }
         if(userID === adminID){
             // Attached complete admin details with request, save time for controller
             req.user = adminUser;
-            return false; // Admin can never be blocked
+            return next(); // Admin can never be blocked
         }
         else{
             const user = await UserModel.findOne({userID: userID});
             if(!user){
                 logWithTime("Invalid User ID entered by you");
-                throwInvalidResourceError(res,"UserID");
-                return true;
+                return throwInvalidResourceError(res,"UserID");
             }
-            if(!user.isActive)return true;
+            if(!user.isActive){
+                logWithTime("⚠️ Blocked User Account is denied access whose user id is !"+userID);
+                return throwAccessDeniedError(res,"⚠️ Blocked User Account Provided !")
+            };
             // Attached complete user details with request, save time for controller
             req.user = user;
-            return false;
+            return next();
         }
     }catch(err){
         logWithTime("An Error occurred while checking User is blocked or not");
         errorMessage(err);
-        throwInternalServerError(res);
-        return true;
+        return throwInternalServerError(res);
     }
 }
 
@@ -65,37 +65,32 @@ function checkUserIsNotVerified(res,user){
 
 // Check that User is Verified or Not
 // Act as middleware for verifyToken and isAdmin function
-const checkUserIsVerified = async(req,res) => {
-    const result = await isUserBlocked(req,res);
-    if(result){
-        throwBlockedAccountError(res);
-        return false;
-    }
-    const userID = req.user.userID;
-    if(userID === adminID){
-        const result = checkUserIsNotVerified(res,adminUser);
-        if(result)return;
+const checkUserIsVerified = async(req,res,next) => {
+    // If User is admin itself skip DB Call Reduces Latency Time
+    if (req.user.userID === adminID) {
+        const isNotVerified = checkUserIsNotVerified(req,res);
+        if(isNotVerified)return;
+        // 🆕 Always refresh token here
+        const newToken = makeToken(adminUser.userID);
+        if(!newToken)return; // If token not found just return
+        adminUser.jwtTokenIssuedAt = Date.now();
         adminUser.isVerified = true;
-        return true;
-    }else{
-        try{
-            const user = req.user;
-            if(!user){
-                logWithTime("Please enter a valid userid");
-                throwInvalidResourceError(res,"User ID");
-                return false;
-            }
-            const result = checkUserIsNotVerified(res,user);
-            if(result)return;
-            user.isVerified = true;
-            return true;
-        }catch(err){
-            logWithTime("⚠️ An Error Occurred while finding the User in isVerified Validation");
-            errorMessage(err);
-            throwInternalServerError(res);
-            return false;
-        }
+        logWithTime("✅ Admin token verified without DB call");
+        await adminUser.save();
+        res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
+        return next();
     }
+    const isNotVerified = checkUserIsNotVerified(req,res);
+    if(isNotVerified)return;
+    const user = req.user;
+    // 🆕 Always refresh token here
+    const newToken = makeToken(user.userID);
+    if(!newToken)return; // If token not found just return
+    user.jwtTokenIssuedAt = Date.now();
+    await user.save();
+    logWithTime("✅ User with "+user.userID+" token is verified");
+    res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
+    return next();
 }
 
 // Logic to Verify Token and Update jwtTokenIssuedAt time
@@ -119,25 +114,8 @@ const verifyToken = (req,res,next) => {
                 logWithTime("⚠️ Invalid Malformed token (ID missing) Provided");
                 return throwResourceNotFoundError(res,"ID");
             }
-            // If User is admin itself skip DB Call Reduces Latency Time
-            if (decoded.id === adminID) {
-                const isVerified = await checkUserIsVerified(req,res);
-                if(!isVerified)return;
-                adminUser.jwtTokenIssuedAt = Date.now();
-                logWithTime("✅ Admin token verified without DB call");
-                await adminUser.save();
-                return next();
-            }
-            const isVerified = await checkUserIsVerified(req,res);
-            if(!isVerified)return;
-            const user = req.user;
-             // 🆕 Always refresh token here
-            const newToken = makeToken(user.userID);
-            if(!newToken)return; // If token not found just return
-            user.jwtTokenIssuedAt = Date.now();
-            await user.save();
-            logWithTime("✅ User with "+decoded.id+" token is verified");
-            res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
+            req.foundUserID = decoded.id;
+            logWithTime("Valid Token is Provided");
             next();
         }catch(err){
             logWithTime("⚠️ An Error occurred while verifying the JWT token provided in request");
@@ -157,3 +135,11 @@ const isAdmin = (req,res,next) => {
         return res.status(403).send({ message: "Access Denied: Admins only" });
     }
 }
+
+module.exports = {
+    verifyToken: verifyToken,
+    isAdmin: isAdmin,
+    checkUserIsVerified: checkUserIsVerified,
+    isUserBlocked: isUserBlocked
+}
+

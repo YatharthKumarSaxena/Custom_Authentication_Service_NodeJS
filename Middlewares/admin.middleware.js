@@ -19,3 +19,7 @@ const verifyAdminBody = async(req,res,next) => {
         return throwInternalServerError(res);
     }
 }   
+
+module.exports = {
+    verifyAdminBody:verifyAdminBody
+}
