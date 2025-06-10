@@ -2,7 +2,7 @@
 
 // Extract the Required Modules
 const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../Configs/message.configs");
-const { logWithTime } = require("../Configs/timeStampsFunctions.config");
+const { logWithTime } = require("../Utils/timeStamps.utils");
 const UserModel = require("../Models/User.model");
 
 exports.blockUserAccount = async(req,res) => {

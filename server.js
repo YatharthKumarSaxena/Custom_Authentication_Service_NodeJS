@@ -11,7 +11,7 @@ const UserModel = require("./Models/User.model");
 const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
 const errorMessage = functionModel.errorMessage;
-const {logWithTime} = require("./Configs/timeStampsFunctions.config");
+const { logWithTime } = require("./Utils/timeStamps.utils");
 const {makeTokenByUserID} = require("./Utils/issueToken.utils");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES

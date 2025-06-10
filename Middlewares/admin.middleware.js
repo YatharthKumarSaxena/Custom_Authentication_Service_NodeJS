@@ -1,7 +1,7 @@
 // Middleware Code For Admin Controller
 
 const { throwResourceNotFoundError, errorMessage, throwInternalServerError } = require("../Configs/message.configs");
-const { logWithTime } = require("../Configs/timeStampsFunctions.config");
+const { logWithTime } = require("../Utils/timeStamps.utils");
 
 // Verify Admin Body Request for Blocking / Unblocking a user
 const verifyAdminBody = async(req,res,next) => {

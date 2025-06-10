@@ -4,9 +4,9 @@ const UserModel = require("../Models/User.model");
 
 // Extracting Required Functions and Values
 
-const logWithTime = require("./timeStampsFunctions.config").logWithTime;
-const { throwAccessDeniedError, throwBlockedAccountError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("./message.configs");
-const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("./userID.config");
+const { logWithTime } = require("../Utils/timeStamps.utils");
+const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
+const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
 const { makeToken } = require("../Utils/issueToken.utils");
 
 // Checking User is Blocked

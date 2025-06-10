@@ -12,7 +12,7 @@ const errorMessage = messageModel.errorMessage;
 const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
 const throwInvalidResourceError = messageModel.throwInvalidResourceError;
-const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
+const { logWithTime } = require("../Utils/timeStamps.utils");
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){

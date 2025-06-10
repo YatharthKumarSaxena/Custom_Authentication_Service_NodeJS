@@ -7,8 +7,7 @@
 */
 
 // Extracts file that include timeStamp function
-const timeStamps = require("./timeStampsFunctions.config");
-const logWithTime = timeStamps.logWithTime;
+const {logWithTime} = require("../Utils/timeStamps.utils");
 
 exports.errorMessage = (err) => {
     logWithTime("🛑 Error occurred:");

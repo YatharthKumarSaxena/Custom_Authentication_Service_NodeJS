@@ -4,7 +4,7 @@ const messageModel = require("../Configs/message.configs");
 
 const categoryIDPrefix = require("../Configs/idPrefixes.config").category;
 const IP_Address_Code = require("../Configs/ipAddress.config").IP_Address_Code;
-const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
+const { logWithTime } = require("../Utils/timeStamps.utils");
 const errorMessage = messageModel.errorMessage;
 const throwInternalServerError = messageModel.throwInternalServerError;
 
