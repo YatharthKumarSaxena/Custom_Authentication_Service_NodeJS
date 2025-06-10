@@ -11,7 +11,7 @@ const adminController = require("../Controllers/admin.controllers");
 // Connecting Router to Middleware
 module.exports = (app)=> {
     app.post(URIS.USER_SIGNUP_URI,[authMiddleware.verifySignUpBody],authController.signUp);
-    app.post(URIS.USER_SIGNIN_URI,[authMiddleware.verifySignInBody,commonUsedMiddleware.verifyToken],authController.signIn);
-    app.post(URIS.BLOCK_USER_URI,[adminMiddleware.verifyAdminBody,commonUsedMiddleware.verifyToken,commonUsedMiddleware.isAdmin],adminController.blockUserAccount);
-    app.post(URIS.UNBLOCK_USER_URI,[commonUsedMiddleware.verifyToken,adminMiddleware.verifyAdminBody,commonUsedMiddleware.isAdmin],adminController.unblockUserAccount);
+    app.post(URIS.USER_SIGNIN_URI,[authMiddleware.verifySignInBody,commonUsedMiddleware.isUserBlocked],authController.signIn);
+    app.post(URIS.BLOCK_USER_URI,[commonUsedMiddleware.verifyToken,adminMiddleware.verifyAdminBody,commonUsedMiddleware.isAdmin,commonUsedMiddleware.checkUserIsVerified],adminController.blockUserAccount);
+    app.post(URIS.UNBLOCK_USER_URI,[commonUsedMiddleware.verifyToken,adminMiddleware.verifyAdminBody,commonUsedMiddleware.isAdmin,commonUsedMiddleware.checkUserIsVerified],adminController.unblockUserAccount);
 }
