@@ -7,6 +7,7 @@ const UserModel = require("../Models/User.model");
 const logWithTime = require("./timeStampsFunctions.config").logWithTime;
 const { throwAccessDeniedError, throwBlockedAccountError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("./message.configs");
 const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("./userID.config");
+const { makeToken } = require("../Utils/issueToken.utils");
 
 // Checking User is Blocked 
 isUserBlocked = async(req,res) => {
@@ -131,9 +132,8 @@ const verifyToken = (req,res,next) => {
             if(!isVerified)return;
             const user = req.user;
              // 🆕 Always refresh token here
-            const newToken = jwt.sign({ id: req.user.userID }, secretCode, {
-                expiresIn: expiryTimeOfJWTtoken
-            });
+            const newToken = makeToken(user.userID);
+            if(!newToken)return; // If token not found just return
             user.jwtTokenIssuedAt = Date.now();
             await user.save();
             logWithTime("✅ User with "+decoded.id+" token is verified");

@@ -14,6 +14,7 @@ const bcryptjs = require("bcryptjs")
 const {throwInvalidResourceError,errorMessage,throwInternalServerError} = require("../Configs/message.configs");
 const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
 const jwt = require("jsonwebtoken");
+const {makeTokenByUserID,makeTokenByEmailID,makeTokenByPhoneNumber} = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
 
 /*
@@ -135,23 +136,18 @@ function signInWithToken(request){
     if(verifyWith === "UserID"){
         logWithTime("User is logged in by User ID");
         // Token is generated here based on User ID and Secret Code
-        token = jwt.sign({id: user.userID},secretCode,{
-            expiresIn: expiryTimeOfJWTtoken
-        })
+        token = makeTokenByUserID(user.userID);
     }
     else if(verifyWith === "EmailID"){
         logWithTime("User is logged in by Email ID");
         // Token is generated here based on Email ID and Secret Code
-        token = jwt.sign({emailID: user.emailID},secretCode,{
-            expiresIn: expiryTimeOfJWTtoken
-        })
+        token = makeTokenByEmailID(user.emailID);
     }else{
         logWithTime("User is logged in by Phone Number");
         // Token is generated here based on Phone Number and Secret Code
-        token = jwt.sign({phoneNumber: user.phoneNumber},secretCode,{
-            expiresIn: expiryTimeOfJWTtoken
-        })
+        token = makeTokenByPhoneNumber(user.phoneNumber);
     }
+    if(!token)return "";
     return token;
 }
 
@@ -180,7 +176,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
       ✅ SRP: User object is composed here only once after getting all required parts.
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
-   
+
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
@@ -200,16 +196,31 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             userType: user.userType,
             createdAt: user.createdAt
         }
-        console.log(userGeneralDetails);
-    /* 3. Return the response back to the User */
-        return res.status(201).send({
-            message: "Congratulations, Your Registration is Done Successfully :- ",
+        const userDisplayDetails = {
             details:"Here is your Basic Profile Details given below:-", 
             name: user.name,
             userID: user.userID,
             emailId: user.emailID,
             phoneNumber: user.phoneNumber,
             address: user.address
+        }
+        const newToken = makeTokenByUserID(user.userID);
+        if(!newToken){
+            logWithTime("❌ Token generation failed after successful registration!");
+            return res.status(500).send({
+                message: "User registered but login (token generation) failed. Please try logging in manually.",
+                userDisplayDetails
+            });
+        }
+        logWithTime("User is successfully logged in on registration!");
+        user.isVerified = true;
+        await user.save();
+        console.log(userGeneralDetails);
+    /* 3. Return the response back to the User */
+        return res.status(201).send({
+            message: "Congratulations, Your Registration as well as login is Done Successfully :- ",
+            userDisplayDetails,
+            jwtToken: newToken
         })
     }catch(err){
         logWithTime("⚠️ Error happened while creating a new User");
@@ -228,6 +239,7 @@ exports.signIn = async (req,res) => {
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
             const token = signInWithToken(req);
+            if(token === "")return;
             user.isVerified = true; // Marked User as Verified
             user.lastLogin = new Date(); // Update Last Login Time of User
             await user.save();
@@ -240,10 +252,10 @@ exports.signIn = async (req,res) => {
         }
         else{
             logWithTime("❌ Incorrect Password")
-            throwInvalidResourceError(res,"Password");
+            return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
         logWithTime("⚠️ Error occurred while logging the User")
-        throwInternalServerError(res);
+        return throwInternalServerError(res);
     }  
 }

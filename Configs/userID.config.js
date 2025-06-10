@@ -29,7 +29,6 @@ module.exports = {
             state: "Uttar Pradesh",
             country: "India"}
         ],
-        isVerified: true,
         userType: "Admin",
         userID: adminID
     }
