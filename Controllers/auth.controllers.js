@@ -240,6 +240,7 @@ exports.signIn = async (req,res) => {
             const token = signInWithToken(req);
             if(token === "")return;
             user.isVerified = true; // Marked User as Verified
+            user.jwtTokenIssuedAt = new Date(); // Update JWT token issued time
             user.lastLogin = new Date(); // Update Last Login Time of User
             await user.save();
             logWithTime("🔐 User with "+user.userID+" is Successfully logged in")

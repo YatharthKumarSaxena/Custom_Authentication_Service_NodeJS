@@ -8,6 +8,7 @@ const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
 const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
 const { makeTokenByUserID } = require("../Utils/issueToken.utils");
+const {checkUserIsNotVerified} = require("./helperMiddlewares");
 
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
@@ -46,29 +47,9 @@ const isUserBlocked = async(req,res,next) => {
     }
 }
 
-// DRY Principle followed by this Code
-function checkUserIsNotVerified(res,user){
-    const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
-    const currentTime = Date.now(); // In milli second current time is return
-    if(currentTime > tokenIssueTime + expiryTimeOfJWTtoken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
-        user.isVerified = false;
-        logWithTime("⏰ Session expired. Please log in again to continue accessing your account.");
-        res.status(401).send({
-            success: false,
-            message: "⏰ Session expired. Please log in again to continue accessing your account.",
-            code: "TOKEN_EXPIRED"
-        })
-        return true; // 🧠 session expired, response already sent
-    }
-    return false; // ✅ token valid, continue execution
-}
-
 // Check that User is Verified or Not
 // Act as middleware for verifyToken and isAdmin function
 const checkUserIsVerified = async(req,res,next) => {
-    // If User is admin itself skip DB Call Reduces Latency Time
-    const isNotVerified = checkUserIsNotVerified(req,res);
-    if(isNotVerified)return;
     let user = req.user;
     if(!user){
         let userID = req?.user?.userID || req?.body?.userID;
@@ -78,6 +59,16 @@ const checkUserIsVerified = async(req,res,next) => {
             return throwResourceNotFoundError(res, "User");
         }
     req.user = user; // 🧷 Attach for future use
+    }
+    const isNotVerified = await checkUserIsNotVerified(user);
+    if(isNotVerified){
+        logWithTime("⏰ Session expired. Please log in again to continue accessing your account.");
+        res.status(401).send({
+            success: false,
+            message: "⏰ Session expired. Please log in again to continue accessing your account.",
+            code: "TOKEN_EXPIRED"
+        })
+        return;
     }
     // 🆕 Always refresh token here
     const newToken = makeTokenByUserID(user.userID);

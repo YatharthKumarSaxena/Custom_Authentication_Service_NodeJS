@@ -13,6 +13,7 @@ const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
 const throwInvalidResourceError = messageModel.throwInvalidResourceError;
 const { logWithTime } = require("../Utils/timeStamps.utils");
+const { checkUserIsNotVerified } = require("./helperMiddlewares");
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
@@ -164,6 +165,9 @@ const verifySignInBody = async (req,res,next) =>{
             resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
             return throwResourceNotFoundError(res,resource);
         }
+        if(!user){
+            return throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
+        }
         if(user && !user.isActive){
             logWithTime("🚫 Login Access Denied: Your account is blocked.");
             return res.status(403).send({
@@ -171,8 +175,15 @@ const verifySignInBody = async (req,res,next) =>{
                 suggestion: "Please contact support."
             });
         }
-        if(!user){
-            return throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
+        // ✅ Now Check if User is Already Logged In
+        const result = await checkUserIsNotVerified(user);
+        if (!result) {
+            logWithTime("🚫 Login Request Denied: User is already logged in.");
+            return res.status(400).send({
+            success: false,
+            message: "User is already logged in.",
+            suggestion: "Please logout first before trying to login again."
+            });
         }
         // Attach the verified user's identity source and the user object to the request 
         // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
