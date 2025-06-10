@@ -13,7 +13,6 @@ const CounterModel = require("../Models/ID_Generator.model");
 const bcryptjs = require("bcryptjs")
 const {throwInvalidResourceError,errorMessage,throwInternalServerError} = require("../Configs/message.configs");
 const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
-const jwt = require("jsonwebtoken");
 const {makeTokenByUserID,makeTokenByEmailID,makeTokenByPhoneNumber} = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
 

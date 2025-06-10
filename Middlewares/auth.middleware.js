@@ -8,7 +8,6 @@
 // Extracting the Required Modules
 const UserModel = require("../Models/User.model");
 const messageModel = require("../Configs/message.configs");
-const { verify } = require("jsonwebtoken");
 const errorMessage = messageModel.errorMessage;
 const throwResourceNotFoundError = messageModel.throwResourceNotFoundError;
 const throwInternalServerError = messageModel.throwInternalServerError;
