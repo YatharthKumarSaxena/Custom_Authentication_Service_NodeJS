@@ -7,18 +7,13 @@
 */
 
 // Extracting the required modules
-const impConstraints = require("../Configs/userID.config");
+const {userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,secretCode,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
 const UserModel = require("../Models/User.model");
-const bcryptjs = require("bcryptjs")
 const CounterModel = require("../Models/ID_Generator.model");
-const messageModel = require("../Configs/message.configs");
-const errorMessage = messageModel.errorMessage;
-const throwInvalidResourceError = messageModel.throwInvalidResourceError
-const throwInternalServerError = messageModel.throwInternalServerError;
+const bcryptjs = require("bcryptjs")
+const {throwInvalidResourceError,errorMessage,throwInternalServerError} = require("../Configs/message.configs");
 const logWithTime = require("../Configs/timeStampsFunctions.config").logWithTime;
 const jwt = require("jsonwebtoken");
-const expiryTimeOfJWTtoken = impConstraints.expiryTimeOfJWTtoken;
-const secretCode = impConstraints.secretCode;
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
 
 /*
@@ -100,14 +95,14 @@ async function makeUserID(){
         totalCustomers = customerCounter.seq; // extract 'seq' field 
     }
     let newID = totalCustomers;
-    if(newID>=impConstraints.userRegistrationCapacity){
+    if(newID>=userRegistrationCapacity){
         logWithTime("⚠️ Machine Capacity to Store User Data is completely full");
         logWithTime("So User cannot be Registered");
         return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
     }
     else{
-        newID = newID+impConstraints.adminUserID
-        let machineCode = impConstraints.IP_Address_Code;
+        newID = newID+adminUserID;
+        let machineCode = IP_Address_Code;
         let identityCode = customerCounter._id+machineCode;
         let idNumber = String(newID);
         const userID = identityCode+idNumber;
@@ -185,8 +180,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
       ✅ SRP: User object is composed here only once after getting all required parts.
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
-
-    const SALT = impConstraints.SALT; // Extracting SALT for Encryption of Password
+   
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,

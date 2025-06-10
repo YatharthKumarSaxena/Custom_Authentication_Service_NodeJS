@@ -130,9 +130,14 @@ const verifyToken = (req,res,next) => {
             const isVerified = await checkUserIsVerified(req,res);
             if(!isVerified)return;
             const user = req.user;
+             // 🆕 Always refresh token here
+            const newToken = jwt.sign({ id: req.user.userID }, secretCode, {
+                expiresIn: expiryTimeOfJWTtoken
+            });
             user.jwtTokenIssuedAt = Date.now();
             await user.save();
             logWithTime("✅ User with "+decoded.id+" token is verified");
+            res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
             next();
         }catch(err){
             logWithTime("⚠️ An Error occurred while verifying the JWT token provided in request");
