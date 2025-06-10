@@ -7,7 +7,7 @@ const UserModel = require("../Models/User.model");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
 const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
-const { makeToken } = require("../Utils/issueToken.utils");
+const { makeTokenByUserID } = require("../Utils/issueToken.utils");
 
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
@@ -67,24 +67,20 @@ function checkUserIsNotVerified(res,user){
 // Act as middleware for verifyToken and isAdmin function
 const checkUserIsVerified = async(req,res,next) => {
     // If User is admin itself skip DB Call Reduces Latency Time
-    if (req.user.userID === adminID) {
-        const isNotVerified = checkUserIsNotVerified(req,res);
-        if(isNotVerified)return;
-        // 🆕 Always refresh token here
-        const newToken = makeToken(adminUser.userID);
-        if(!newToken)return; // If token not found just return
-        adminUser.jwtTokenIssuedAt = Date.now();
-        adminUser.isVerified = true;
-        logWithTime("✅ Admin token verified without DB call");
-        await adminUser.save();
-        res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
-        return next();
-    }
     const isNotVerified = checkUserIsNotVerified(req,res);
     if(isNotVerified)return;
-    const user = req.user;
+    let user = req.user;
+    if(!user){
+        let userID = req?.user?.userID || req?.body?.userID;
+        user = await UserModel.findOne({ userID: userID });
+        if (!user) {
+            logWithTime("❌ User not found while verifying.");
+            return throwResourceNotFoundError(res, "User");
+        }
+    req.user = user; // 🧷 Attach for future use
+    }
     // 🆕 Always refresh token here
-    const newToken = makeToken(user.userID);
+    const newToken = makeTokenByUserID(user.userID);
     if(!newToken)return; // If token not found just return
     user.jwtTokenIssuedAt = Date.now();
     await user.save();
@@ -127,7 +123,7 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    const userID = req.user.userID;
+    let userID = req?.user?.userID || req?.body?.userID;
     if(userID === adminID)next(); // Checking Provided User ID matches with Admin ID
     else{
         // Admin not present, access denied

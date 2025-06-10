@@ -6,11 +6,11 @@ const { logWithTime } = require("../Utils/timeStamps.utils");
 // Verify Admin Body Request for Blocking / Unblocking a user
 const verifyAdminBody = async(req,res,next) => {
     try{
-        if(!req.body.adminID){
-            return throwResourceNotFoundError("AdminID");
+        if(!req.body.userID){
+            return throwResourceNotFoundError(res,"AdminID");
         }
         if(!req.body.requestedUserID && !req.body.phoneNumber && !req.body.emailID){
-            return throwResourceNotFoundError("EmailID,Requested UserID or Phone Number(At least one of these fields)");
+            return throwResourceNotFoundError(res,"EmailID,Requested UserID or Phone Number(At least one of these fields)");
         }
         return next();
     }catch(err){

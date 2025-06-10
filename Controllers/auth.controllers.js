@@ -187,7 +187,6 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     try{
         const user = await UserModel.create(User);
         logWithTime("🟢 User Created Successfully, Registration Successfull");
-        logWithTime("👤 New User Details:- ");
         const userGeneralDetails = {
             name: user.name,
             emailID: user.emailID,
@@ -212,6 +211,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             });
         }
         logWithTime("User is successfully logged in on registration!");
+        logWithTime("👤 New User Details:- ");
         user.isVerified = true;
         await user.save();
         console.log(userGeneralDetails);
