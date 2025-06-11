@@ -13,7 +13,8 @@ const {checkUserIsNotVerified} = require("./helperMiddlewares");
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
     try{
-        let userID = req.body.userID;
+        let userID = req.foundUserID;
+        if(!userID) userID = req.body.userID;
         if(!userID){ // Get request has no body 
             userID = req.query.userID;
         }
@@ -58,7 +59,7 @@ const checkUserIsVerified = async(req,res,next) => {
             logWithTime("❌ User not found while verifying.");
             return throwResourceNotFoundError(res, "User");
         }
-    req.user = user; // 🧷 Attach for future use
+        req.user = user; // 🧷 Attach for future use
     }
     const isNotVerified = await checkUserIsNotVerified(user);
     if(isNotVerified){
@@ -114,12 +115,12 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    let userID = req?.user?.userID || req?.body?.userID;
+    let userID = req?.foundUserID || req?.user?.userID || req?.body?.userID;
     if(userID === adminID)next(); // Checking Provided User ID matches with Admin ID
     else{
         // Admin not present, access denied
         logWithTime("Access Denied: User is not Admin");
-        return res.status(403).send({ message: "Access Denied: Admins only" });
+        return throwAccessDeniedError(res,"Admins only");
     }
 }
 

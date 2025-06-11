@@ -188,7 +188,7 @@ const verifySignInBody = async (req,res,next) =>{
         // Attach the verified user's identity source and the user object to the request 
         // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
         req.verifyWith = verifyWith;
-        req.foundUser = user;
+        req.user = user;
         next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User Request");

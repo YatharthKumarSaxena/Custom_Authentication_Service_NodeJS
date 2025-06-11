@@ -130,7 +130,7 @@ async function makeUserID(){
 /* Logic to Return JWT Token to the User */
 function signInWithToken(request){
     const verifyWith = request.verifyWith;
-    const user = request.foundUser;
+    const user = request.user;
     let token;
     if(verifyWith === "UserID"){
         logWithTime("User is logged in by User ID");
@@ -233,7 +233,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
 exports.signIn = async (req,res) => {
     try{
         // Check Password is Correct or Not
-        const user = req.foundUser;
+        const user = req.user;
         let isPasswordValid = bcryptjs.compareSync(req.body.password,user.password);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
