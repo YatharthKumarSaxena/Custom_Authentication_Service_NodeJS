@@ -236,7 +236,7 @@ exports.signIn = async (req,res) => {
         let user = req?.user;
         if(!user){
             const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
-            user = UserModel.findOne({userID: userID});
+            user = await UserModel.findOne({userID: userID});
             if(!user){
                 return throwInvalidResourceError("UserID");
             }
@@ -262,7 +262,34 @@ exports.signIn = async (req,res) => {
             return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging the User")
+        logWithTime("⚠️ Error occurred while logging in the User")
         return throwInternalServerError(res);
     }  
+}
+
+exports.signOut = async (req,res) => {
+    try{
+        // Check Password is Correct or Not
+        let user = req?.user;
+        if(!user){
+            const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
+            user = await UserModel.findOne({userID: userID});
+            if(!user){
+                return throwInvalidResourceError("UserID");
+            }
+        }
+        user.isVerified = false;
+        await user.save();
+        if (!user.isActive) {
+            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout.`);
+        }
+        else logWithTime("🔓 User with "+user.userID+" is Successfully logged out")
+        res.status(200).send({
+            message: user.name+", You are successfully logged out",
+            userID: user.userID,
+        })
+    }catch(err){
+        logWithTime("⚠️ Error occurred while logging out the User")
+        return throwInternalServerError(res);
+    }
 }
