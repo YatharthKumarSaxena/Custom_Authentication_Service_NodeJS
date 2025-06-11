@@ -233,7 +233,14 @@ exports.signUp = async (req,res) => { // Made this function async to use await
 exports.signIn = async (req,res) => {
     try{
         // Check Password is Correct or Not
-        const user = req.user;
+        let user = req?.user;
+        if(!user){
+            const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
+            user = UserModel.findOne({userID: userID});
+            if(!user){
+                return throwInvalidResourceError("UserID");
+            }
+        }
         let isPasswordValid = bcryptjs.compareSync(req.body.password,user.password);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token

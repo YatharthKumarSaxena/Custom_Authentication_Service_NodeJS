@@ -23,8 +23,6 @@ const isUserBlocked = async(req,res,next) => {
             return throwResourceNotFoundError(res,"User ID");
         }
         if(userID === adminID){
-            // Attached complete admin details with request, save time for controller
-            req.user = adminUser;
             return next(); // Admin can never be blocked
         }
         else{
