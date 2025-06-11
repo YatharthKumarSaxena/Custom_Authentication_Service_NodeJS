@@ -281,6 +281,7 @@ exports.signOut = async (req,res) => {
         await user.save();
         if (!user.isActive) {
             logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout.`);
+            return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
         else logWithTime("🔓 User with "+user.userID+" is Successfully logged out")
         res.status(200).send({
