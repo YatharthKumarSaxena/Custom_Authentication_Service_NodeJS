@@ -30,7 +30,8 @@ module.exports = (app)=> {
     // Controller: Logs user in and returns token
     app.post(SIGNIN, [
         authMiddleware.verifySignInBody,
-        commonUsedMiddleware.isUserBlocked
+        commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive
     ], authController.signIn);
 
     // 🔓 Public User Signout Route
@@ -67,12 +68,12 @@ module.exports = (app)=> {
 
     // ✅ Public User: Activate own account
     // Middleware Chain:
-    // - check if user is currently blocked (blocked users cannot activate)
     // - validate input body (userID/email/phone + password, and user must be inactive)
+    // - check if user is currently blocked (blocked users cannot activate)
     // Controller: Activates the user’s account
     app.patch(ACTIVATE_USER,[
-        commonUsedMiddleware.isUserBlocked,
-        authMiddleware.verifyActivateUserAccountBody
+        authMiddleware.verifyActivateUserAccountBody,
+        commonUsedMiddleware.isUserBlocked
     ],authController.activateUserAccount)
 
     // 🚫 Public User: Deactivate own account

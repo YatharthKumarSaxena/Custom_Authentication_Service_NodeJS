@@ -10,6 +10,34 @@ const {secretCode,adminID} = require("../Configs/userID.config");
 const { makeTokenByUserID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified} = require("./helperMiddlewares");
 
+// ✅ Checking if User Account is Active
+const isUserAccountActive = async(req,res,next) => {
+    try{
+        let userID = req?.user?.userID || req?.body?.userID || req?.query?.userID;
+        if(userID === adminID){ // Admin Account can never be deactivated
+            return next();
+        }
+        let user = req.user;
+        if(user.isActive === false){
+            logWithTime(`🚫 Access Denied: User Account (${user.userID}) is Deactivated.`);
+            return res.status(403).send({
+                success: false,
+                message: "Your account is currently deactivated.",
+                suggestion: "Please activate your account before continuing."
+            });
+        }
+        // ✅ Active User – Allow to proceed
+        return next();
+    }catch(err){
+        logWithTime("An Error occurred while checking User Account is active or not");
+        errorMessage(err);
+        if (!res.headersSent) {
+            return throwInternalServerError(res);
+        }
+    }
+    
+}
+
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
     try{
@@ -128,6 +156,7 @@ module.exports = {
     verifyToken: verifyToken,
     isAdmin: isAdmin,
     checkUserIsVerified: checkUserIsVerified,
-    isUserBlocked: isUserBlocked
+    isUserBlocked: isUserBlocked,
+    isUserAccountActive: isUserAccountActive
 }
 
