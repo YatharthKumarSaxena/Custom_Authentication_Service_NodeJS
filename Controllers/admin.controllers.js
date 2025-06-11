@@ -4,9 +4,14 @@
 const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../Configs/message.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const UserModel = require("../Models/User.model");
+const {adminID} = require("../Configs/userID.config");
 
 exports.blockUserAccount = async(req,res) => {
     try{
+        if(req.body.requestedUserID === adminID){
+            logWithTime("🛡️👨‍💼 Admin cannot be blocked");
+            return res.status(403).send({ success: false, message: "Admin cannot be blocked." });
+        }
         const user = await UserModel.findOne({
             $or:[
                 {userID: req.body.requestedUserID},
@@ -41,6 +46,10 @@ exports.blockUserAccount = async(req,res) => {
 
 exports.unblockUserAccount = async(req,res) => {
     try{
+        if(req.body.requestedUserID === adminID){
+            logWithTime("🛡️👨‍💼 Admin cannot be unblocked");
+            return res.status(403).send({ success: false, message: "Admin cannot be unblocked." });
+        }
         const user = await UserModel.findOne({
             $or:[
                 {userID: req.body.requestedUserID},
@@ -49,7 +58,7 @@ exports.unblockUserAccount = async(req,res) => {
             ]
         })
         if(!user){
-            logWithTime("Inavalid Details of User to be unblocked is Provided");
+            logWithTime("⚠️ Invalid details provided for user to be unblocked.");
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
         }
         if(!user.isBlocked){
