@@ -35,6 +35,7 @@ module.exports = (app)=> {
     // Middleware: Validate logout input
     // Controller: Logs out user
     app.post(SIGNOUT, [
+        commonUsedMiddleware.verifyToken,
         authMiddleware.verifySignOutBody
     ], authController.signOut);
 

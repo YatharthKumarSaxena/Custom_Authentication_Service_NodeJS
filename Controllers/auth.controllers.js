@@ -269,7 +269,6 @@ exports.signIn = async (req,res) => {
 
 exports.signOut = async (req,res) => {
     try{
-        // Check Password is Correct or Not
         let user = req?.user;
         if(!user){
             const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
