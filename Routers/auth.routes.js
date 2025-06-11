@@ -14,6 +14,8 @@ const SIGNIN = URIS.AUTH_ROUTES.SIGNIN;
 const SIGNOUT = URIS.AUTH_ROUTES.SIGNOUT;
 const BLOCK_USER = URIS.AUTH_ROUTES.BLOCK_USER;
 const UNBLOCK_USER = URIS.AUTH_ROUTES.UNBLOCK_USER;
+const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
+const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app)=> {
@@ -46,7 +48,7 @@ module.exports = (app)=> {
     // - check if user is an admin
     // - verify admin's account is not blocked/deactivated
     // Controller: Admin blocks another user
-    app.post(BLOCK_USER, [
+    app.patch(BLOCK_USER, [
         commonUsedMiddleware.verifyToken,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
@@ -56,7 +58,7 @@ module.exports = (app)=> {
     // ✅ Admin Only: Unblock a user account
     // Middleware chain same as block user
     // Controller: Admin unblocks the user
-    app.post(UNBLOCK_USER, [
+    app.patch(UNBLOCK_USER, [
         commonUsedMiddleware.verifyToken,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,

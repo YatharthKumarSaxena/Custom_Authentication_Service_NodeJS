@@ -9,7 +9,7 @@
 const UserModel = require("../Models/User.model");
 const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/message.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
-const { checkUserIsNotVerified,helperOfSignIn_Or_SignOut_BodyVerification } = require("./helperMiddlewares");
+const { checkUserIsNotVerified,helperOfAuthRequestBodyVerification} = require("./helperMiddlewares");
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
@@ -136,7 +136,7 @@ const verifySignInBody = async (req,res,next) =>{
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
-        let verifyWith = await helperOfSignIn_Or_SignOut_BodyVerification(req,res);
+        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
         if(verifyWith === ""){
             logWithTime("Login Request Cancelled")
             return;
@@ -164,7 +164,7 @@ const verifySignInBody = async (req,res,next) =>{
 const verifySignOutBody = async (req,res,next) => {
     // Validating the User SignIn Body
     try{
-        let verifyWith = await helperOfSignIn_Or_SignOut_BodyVerification(req,res);
+        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
         if(verifyWith === ""){
             logWithTime("Logout Request Cancelled")
             return;
@@ -188,8 +188,65 @@ const verifySignOutBody = async (req,res,next) => {
         return;
     }
 }
+
+const verifyActivateUserAccountBody = async(req,res,next) => {
+    // Validating Request Body
+    try{
+        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
+        if(verifyWith === ""){
+            logWithTime("Activate Account Request Cancelled")
+            return;
+        }
+        if(!req.body.password){
+            return throwResourceNotFoundError(res,"Password");
+        }
+        const user = req.user;
+        if(user.isActive === true){
+            logWithTime("🚫 User Account Activation Request Denied: User Account is already Active.");
+            return res.status(400).send({
+            success: false,
+            message: "User Account is already Active.",
+            suggestion: "Please deactivate your account first before trying to activate again."
+            });
+        }
+        next();
+    }catch(err){
+        logWithTime("⚠️ Error happened while validating the User Account Activation Request")
+        return throwInternalServerError(res);
+    }
+}
+
+const verifyDeactivateUserAccountBody = async(req,res,next) => {
+    // Validating Request Body
+    try{
+        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
+        if(verifyWith === ""){
+            logWithTime("Deactivate Account Request Cancelled")
+            return;
+        }
+        if(!req.body.password){
+            return throwResourceNotFoundError(res,"Password");
+        }
+        const user = req.user;
+        if(user.isActive === false){
+            logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
+            return res.status(400).send({
+            success: false,
+            message: "User Account is already Inactive.",
+            suggestion: "Please activate your account first before trying to deactivate again."
+            });
+        }
+        next();
+    }catch(err){
+        logWithTime("⚠️ Error happened while validating the User Account Deactivation Request")
+        return throwInternalServerError(res);
+    }
+}
+
 module.exports = {
     verifySignUpBody: verifySignUpBody,
     verifySignInBody: verifySignInBody,
-    verifySignOutBody: verifySignOutBody
+    verifySignOutBody: verifySignOutBody,
+    verifyActivateUserAccountBody: verifyActivateUserAccountBody,
+    verifyDeactivateUserAccountBody: verifyDeactivateUserAccountBody
 }

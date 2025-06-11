@@ -17,7 +17,7 @@ const checkUserIsNotVerified = async(user) => {
     return false; // ✅ token valid, continue execution
 }
 
-const helperOfSignIn_Or_SignOut_BodyVerification = async(req,res) =>{
+const helperOfAuthRequestBodyVerification = async(req,res) =>{
     let user;
     let verifyWith = "";
     let anyResourcePresent = true;
@@ -40,7 +40,7 @@ const helperOfSignIn_Or_SignOut_BodyVerification = async(req,res) =>{
         anyResourcePresent = false;
     }
     if(!anyResourcePresent){
-        resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
+        const resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
         throwResourceNotFoundError(res,resource);
         return verifyWith;
     }
@@ -63,5 +63,5 @@ const helperOfSignIn_Or_SignOut_BodyVerification = async(req,res) =>{
 
 module.exports = {
     checkUserIsNotVerified: checkUserIsNotVerified,
-    helperOfSignIn_Or_SignOut_BodyVerification: helperOfSignIn_Or_SignOut_BodyVerification
+    helperOfAuthRequestBodyVerification: helperOfAuthRequestBodyVerification
 }
