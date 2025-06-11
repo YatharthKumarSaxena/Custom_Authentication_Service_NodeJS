@@ -11,6 +11,7 @@ const adminController = require("../Controllers/admin.controllers");
 // 🛣️ Destructuring Required URIs for cleaner usage below
 const SIGNUP = URIS.AUTH_ROUTES.SIGNUP;
 const SIGNIN = URIS.AUTH_ROUTES.SIGNIN;
+const SIGNOUT = URIS.AUTH_ROUTES.SIGNOUT;
 const BLOCK_USER = URIS.AUTH_ROUTES.BLOCK_USER;
 const UNBLOCK_USER = URIS.AUTH_ROUTES.UNBLOCK_USER;
 
@@ -29,6 +30,13 @@ module.exports = (app)=> {
         authMiddleware.verifySignInBody,
         commonUsedMiddleware.isUserBlocked
     ], authController.signIn);
+
+    // 🔓 Public User Signout Route
+    // Middleware: Validate logout input
+    // Controller: Logs out user
+    app.post(SIGNOUT, [
+        authMiddleware.verifySignOutBody
+    ], authController.signOut);
 
     // 🚫 Admin Only: Block a user account
     // Middleware Chain:

@@ -232,5 +232,6 @@ const verifySignOutBody = async (req,res,next) => {
 }
 module.exports = {
     verifySignUpBody: verifySignUpBody,
-    verifySignInBody: verifySignInBody
+    verifySignInBody: verifySignInBody,
+    verifySignOutBody: verifySignOutBody
 }

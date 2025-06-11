@@ -23,6 +23,7 @@ module.exports = {
     AUTH_ROUTES: {
         SIGNUP: `${AUTH_BASE}/signup`,                  // POST /ecomm/api/v1/auth/signup
         SIGNIN: `${AUTH_BASE}/signin`,                  // POST /ecomm/api/v1/auth/signin
+        SIGNOUT: `${AUTH_BASE}/signout`,                // POST /ecomm/api/v1/auth/signout
         BLOCK_USER: `${AUTH_BASE}/block`,               // PATCH /ecomm/api/v1/auth/block
         UNBLOCK_USER: `${AUTH_BASE}/unblock`,           // PATCH /ecomm/api/v1/auth/unblock
         DEACTIVATE_USER: `${AUTH_BASE}/deactivate`,     // PATCH /ecomm/api/v1/auth/deactivate
