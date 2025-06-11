@@ -15,6 +15,50 @@ const throwInvalidResourceError = messageModel.throwInvalidResourceError;
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { checkUserIsNotVerified } = require("./helperMiddlewares");
 
+async function helperOfSignIn_Or_SignOut_BodyVerification(req,res){
+    let user;
+    let verifyWith = "";
+    let anyResourcePresent = true;
+    if(req.body.userID){
+        user = await UserModel.findOne({userID: req.body.userID});
+        if(user){
+            verifyWith = verifyWith+"UserID";
+        }
+    }else if(req.body.emailID){
+        user = await UserModel.findOne({emailID: req.body.emailID});
+        if(user){
+            verifyWith = verifyWith+"EmailID";
+        }
+    }else if(req.body.phoneNumber){
+        user = await UserModel.findOne({phoneNumber: req.body.phoneNumber});
+        if(user){
+            verifyWith = verifyWith+"PhoneNumber";
+        }
+    }else{
+        anyResourcePresent = false;
+    }
+    if(!anyResourcePresent){
+        resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
+        throwResourceNotFoundError(res,resource);
+        return verifyWith;
+    }
+    if(!user){
+        throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
+    }
+    if(user && !user.isActive){
+        logWithTime("🚫 Access Denied: Your account is blocked.");
+        res.status(403).send({
+            message: "Your account has been disabled by the admin.",
+            suggestion: "Please contact support."
+        });
+    }
+    // Attach the verified user's identity source and the user object to the request 
+    // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
+    req.verifyWith = verifyWith;
+    req.user = user;
+    return verifyWith;
+}
+
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
     try{
@@ -140,45 +184,13 @@ const verifySignInBody = async (req,res,next) =>{
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
-        let user;
-        let verifyWith;
-        let anyResourcePresent = true;
-        if(req.body.userID){
-            user = await UserModel.findOne({userID: req.body.userID});
-            if(user){
-                verifyWith = "UserID";
-            }
-        }else if(req.body.emailID){
-            user = await UserModel.findOne({emailID: req.body.emailID});
-            if(user){
-                verifyWith = "EmailID";
-            }
-        }else if(req.body.phoneNumber){
-            user = await UserModel.findOne({phoneNumber: req.body.phoneNumber});
-            if(user){
-                verifyWith = "PhoneNumber";
-            }
-        }else{
-            anyResourcePresent = false;
-        }
-        if(!anyResourcePresent){
-            resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
-            return throwResourceNotFoundError(res,resource);
-        }
-        if(!user){
-            return throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
-        }
-        if(user && !user.isActive){
-            logWithTime("🚫 Login Access Denied: Your account is blocked.");
-            return res.status(403).send({
-                message: "Your account has been disabled by the admin.",
-                suggestion: "Please contact support."
-            });
-        }
+        let verifyWith = await helperOfSignIn_Or_SignOut_BodyVerification(req,res);
+        if(verifyWith === "")return;
+        const user = req.user;
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user);
         if (!result) {
-            logWithTime("🚫 Login Request Denied: User is already logged in.");
+            logWithTime("🚫 Request Denied: User is already logged in.");
             return res.status(400).send({
             success: false,
             message: "User is already logged in.",
@@ -191,13 +203,37 @@ const verifySignInBody = async (req,res,next) =>{
         req.user = user;
         next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Request");
+        logWithTime("⚠️ Error happened while validating the User SignIn Request");
         errorMessage(err);
         throwInternalServerError(res);
         return;
     }
 }
 
+const verifySignOutBody = async (req,res,next) => {
+    // Validating the User SignIn Body
+    try{
+        let verifyWith = await helperOfSignIn_Or_SignOut_BodyVerification(req,res);
+        if(verifyWith === "")return;
+        const user = req.user;
+        // ✅ Now Check if User is Already Logged Out
+        const result = await checkUserIsNotVerified(user);
+        if (result) {
+            logWithTime("🚫 Login Request Denied: User is already logged out.");
+            return res.status(400).send({
+            success: false,
+            message: "User is already logged out.",
+            suggestion: "Please login first before trying to logout again."
+            });
+        }
+        next();
+    }catch(err){
+        logWithTime("⚠️ Error happened while validating the User Sign Out Request");
+        errorMessage(err);
+        throwInternalServerError(res);
+        return;
+    }
+}
 module.exports = {
     verifySignUpBody: verifySignUpBody,
     verifySignInBody: verifySignInBody
