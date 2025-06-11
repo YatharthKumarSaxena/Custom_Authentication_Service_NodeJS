@@ -12,7 +12,8 @@ const verifyAdminBody = async(req,res,next) => {
         if(!req.body.requestedUserID && !req.body.phoneNumber && !req.body.emailID){
             return throwResourceNotFoundError(res,"EmailID,Requested UserID or Phone Number(At least one of these fields)");
         }
-        return next();
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("⚠️ An Error occurred while validating the Admin Body Request for blocking/unblocking users")
         errorMessage(err);

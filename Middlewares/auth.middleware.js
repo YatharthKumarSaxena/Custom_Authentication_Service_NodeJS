@@ -111,23 +111,21 @@ const verifySignUpBody = async (req,res,next) =>{
             // Checking User already exists or not 
             const userExistReason = await checkUserExists(emailID,phoneNumber);
             if(userExistReason !== ""){
-                res.send({
-                message: "User Already Exists with "+userExistReason,
-                warning: "Use different Email ID or Phone Number or both based on Message"
-            })
-            return;
+                return res.status(400).send({
+                    message: "User Already Exists with "+userExistReason,
+                    warning: "Use different Email ID or Phone Number or both based on Message"
+                })
             }
         }
         else{ // Throw Error as User Details are not properly given
-            throwResourceNotFoundError(res,reason);
-            return;
+            return throwResourceNotFoundError(res,reason);
         }
-        next();  // ✅ All validations passed, forward to controller
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User Request");
         errorMessage(err);
-        throwInternalServerError(res);
-        return;
+        return throwInternalServerError(res);
     }
 }
 
@@ -153,12 +151,12 @@ const verifySignInBody = async (req,res,next) =>{
             suggestion: "Please logout first before trying to login again."
             });
         }
-        next();
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User SignIn Request");
         errorMessage(err);
-        throwInternalServerError(res);
-        return;
+        return throwInternalServerError(res);
     }
 }
 
@@ -181,12 +179,12 @@ const verifySignOutBody = async (req,res,next) => {
             suggestion: "Please login first before trying to logout again."
             });
         }
-        next();
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User Sign Out Request");
         errorMessage(err);
-        throwInternalServerError(res);
-        return;
+        return throwInternalServerError(res);
     }
 }
 
@@ -218,7 +216,8 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
             suggestion: "Please deactivate your account first before trying to activate again."
             });
         }
-        next();
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User Account Activation Request")
         return throwInternalServerError(res);
@@ -253,7 +252,8 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
             suggestion: "Please activate your account first before trying to deactivate again."
             });
         }
-        next();
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("⚠️ Error happened while validating the User Account Deactivation Request")
         return throwInternalServerError(res);

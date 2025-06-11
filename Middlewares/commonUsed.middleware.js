@@ -15,19 +15,22 @@ const isUserAccountActive = async(req,res,next) => {
     try{
         let userID = req?.user?.userID || req?.body?.userID || req?.query?.userID;
         if(userID === adminID){ // Admin Account can never be deactivated
-            return next();
+            // Very next line should be:
+            if (!res.headersSent) return next();
         }
         let user = req.user;
         if(user.isActive === false){
             logWithTime(`🚫 Access Denied: User Account (${user.userID}) is Deactivated.`);
-            return res.status(403).send({
+            res.status(403).send({
                 success: false,
                 message: "Your account is currently deactivated.",
                 suggestion: "Please activate your account before continuing."
             });
+            return;
         }
         // ✅ Active User – Allow to proceed
-        return next();
+        // Very next line should be:
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("An Error occurred while checking User Account is active or not");
         errorMessage(err);
@@ -61,11 +64,13 @@ const isUserBlocked = async(req,res,next) => {
             }
             if(user.isBlocked){
                 logWithTime("⚠️ Blocked User Account is denied access whose user id is "+userID);
-                return throwAccessDeniedError(res,"⚠️ Blocked User Account Provided !")
+                throwAccessDeniedError(res,"⚠️ Blocked User Account Provided !")
+                return;
             };
             // Attached complete user details with request, save time for controller
             req.user = user;
-            return next();
+            // Very next line should be:
+            if (!res.headersSent) return next();
         }
     }catch(err){
         logWithTime("An Error occurred while checking User is blocked or not");
@@ -106,7 +111,8 @@ const checkUserIsVerified = async(req,res,next) => {
     await user.save();
     logWithTime("✅ User with "+user.userID+" token is verified");
     res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
-    return next();
+    // Very next line should be:
+    if (!res.headersSent) return next();
 }
 
 // Logic to Verify Token and Update jwtTokenIssuedAt time
@@ -132,7 +138,8 @@ const verifyToken = (req,res,next) => {
             }
             req.foundUserID = decoded.id;
             logWithTime("Valid Token is Provided");
-            next();
+            // Very next line should be:
+            if (!res.headersSent) return next();
         }catch(err){
             logWithTime("⚠️ An Error occurred while verifying the JWT token provided in request");
             errorMessage(err);
@@ -144,8 +151,11 @@ const verifyToken = (req,res,next) => {
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
     let userID = req?.foundUserID || req?.user?.userID || req?.body?.userID;
-    if(userID === adminID)next(); // Checking Provided User ID matches with Admin ID
-    else{
+    if(userID === adminID){
+        // Very next line should be:
+        if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID
+    }
+        else{
         // Admin not present, access denied
         logWithTime("Access Denied: User is not Admin");
         return throwAccessDeniedError(res,"Admins only");
