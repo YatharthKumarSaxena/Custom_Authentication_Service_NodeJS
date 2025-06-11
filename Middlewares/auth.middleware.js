@@ -10,6 +10,7 @@ const UserModel = require("../Models/User.model");
 const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/message.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { checkUserIsNotVerified,helperOfAuthRequestBodyVerification} = require("./helperMiddlewares");
+const { adminID } = require("../Configs/idPrefixes.config");
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
@@ -192,6 +193,14 @@ const verifySignOutBody = async (req,res,next) => {
 const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
+        if(req.body.userID === adminID){
+            logWithTime("🚫 Request Denied: Admin account cannot be activated.");
+            return res.status(403).send({
+            success: false,
+            message: "Admin account cannot be activated.",
+            reason: "Admin is a system-level user and cannot be modified like a normal user."
+            });
+        }
         let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
         if(verifyWith === ""){
             logWithTime("Activate Account Request Cancelled")
@@ -219,6 +228,14 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
 const verifyDeactivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
+        if(req.body.userID === adminID){
+            logWithTime("🚫 Request Denied: Admin account cannot be deactivated.");
+            return res.status(403).send({
+            success: false,
+            message: "Admin account cannot be deactivated.",
+            reason: "Admin is a system-level user and cannot be modified like a normal user."
+            });
+        }
         let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
         if(verifyWith === ""){
             logWithTime("Deactivate Account Request Cancelled")
