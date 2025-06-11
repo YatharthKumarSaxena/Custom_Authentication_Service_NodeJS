@@ -15,17 +15,17 @@ exports.blockUserAccount = async(req,res) => {
             ]
         })
         if(!user){
-            logWithTime("Inavalid Details of User to be blocked is Provided");
+            logWithTime(`⚠️ Invalid block request received. Admin tried blocking: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID}`);
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
         }
-        if(!user.isActive){
+        if(user.isBlocked){
             return res.status(400).send({
                 success: false,
                 message: `User (${user.userID}) is already blocked.`
             });
         }
-        // Block the user by setting isActive = false
-        user.isActive = false;
+        // Block the user by setting isBlocked = true
+        user.isBlocked = true;
         await user.save();
         logWithTime(`✅ User (${user.userID}) has been successfully blocked`);
         return res.status(200).send({
@@ -35,7 +35,7 @@ exports.blockUserAccount = async(req,res) => {
     }catch(err){
         logWithTime("An Error occurrred while blocking the user account");
         errorMessage(err);
-        return throwInternalServerError(err);
+        return throwInternalServerError(res);
     }
 }
 
@@ -52,14 +52,14 @@ exports.unblockUserAccount = async(req,res) => {
             logWithTime("Inavalid Details of User to be unblocked is Provided");
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
         }
-        if(user.isActive){
+        if(!user.isBlocked){
             return res.status(400).send({
                 success: false,
                 message: `User (${user.userID}) is already unblocked.`
             });
         }
-        // Unblock the user by setting isActive = false
-        user.isActive = true;
+        // Unblock the user by setting isBlocked = false
+        user.isBlocked = false;
         await user.save();
         logWithTime(`✅ User (${user.userID}) has been successfully unblocked`);
         return res.status(200).send({
@@ -69,6 +69,6 @@ exports.unblockUserAccount = async(req,res) => {
     }catch(err){
         logWithTime("An Error occurrred while unblocking the user account");
         errorMessage(err);
-        return throwInternalServerError(err);
+        return throwInternalServerError(res);
     }
 }

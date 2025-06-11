@@ -31,8 +31,8 @@ const isUserBlocked = async(req,res,next) => {
                 logWithTime("Invalid User ID entered by you");
                 return throwInvalidResourceError(res,"UserID");
             }
-            if(!user.isActive){
-                logWithTime("⚠️ Blocked User Account is denied access whose user id is !"+userID);
+            if(user.isBlocked){
+                logWithTime("⚠️ Blocked User Account is denied access whose user id is "+userID);
                 return throwAccessDeniedError(res,"⚠️ Blocked User Account Provided !")
             };
             // Attached complete user details with request, save time for controller

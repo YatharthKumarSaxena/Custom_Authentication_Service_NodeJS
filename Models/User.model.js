@@ -74,11 +74,11 @@ const userSchema = mongoose.Schema({
             }
         }
     ],
-    isActive:{
+    isActive:{ // This is controlled by Users only (For Soft Delete Account Purposes)
         type: Boolean,
         default: true
     },
-    isBlocked:{
+    isBlocked:{ // This is controlled by Admins Only
         type: Boolean,
         default: false
     },
