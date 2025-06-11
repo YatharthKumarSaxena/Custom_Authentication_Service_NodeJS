@@ -1,5 +1,6 @@
 // Extracting required Modules, their functions and values
 const {expiryTimeOfJWTtoken} = require("../Configs/userID.config");
+const {logWithTime} = require("../Utils/timeStamps.utils");
 const {throwInvalidResourceError,throwResourceNotFoundError} = require("../Configs/message.configs");
 const UserModel = require("../Models/User.model");
 

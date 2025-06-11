@@ -11,7 +11,7 @@ const {logWithTime} = require("../Utils/timeStamps.utils");
 
 exports.errorMessage = (err) => {
     logWithTime("🛑 Error occurred:");
-    logWithTime("File Name and Line Number where this error ccured is displayed below:- ");
+    logWithTime("File Name and Line Number where this error occurred is displayed below:- ");
     console.log(err.stack)
     logWithTime("Error Message is displayed below:- ")
     console.error(err.message);
@@ -26,6 +26,7 @@ exports.errorMessage = (err) => {
 exports.throwResourceNotFoundError = (res,resource) =>{
     logWithTime("⚠️ Missing required fields in the request:");
     console.log(resource);
+    if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(400).send({
         warning: "The following required field(s) are missing:",
         fields: resource,
@@ -40,6 +41,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
 
 exports.throwInternalServerError = (res) => {
     logWithTime("💥 Internal Server Error occurred.");
+    if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(500).send({
         response: "An internal server error occurred while processing your request.",
         message: "We apologize for the inconvenience. Please try again later."
@@ -54,6 +56,7 @@ exports.throwInternalServerError = (res) => {
 exports.throwInvalidResourceError = (res,resource) => {
     logWithTime("⚠️ Invalid "+resource);
     logWithTime("❌ Invalid Credentials! Please try again.");
+    if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(401).send({
         type: "InvalidResource",
         resource: resource,
@@ -69,6 +72,7 @@ exports.throwInvalidResourceError = (res,resource) => {
 
 exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
     logWithTime("⛔️ Access Denied: " + reason);
+    if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(403).send({
         type: "AccessDenied",
         warning: reason,
@@ -84,6 +88,7 @@ exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
 exports.throwBlockedAccountError = (res) => {
     const reason = "Your account is currently blocked.";
     logWithTime("⛔️ Blocked Account: " + reason);
+    if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(403).send({
         type: "BlockedAccount",
         warning: reason,

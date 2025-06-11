@@ -11,7 +11,7 @@ module.exports = {
     IP_Address_Code: IP_Address_Code, // Unique per machine
     SALT: SALT,
     secretCode: "This is secret code for JSON Web Token",
-    expiryTimeOfJWTtoken: 120, // JWT Token will expire after 120 Seconds
+    expiryTimeOfJWTtoken: 480, // JWT Token will expire after 120 Seconds
     adminUser:{
         name: "Yatharth",
         phoneNumber: "7310871289",

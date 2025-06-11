@@ -274,7 +274,7 @@ exports.signOut = async (req,res) => {
             const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
             user = await UserModel.findOne({userID: userID});
             if(!user){
-                return throwInvalidResourceError("UserID");
+                return throwInvalidResourceError(res,"UserID");
             }
         }
         user.isVerified = false;

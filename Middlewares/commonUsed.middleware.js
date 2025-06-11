@@ -6,7 +6,7 @@ const UserModel = require("../Models/User.model");
 
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
-const {secretCode,adminID,adminUser,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
+const {secretCode,adminID} = require("../Configs/userID.config");
 const { makeTokenByUserID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified} = require("./helperMiddlewares");
 
@@ -42,7 +42,9 @@ const isUserBlocked = async(req,res,next) => {
     }catch(err){
         logWithTime("An Error occurred while checking User is blocked or not");
         errorMessage(err);
-        return throwInternalServerError(res);
+        if (!res.headersSent) {
+            return throwInternalServerError(res);
+        }
     }
 }
 
