@@ -289,7 +289,42 @@ exports.signOut = async (req,res) => {
             userID: user.userID,
         })
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging out the User")
+        logWithTime("⚠️ Error occurred while logging out the User");
+        return throwInternalServerError(res);
+    }
+}
+
+// Logic to activate user account
+exports.activateUserAccount = async(req,res) => {
+    try{
+        const user = req.user;
+        user.isActive = true;
+        await user.save();
+        return res.status(200).send({
+            success: true,
+            message: "Account activated successfully.",
+            suggestion: "Please login to continue."
+        });
+    }catch(err){
+        logWithTime("⚠️ Error occurred while activating the User Account");
+        return throwInternalServerError(res);
+    }
+}
+
+// Logic to deactivate user account
+exports.deactivateUserAccount = async(req,res) => {
+    try{
+        const user = req.user;
+        user.isActive = false;
+        user.isVerified = false; // Forcibly Log Out User when its Account is Deactivated
+        await user.save();
+        return res.status(200).send({
+            success: true,
+            message: "Account deactivated successfully.",
+            notice: "You are logged out"
+        });
+    }catch(err){
+        logWithTime("⚠️ Error occurred while deactivating the User Account");
         return throwInternalServerError(res);
     }
 }
