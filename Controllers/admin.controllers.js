@@ -20,10 +20,11 @@ exports.blockUserAccount = async(req,res) => {
             ]
         })
         if(!user){
-            logWithTime(`⚠️ Invalid block request received. Admin tried blocking: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID}`);
+            logWithTime(`⚠️ Invalid block request. Admin tried blocking non-existent user: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID}`);
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
         }
         if(user.isBlocked){
+            logWithTime(`⚠️ User (${user.userID}) is already blocked`);
             return res.status(400).send({
                 success: false,
                 message: `User (${user.userID}) is already blocked.`
@@ -58,10 +59,11 @@ exports.unblockUserAccount = async(req,res) => {
             ]
         })
         if(!user){
-            logWithTime("⚠️ Invalid details provided for user to be unblocked.");
+            logWithTime(`⚠️ Invalid unblock request. Admin tried unblocking non-existent user: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID}`);
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
         }
         if(!user.isBlocked){
+            logWithTime(`⚠️ User (${user.userID}) is already unblocked`);
             return res.status(400).send({
                 success: false,
                 message: `User (${user.userID}) is already unblocked.`

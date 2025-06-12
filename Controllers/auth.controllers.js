@@ -307,10 +307,12 @@ exports.activateUserAccount = async(req,res) => {
         const user = req.user;
         let isPasswordValid = checkPasswordIsValid(req,user);
         if(!isPasswordValid){
-            return throwInvalidResourceError("Password");
+            return throwInvalidResourceError(res,"Password");
         }
         user.isActive = true;
         await user.save();
+        // Activation success log
+        logWithTime(`✅ Account activated for UserID: ${user.userID}`);
         return res.status(200).send({
             success: true,
             message: "Account activated successfully.",
@@ -333,6 +335,8 @@ exports.deactivateUserAccount = async(req,res) => {
         user.isActive = false;
         user.isVerified = false; // Forcibly Log Out User when its Account is Deactivated
         await user.save();
+        // Deactivation success log
+        logWithTime(`🚫 Account deactivated for UserID: ${user.userID}`);
         return res.status(200).send({
             success: true,
             message: "Account deactivated successfully.",

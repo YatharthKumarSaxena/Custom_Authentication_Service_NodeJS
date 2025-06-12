@@ -19,6 +19,14 @@ const isUserAccountActive = async(req,res,next) => {
             if (!res.headersSent) return next();
         }
         let user = req.user;
+        if(!user){
+            user = await UserModel.findOne({userID: userID});
+            if(!user){
+                logWithTime("❌ User not found while checking account active status");
+                return throwResourceNotFoundError(res, "User");
+            }
+            req.user = user; // 🧷 Attach for future use
+        }
         if(user.isActive === false){
             logWithTime(`🚫 Access Denied: User Account (${user.userID}) is Deactivated.`);
             res.status(403).send({
@@ -37,8 +45,7 @@ const isUserAccountActive = async(req,res,next) => {
         if (!res.headersSent) {
             return throwInternalServerError(res);
         }
-    }
-    
+    }  
 }
 
 // Checking User is Blocked

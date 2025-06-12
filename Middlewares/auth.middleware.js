@@ -204,7 +204,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
             reason: "Admin is a system-level user and cannot be modified like a normal user."
             });
         }
-        if(!req.user.password){
+        if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
         const user = req.user;

@@ -68,24 +68,26 @@ module.exports = (app)=> {
 
     // ✅ Public User: Activate own account
     // Middleware Chain:
-    // - validate input body (userID/email/phone + password, and user must be inactive)
     // - check if user is currently blocked (blocked users cannot activate)
+    // - validate input body (userID/email/phone + password, and user must be inactive)
     // Controller: Activates the user’s account
     app.patch(ACTIVATE_USER,[
-        authMiddleware.verifyActivateUserAccountBody,
-        commonUsedMiddleware.isUserBlocked
+        commonUsedMiddleware.isUserBlocked,
+        authMiddleware.verifyActivateUserAccountBody
     ],authController.activateUserAccount)
 
     // 🚫 Public User: Deactivate own account
     // Middleware Chain:
     // - validate token (ensure user is logged in)
     // - check if user is blocked (blocked users cannot deactivate)
+    // - check if user account is active (decativate user account cannot deactivate account again)
     // - ensure user is verified (session is valid)
     // - validate input body (userID/email/phone + password, and user must be active)
     // Controller: Deactivates the user’s account and forcibly logs them out  
     app.patch(DEACTIVATE_USER,[
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
         authMiddleware.verifyDeactivateUserAccountBody
     ],authController.deactivateUserAccount) 
