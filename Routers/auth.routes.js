@@ -39,6 +39,7 @@ module.exports = (app)=> {
     // Controller: Logs out user
     app.post(SIGNOUT, [
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.validateUserIDMatch,
         authMiddleware.verifySignOutBody
     ], authController.signOut);
 
@@ -86,6 +87,7 @@ module.exports = (app)=> {
     // Controller: Deactivates the user’s account and forcibly logs them out  
     app.patch(DEACTIVATE_USER,[
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,

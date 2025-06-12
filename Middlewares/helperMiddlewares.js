@@ -55,5 +55,5 @@ const fetchUser = async(req,res) =>{
 
 module.exports = {
     checkUserIsNotVerified: checkUserIsNotVerified,
-    helperOfAuthRequestBodyVerification: helperOfAuthRequestBodyVerification
+    fetchUser: fetchUser
 }

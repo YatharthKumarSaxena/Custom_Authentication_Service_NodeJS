@@ -9,7 +9,7 @@
 const UserModel = require("../Models/User.model");
 const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/message.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
-const { checkUserIsNotVerified,helperOfAuthRequestBodyVerification} = require("./helperMiddlewares");
+const { checkUserIsNotVerified,fetchUser} = require("./helperMiddlewares");
 const { adminID } = require("../Configs/userID.config");
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
@@ -140,7 +140,7 @@ const verifySignInBody = async (req,res,next) =>{
             logWithTime("Login Request Cancelled")
             return;
         }
-        const user = req.user;
+        const user = req.foundUser;
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user);
         if (!result) {
@@ -168,7 +168,7 @@ const verifySignOutBody = async (req,res,next) => {
             logWithTime("Logout Request Cancelled")
             return;
         }
-        const user = req.user;
+        const user = req.foundUser;
         // ✅ Now Check if User is Already Logged Out 
         const result = await checkUserIsNotVerified(user);
         if (result) {
@@ -196,7 +196,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
             logWithTime("Activate Account Request Cancelled")
             return;
         }
-        if(req.user.userID === adminID){
+        if(req.foundUser.userID === adminID){
             logWithTime("🚫 Request Denied: Admin account cannot be activated.");
             return res.status(403).send({
             success: false,
@@ -207,7 +207,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
-        const user = req.user;
+        const user = req.foundUser;
         if(user.isActive === true){
             logWithTime("🚫 User Account Activation Request Denied: User Account is already Active.");
             return res.status(400).send({
@@ -243,7 +243,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
-        const user = req.user;
+        const user = req.foundUser;
         if(user.isActive === false){
             logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
             return res.status(400).send({

@@ -7,7 +7,7 @@
 */
 
 // Extracting the required modules
-const {userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,secretCode,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
+const {userRegistrationCapacity,adminUserID,IP_Address_Code,SALT} = require("../Configs/userID.config");
 const UserModel = require("../Models/User.model");
 const CounterModel = require("../Models/ID_Generator.model");
 const bcryptjs = require("bcryptjs")
@@ -137,7 +137,7 @@ async function makeUserID(){
 /* Logic to Return JWT Token to the User */
 function signInWithToken(request){
     const verifyWith = request.verifyWith;
-    const user = request.user;
+    const user = request.foundUser;
     let token;
     if(verifyWith === "UserID"){
         logWithTime("User is logged in by User ID");
@@ -239,15 +239,16 @@ exports.signUp = async (req,res) => { // Made this function async to use await
 /* Logic to Login the Registered User */
 exports.signIn = async (req,res) => {
     try{
-        // Check Password is Correct or Not
-        let user = req?.user;
+        let user = req.foundUser;
         if(!user){
             const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
             user = await UserModel.findOne({userID: userID});
             if(!user){
                 return throwInvalidResourceError("UserID");
             }
+            req.foundUser = user;
         }
+        // Check Password is Correct or Not
         let isPasswordValid = checkPasswordIsValid(req,user);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
@@ -276,7 +277,7 @@ exports.signIn = async (req,res) => {
 
 exports.signOut = async (req,res) => {
     try{
-        let user = req?.user;
+        let user = req.foundUser;
         if(!user){
             const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
             user = await UserModel.findOne({userID: userID});
@@ -304,7 +305,7 @@ exports.signOut = async (req,res) => {
 // Logic to activate user account
 exports.activateUserAccount = async(req,res) => {
     try{
-        const user = req.user;
+        const user = req.foundUser;
         let isPasswordValid = checkPasswordIsValid(req,user);
         if(!isPasswordValid){
             return throwInvalidResourceError(res,"Password");
@@ -327,7 +328,7 @@ exports.activateUserAccount = async(req,res) => {
 // Logic to deactivate user account
 exports.deactivateUserAccount = async(req,res) => {
     try{
-        const user = req.user;
+        const user = req.foundUser;
         let isPasswordValid = checkPasswordIsValid(req,user);
         if(!isPasswordValid){
             return throwInvalidResourceError("Password");
