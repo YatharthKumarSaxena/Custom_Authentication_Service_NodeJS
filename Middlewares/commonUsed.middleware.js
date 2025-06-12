@@ -7,13 +7,13 @@ const UserModel = require("../Models/User.model");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
 const {secretCode,adminID} = require("../Configs/userID.config");
-const { makeTokenByUserID } = require("../Utils/issueToken.utils");
+const { makeTokenByUserID, makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
     try{
-        let userID = req?.user?.userID || req?.body?.userID || req?.query?.userID;
+        let userID = req?.user?.userID  || req?.foundUser?.userID || req?.body?.userID || req?.query?.userID;
         if(userID === adminID){ // Admin Account can never be deactivated
             // Very next line should be:
             if (!res.headersSent) return next();
@@ -53,6 +53,7 @@ const isUserBlocked = async(req,res,next) => {
     try{
         let userID = req.foundUserID;
         if(!userID) userID = req.body.userID;
+        if(!userID && req.foundUser) userID = req.foundUser.userID;
         if(!userID){ // Get request has no body 
             userID = req.query.userID;
         }
@@ -64,14 +65,14 @@ const isUserBlocked = async(req,res,next) => {
             return next(); // Admin can never be blocked
         }
         else{
-            let user = req.user;
+            let user = req.foundUser || req.user;
             if(!user)user = await UserModel.findOne({userID: userID});
             if(!user){
                 logWithTime("Invalid User ID entered by you");
                 return throwInvalidResourceError(res,"UserID");
             }
             if(user.isBlocked){
-                logWithTime("⚠️ Blocked User Account is denied access whose user id is "+userID);
+                logWithTime("⚠️ Blocked User Account is denied access whose user id is "+user.userID);
                 throwAccessDeniedError(res,"⚠️ Blocked User Account Provided !")
                 return;
             };
@@ -113,7 +114,7 @@ const checkUserIsVerified = async(req,res,next) => {
         return;
     }
     // 🆕 Always refresh token here
-    const newToken = makeTokenByUserID(user.userID);
+    const newToken = makeTokenWithMongoID(user._id);
     if(!newToken)return; // If token not found just return
     user.jwtTokenIssuedAt = Date.now();
     await user.save();
@@ -163,7 +164,7 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    let userID = req?.foundUserID || req?.user?.userID || req?.body?.userID;
+    let userID = req.body.userID;
     if(userID === adminID){
         // Very next line should be:
         if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID
@@ -179,9 +180,13 @@ const isAdmin = (req,res,next) => {
 const validateUserIDMatch = async (req, res, next) => {
     try{
         const verifyWith = await fetchUser(req,res);
-        const providedUserID = req.foundUser.userID;
+        if(!req.foundUser){
+            logWithTime("❌ User not found during ID validation");
+            return;
+        }
+        const providedUserID = String(req.foundUser._id);
         if(!providedUserID || req.user.id !== providedUserID){
-            logWithTime(`⚠️ User ID mismatch: token(${req.user.id}) vs request(${verifyWith}) whose user id is (${providedUserID})`);
+            logWithTime(`⚠️ User ID mismatch: tokenUserID(${req.user.userID}) vs request(${verifyWith}) whose user id is (${req.foundUser.userID})`);
             return res.status(403).send({ message: "User ID mismatch: Access Denied" });
         }
         if(!res.headersSent)return next();

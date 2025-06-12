@@ -13,7 +13,7 @@ const CounterModel = require("../Models/ID_Generator.model");
 const bcryptjs = require("bcryptjs")
 const {throwInvalidResourceError,errorMessage,throwInternalServerError} = require("../Configs/message.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
-const {makeTokenByUserID,makeTokenByEmailID,makeTokenByPhoneNumber} = require("../Utils/issueToken.utils");
+const {makeTokenWithMongoID} = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
 
 /*
@@ -136,25 +136,11 @@ async function makeUserID(){
 
 /* Logic to Return JWT Token to the User */
 function signInWithToken(request){
-    const verifyWith = request.verifyWith;
     const user = request.foundUser;
-    let token;
-    if(verifyWith === "UserID"){
-        logWithTime("User is logged in by User ID");
-        // Token is generated here based on User ID and Secret Code
-        token = makeTokenByUserID(user.userID);
-    }
-    else if(verifyWith === "EmailID"){
-        logWithTime("User is logged in by Email ID");
-        // Token is generated here based on Email ID and Secret Code
-        token = makeTokenByEmailID(user.emailID);
-    }else{
-        logWithTime("User is logged in by Phone Number");
-        // Token is generated here based on Phone Number and Secret Code
-        token = makeTokenByPhoneNumber(user.phoneNumber);
-    }
-    if(!token)return "";
-    return token;
+    const verifyWith = request.verifyWith;
+    logWithTime(`User is logged in by ${verifyWith}`);
+    const token = makeTokenWithMongoID(user._id);
+    return token || "";
 }
 
 /* Logic to Create User i.e User Registration */

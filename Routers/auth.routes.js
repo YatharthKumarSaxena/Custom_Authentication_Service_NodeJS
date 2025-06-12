@@ -52,6 +52,7 @@ module.exports = (app)=> {
     // Controller: Admin blocks another user
     app.patch(BLOCK_USER, [
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.validateUserIDMatch,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -62,6 +63,7 @@ module.exports = (app)=> {
     // Controller: Admin unblocks the user
     app.patch(UNBLOCK_USER, [
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.validateUserIDMatch,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
