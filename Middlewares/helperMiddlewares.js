@@ -16,7 +16,7 @@ const checkUserIsNotVerified = async(user) => {
     return false; // ✅ token valid, continue execution
 }
 
-const helperOfAuthRequestBodyVerification = async(req,res) =>{
+const fetchUser = async(req,res) =>{
     let user;
     let verifyWith = "";
     let anyResourcePresent = true;
@@ -49,7 +49,7 @@ const helperOfAuthRequestBodyVerification = async(req,res) =>{
     // Attach the verified user's identity source and the user object to the request 
     // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
     req.verifyWith = verifyWith;
-    req.user = user;
+    req.foundUser = user;
     return verifyWith;
 }
 

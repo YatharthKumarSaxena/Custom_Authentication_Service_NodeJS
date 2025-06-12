@@ -8,7 +8,7 @@ const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
 const {secretCode,adminID} = require("../Configs/userID.config");
 const { makeTokenByUserID } = require("../Utils/issueToken.utils");
-const {checkUserIsNotVerified} = require("./helperMiddlewares");
+const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -64,7 +64,8 @@ const isUserBlocked = async(req,res,next) => {
             return next(); // Admin can never be blocked
         }
         else{
-            const user = await UserModel.findOne({userID: userID});
+            let user = req.user;
+            if(!user)user = await UserModel.findOne({userID: userID});
             if(!user){
                 logWithTime("Invalid User ID entered by you");
                 return throwInvalidResourceError(res,"UserID");
@@ -144,7 +145,12 @@ const verifyToken = (req,res,next) => {
                 return throwResourceNotFoundError(res,"ID");
             }
             req.foundUserID = decoded.id;
-            logWithTime("Valid Token is Provided");
+            const user = await UserModel.findById(decoded.id);
+            if (!user) {
+                return throwResourceNotFoundError(res, "User");
+            }
+            req.user = user; // 🔥 Attach user object to request
+            logWithTime("✅ Token Validated and User Fetched");
             // Very next line should be:
             if (!res.headersSent) return next();
         }catch(err){
@@ -169,11 +175,29 @@ const isAdmin = (req,res,next) => {
     }
 }
 
+// Validate Provided UserID and Token User ID are same or not
+const validateUserIDMatch = async (req, res, next) => {
+    try{
+        const verifyWith = await fetchUser(req,res);
+        const providedUserID = req.foundUser.userID;
+        if(!providedUserID || req.user.id !== providedUserID){
+            logWithTime(`⚠️ User ID mismatch: token(${req.user.id}) vs request(${verifyWith}) whose user id is (${providedUserID})`);
+            return res.status(403).send({ message: "User ID mismatch: Access Denied" });
+        }
+        if(!res.headersSent)return next();
+    }catch(err){
+        logWithTime("⚠️ An Error Occurred while validating the Provided User and User Obtained from Token")
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+};
+
 module.exports = {
     verifyToken: verifyToken,
     isAdmin: isAdmin,
     checkUserIsVerified: checkUserIsVerified,
     isUserBlocked: isUserBlocked,
-    isUserAccountActive: isUserAccountActive
+    isUserAccountActive: isUserAccountActive,
+    validateUserIDMatch: validateUserIDMatch
 }
 

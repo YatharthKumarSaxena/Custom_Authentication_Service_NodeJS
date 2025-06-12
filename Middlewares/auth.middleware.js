@@ -135,7 +135,7 @@ const verifySignInBody = async (req,res,next) =>{
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
-        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
+        let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
             logWithTime("Login Request Cancelled")
             return;
@@ -163,7 +163,7 @@ const verifySignInBody = async (req,res,next) =>{
 const verifySignOutBody = async (req,res,next) => {
     // Validating the User SignIn Body
     try{
-        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
+        let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
             logWithTime("Logout Request Cancelled")
             return;
@@ -191,7 +191,7 @@ const verifySignOutBody = async (req,res,next) => {
 const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
-        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
+        let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
             logWithTime("Activate Account Request Cancelled")
             return;
@@ -235,7 +235,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
             reason: "Admin is a system-level user and cannot be modified like a normal user."
             });
         }
-        let verifyWith = await helperOfAuthRequestBodyVerification(req,res);
+        let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
             logWithTime("Deactivate Account Request Cancelled")
             return;
