@@ -195,7 +195,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             phoneNumber: user.phoneNumber,
             address: user.address
         }
-        const newToken = makeTokenByUserID(user.userID);
+        const newToken = makeTokenWithMongoID(user._id);
         if(!newToken){
             logWithTime("❌ Token generation failed after successful registration!");
             return res.status(500).send({
