@@ -23,6 +23,13 @@ const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
   Operates on a single MongoDB document (id = "CUS"), treating it as a unique entity.
 */
 
+const checkPasswordIsValid = (req,user) => {
+    const providedPassword = req.body.password;
+    const actualPassword = user.password;
+    const isPasswordValid = bcryptjs.compareSync(providedPassword,actualPassword);
+    return isPasswordValid;
+}
+
 // Increases the value of seq field in Customer Counter Document to generate unique ID for the new user
 async function increaseCustomerCounter(){
     try{
@@ -241,7 +248,7 @@ exports.signIn = async (req,res) => {
                 return throwInvalidResourceError("UserID");
             }
         }
-        let isPasswordValid = bcryptjs.compareSync(req.body.password,user.password);
+        let isPasswordValid = checkPasswordIsValid(req,user);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
             const token = signInWithToken(req);
@@ -298,6 +305,10 @@ exports.signOut = async (req,res) => {
 exports.activateUserAccount = async(req,res) => {
     try{
         const user = req.user;
+        let isPasswordValid = checkPasswordIsValid(req,user);
+        if(!isPasswordValid){
+            return throwInvalidResourceError("Password");
+        }
         user.isActive = true;
         await user.save();
         return res.status(200).send({
@@ -315,6 +326,10 @@ exports.activateUserAccount = async(req,res) => {
 exports.deactivateUserAccount = async(req,res) => {
     try{
         const user = req.user;
+        let isPasswordValid = checkPasswordIsValid(req,user);
+        if(!isPasswordValid){
+            return throwInvalidResourceError("Password");
+        }
         user.isActive = false;
         user.isVerified = false; // Forcibly Log Out User when its Account is Deactivated
         await user.save();

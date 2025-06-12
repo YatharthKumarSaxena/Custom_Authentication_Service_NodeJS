@@ -1,6 +1,5 @@
 // Extracting required Modules, their functions and values
 const {expiryTimeOfJWTtoken} = require("../Configs/userID.config");
-const {logWithTime} = require("../Utils/timeStamps.utils");
 const {throwInvalidResourceError,throwResourceNotFoundError} = require("../Configs/message.configs");
 const UserModel = require("../Models/User.model");
 
@@ -46,13 +45,6 @@ const helperOfAuthRequestBodyVerification = async(req,res) =>{
     }
     if(!user){
         throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
-    }
-    if(user && !user.isActive){
-        logWithTime("🚫 Access Denied: Your account is blocked.");
-        res.status(403).send({
-            message: "Your account has been disabled by the admin.",
-            suggestion: "Please contact support."
-        });
     }
     // Attach the verified user's identity source and the user object to the request 
     // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
