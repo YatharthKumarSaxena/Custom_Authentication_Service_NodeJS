@@ -41,8 +41,8 @@ module.exports = {
     // 🛠️ Admin-specific routes (e.g. category creation, update, delete)
     ADMIN_ROUTES: {
         USERS: {
-            BLOCK_USER: `${ADMIN_BASE}/block`,                  // PATCH /ecomm/api/v1/admin/block
-            UNBLOCK_USER: `${ADMIN_BASE}/unblock`,              // PATCH /ecomm/api/v1/admin/unblock
+            BLOCK_USER: `${ADMIN_BASE}/blockUser`,              // PATCH /ecomm/api/v1/admin/blockUser
+            UNBLOCK_USER: `${ADMIN_BASE}/unblockUser`,          // PATCH /ecomm/api/v1/admin/unblockUser
             FETCH_USER_DETAILS: `${ADMIN_BASE}/users/fetch`     // GET /ecomm/api/v1/admin/users/fetch       
         },
         CATEGORY: {
