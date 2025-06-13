@@ -52,6 +52,7 @@ const userSchema = mongoose.Schema({
     },
     address:[
         {
+            _id: false,
             localAddress:{
                 type: String,
                 required: true
@@ -74,6 +75,19 @@ const userSchema = mongoose.Schema({
             }
         }
     ],
+    dateOfBirth:{
+        type: Date,
+        default: null
+    },
+    gender:{
+        type: String,
+        enum: ["Female","Male","Others"],
+        default: null
+    },
+    profilePicUrl: {
+        type: String,
+        default: null
+    },
     isActive:{ // This is controlled by Users only (For Soft Delete Account Purposes)
         type: Boolean,
         default: true

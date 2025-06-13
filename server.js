@@ -12,7 +12,7 @@ const userID_Model = require("./Configs/userID.config");
 const functionModel = require("./Configs/message.configs");
 const errorMessage = functionModel.errorMessage;
 const { logWithTime } = require("./Utils/timeStamps.utils");
-const {makeTokenByUserID} = require("./Utils/issueToken.utils");
+const {makeTokenWithMongoID} = require("./Utils/issueToken.utils");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
@@ -49,7 +49,7 @@ async function init(){ // To use await we need to make function Asynchronous
         else{ // Since findOne returns null when no user found this statement will execute if no Admin User exists
             try{
                 const user = await UserModel.create(userID_Model.adminUser);
-                const newToken = makeTokenByUserID(userID_Model.adminUserID);
+                const newToken = makeTokenWithMongoID(user._id);
                 if(newToken){
                     logWithTime("👑 Welcome Admin, you are successfully logged in!");
                     logWithTime("🔐 Here is your token for secure access:");
