@@ -59,7 +59,64 @@ exports.provideUserDetails = async(req,res) => {
 
 exports.updateUserProfile = async(req,res) => {
     try{
-        
+        let updatedFields = [];
+        const user = req.user;
+        if(req.body.name && req.body.name !== user.name){
+            updatedFields.push("Name");
+            user.name = req.body.name;
+        }
+        if(req.body.emailID && req.body.emailID !== user.emailID){
+            updatedFields.push("Email ID");
+            user.emailID = req.body.emailID;
+        }
+        if(req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber){
+            updatedFields.push("Phone Number");
+            user.phoneNumber = req.body.phoneNumber;
+        }
+        if(new Date(req.body.dateOfBirth).toISOString().slice(0, 10) !== user.dateOfBirth.toISOString().slice(0, 10)){
+            updatedFields.push("Date of Birth");
+            user.dateOfBirth = req.body.dateOfBirth;
+        }
+        if(req.body.gender && req.body.gender !== user.gender){
+            updatedFields.push("Gender");
+            user.gender = req.body.gender;
+        }
+        if(req.body.profilePicUrl && req.body.profilePicUrl !== user.profilePicUrl){
+            updatedFields.push("Profile Picture");
+            user.profilePicUrl = req.body.profilePicUrl;
+        }
+        if(req.body.address){
+            if(req.body.address.localAddress && req.body.address.localAddress !== user.address.localAddress){
+                updatedFields.push("Local Address in Address field");
+                user.address.localAddress = req.body.address.localAddress;
+            }
+            if(req.body.address.city && req.body.address.city !== user.address.city){
+                updatedFields.push("City in Address field");
+                user.address.city = req.body.address.city;
+            }
+            if(req.body.address.pincode && req.body.address.pincode !== user.address.pincode){
+                updatedFields.push("Pincode in Address field");
+                user.address.pincode = req.body.address.pincode;
+            }
+            if(req.body.address.state && req.body.address.state !== user.address.state){
+                updatedFields.push("State in Address field");
+                user.address.state = req.body.address.state;
+            }
+            if(req.body.address.country && req.body.address.country !== user.address.country){
+                updatedFields.push("Country in Address field");
+                user.address.country = req.body.address.country;
+            }
+        }
+        if(updatedFields.length === 0){
+            return res.status(200).json({
+                message: "No changes detected. Your profile remains the same."
+            })
+        }
+        await user.save();
+        return res.status(200).json({
+            message: "Profile updated successfully.",
+            updatedFields
+        })
     }catch(err){
         logWithTime("⚠️ An Error Occurred while updating the User Profile");
         errorMessage(err);
