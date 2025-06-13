@@ -7,17 +7,22 @@
 */
 
 // Extracting the required modules
-const {errorMessage,throwInternalServerError} = require("../Configs/message.configs");
+const {errorMessage,throwInternalServerError, throwResourceNotFoundError} = require("../Configs/message.configs");
 const { fetchUser } = require("../Middlewares/helperMiddlewares");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 
 exports.provideUserDetails = async(req,res) => {
     try{
         // If Get Request has a User then We have to Extract its Details and give to the Admin
+        let user;
         let verifyWith = await fetchUser(req,res);
+        if (res.headersSent) return; // If response is returned by fetchUser
         if(verifyWith !== "")user = req.foundUser;
         // This Will Execute if It is Normal Request Made By User to View their Account Details
         if(!user)user = req.user; 
+        if(!user){
+            return throwResourceNotFoundError(res,"User");
+        }
         const User_Account_Details = {
             "Name": user.name,
             "Customer ID": user.userID,

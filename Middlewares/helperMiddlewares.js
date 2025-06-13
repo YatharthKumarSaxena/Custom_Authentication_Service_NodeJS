@@ -20,7 +20,7 @@ const fetchUser = async(req,res) =>{
     let user;
     let verifyWith = "";
     let anyResourcePresent = true;
-    const getID = req.query.userID; // For the Get Request
+    const getID = req?.query?.userID || req?.user?.userID; // For the Get Request
     if(getID){
         user = await UserModel.findOne({userID: getID});
         if(user){

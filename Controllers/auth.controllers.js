@@ -179,14 +179,13 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     }
     // 🟨 Optional Fields Handling
     if(request_body.gender) {
-        User["Gender"] = request_body.gender;
+        User["gender"] = request_body.gender;
     }
     if(request_body.dateOfBirth) {
-        const dob = new Date(request_body.dateOfBirth).toLocaleDateString("en-IN"); // DD/MM/YYYY format
-        User["Date of Birth"] = dob;
+        User["dateOfBirth"] = new Date(request_body.dateOfBirth); 
     }
     if(request_body.profilePicUrl){
-        User["ProfilePicUrl"] = request_body.profilePicUrl;
+        User["profilePicUrl"] = request_body.profilePicUrl;
     }
     try{
         const user = await UserModel.create(User);
