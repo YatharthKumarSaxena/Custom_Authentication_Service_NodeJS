@@ -7,9 +7,10 @@
 */
 
 // Extracting the required modules
-const {errorMessage,throwInternalServerError, throwResourceNotFoundError} = require("../Configs/message.configs");
+const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../Configs/message.configs");
 const { fetchUser } = require("../Middlewares/helperMiddlewares");
 const { logWithTime } = require("../Utils/timeStamps.utils");
+const { adminID } = require("../Configs/userID.config");
 
 exports.provideUserDetails = async(req,res) => {
     try{
@@ -110,13 +111,13 @@ exports.updateUserProfile = async(req,res) => {
         if(updatedFields.length === 0){
             return res.status(200).json({
                 message: "No changes detected. Your profile remains the same."
-            })
+            });
         }
         await user.save();
         return res.status(200).json({
             message: "Profile updated successfully.",
             updatedFields
-        })
+        });
     }catch(err){
         logWithTime("⚠️ An Error Occurred while updating the User Profile");
         errorMessage(err);

@@ -1,8 +1,21 @@
 const { errorMessage, throwInternalServerError } = require("../Configs/message.configs");
-const { logWithTime,throwInternalServerError } = require("../Utils/timeStamps.utils")
+const { logWithTime } = require("../Utils/timeStamps.utils");
+const { adminID } = require("../Configs/userID.config");
 
 const checkUpdateMyProfileRequest = (req,res,next) => {
     try{
+        const user = req.user;
+        if(user.userID === adminID){
+            logWithTime("⚠️ Access Denied: Admin cannot update their profile details via API Request")
+            return res.status(403).json({
+                message: "Access Denied: Admin cannot update their profile details via API Request"
+            })
+        }
+        if(!req.body){
+            return res.status(200).json({
+                message: "No changes detected. Your profile remains the same."
+            })
+        }
         const immutableFields = ["userID", "userType", "isVerified", "isBlocked", "jwtTokenIssuedAt", "createdAt", "updatedAt", "isActive", "lastLogin"];
         let attemptedFields = [];
         for (let field of immutableFields) {
@@ -19,7 +32,7 @@ const checkUpdateMyProfileRequest = (req,res,next) => {
                 warning: "This attempt has been logged. Please contact support if you believe this is a mistake."
             });
         }
-        return next();
+        if (!res.headersSent) return next();
     }catch(err){
         logWithTime("An Error occurred while validating the User Profile Updation Request");
         errorMessage(err);

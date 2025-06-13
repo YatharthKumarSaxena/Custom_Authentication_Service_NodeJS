@@ -34,7 +34,7 @@ module.exports = {
 
     // 👤 Routes accessible by the logged-in user (like updating their profile)
     USER_ROUTES: {
-        UPDATE_PROFILE: `${USER_BASE}/update`,                  // PATCH /ecomm/api/v1/users/update
+        UPDATE_PROFILE: `${USER_BASE}/updateProfile`,                  // PATCH /ecomm/api/v1/users/updateProfile
         FETCH_MY_PROFILE: `${USER_BASE}/fetch`                  // GET   /ecomm/api/v1/users/fetch
     },
 
