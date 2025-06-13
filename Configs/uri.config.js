@@ -6,6 +6,7 @@ const API_VERSION = "/api/v1";
 
 // API Prefix that is Base Path + API Version
 const API_PREFIX = `${BASE_PATH}${API_VERSION}`
+
 /* 
   ⚙️ What is `${}` and `` ?
   - These are part of JavaScript's Template Literals (introduced in ES6).

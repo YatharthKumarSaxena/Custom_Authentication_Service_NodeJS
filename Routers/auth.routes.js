@@ -13,12 +13,12 @@ const userController = require("../Controllers/user.controllers");
 const SIGNUP = URIS.AUTH_ROUTES.SIGNUP;
 const SIGNIN = URIS.AUTH_ROUTES.SIGNIN;
 const SIGNOUT = URIS.AUTH_ROUTES.SIGNOUT;
-const BLOCK_USER = URIS.AUTH_ROUTES.BLOCK_USER;
-const UNBLOCK_USER = URIS.AUTH_ROUTES.UNBLOCK_USER;
+const BLOCK_USER = URIS.ADMIN_ROUTES.USERS.BLOCK_USER;
+const UNBLOCK_USER = URIS.ADMIN_ROUTES.USERS.UNBLOCK_USER;
 const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
 const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
-const GET_USER_ACCOUNT_DETAILS = URIS.AUTH_ROUTES.FETCH_USER_DETAILS;
-const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES
+const GET_USER_ACCOUNT_DETAILS = URIS.USER_ROUTES.FETCH_MY_PROFILE;
+const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.FETCH_USER_DETAILS
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -128,5 +128,18 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified
     ], userController.provideUserDetails);
 
-
+    // 🛡️ Admin Only: Get Any User's Account Details
+    // 🔒 Middleware:
+    // - Validates token (checks if token is present and valid)
+    // - Confirms the requester is an admin (role check)
+    // - Confirms the admin is a verified user (e.g. admin is logout or not)
+    // - Validates that the admin is requesting valid user data (input format & presence)
+    // 📌 Controller:
+    // - Returns full account details of the target user (based on userId provided in query/body)
+    app.get(FETCH_USER_DETAILS_BY_ADMIN, [
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.isAdmin,
+        commonUsedMiddleware.checkUserIsVerified,
+        adminMiddleware.verifyAdminUserViewRequest
+    ],userController.provideUserDetails);
 };
