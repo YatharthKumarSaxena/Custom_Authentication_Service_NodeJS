@@ -66,15 +66,15 @@ exports.updateUserProfile = async(req,res) => {
             updatedFields.push("Name");
             user.name = req.body.name;
         }
-        if(req.body.emailID && req.body.emailID !== user.emailID){
+        if(req.body.emailID && req.body.emailID.trim().toLowerCase() !== user.emailID.trim().toLowerCase()){
             updatedFields.push("Email ID");
-            user.emailID = req.body.emailID;
+            user.emailID = req.body.emailID
         }
         if(req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber){
             updatedFields.push("Phone Number");
             user.phoneNumber = req.body.phoneNumber;
         }
-        if(new Date(req.body.dateOfBirth).toISOString().slice(0, 10) !== user.dateOfBirth.toISOString().slice(0, 10)){
+        if(req.body.dateOfBirth && !user.dateOfBirth || new Date(req.body.dateOfBirth).toISOString().slice(0, 10) !== user.dateOfBirth.toISOString().slice(0, 10)){
             updatedFields.push("Date of Birth");
             user.dateOfBirth = req.body.dateOfBirth;
         }
