@@ -28,6 +28,17 @@ exports.provideUserDetails = async(req,res) => {
             "Account Status": user.isActive ? "Activated" : "Deactivated",
             "Blocked Account": user.isBlocked ? "Yes" : "No"
         }
+        // 🟨 Optional Fields Handling
+        if(user.gender) {
+            User_Account_Details["Gender"] = user.gender;
+        }
+        if(user.dateOfBirth) {
+            const dob = new Date(user.dateOfBirth).toLocaleDateString("en-IN"); // DD/MM/YYYY format
+            User_Account_Details["Date of Birth"] = dob;
+        }
+        if(user.profilePicUrl){
+            User_Account_Details["ProfilePicUrl"] = user.profilePicUrl;
+        }
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User`)
         return res.status(200).send({
             message: "Here is User Account Details",
