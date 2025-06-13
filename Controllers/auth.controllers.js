@@ -177,6 +177,17 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         address: request_body.address,
         userID: generatedUserID
     }
+    // 🟨 Optional Fields Handling
+    if(request_body.gender) {
+        User["Gender"] = request_body.gender;
+    }
+    if(request_body.dateOfBirth) {
+        const dob = new Date(request_body.dateOfBirth).toLocaleDateString("en-IN"); // DD/MM/YYYY format
+        User["Date of Birth"] = dob;
+    }
+    if(request_body.profilePicUrl){
+        User["ProfilePicUrl"] = request_body.profilePicUrl;
+    }
     try{
         const user = await UserModel.create(User);
         logWithTime("🟢 User Created Successfully, Registration Successfull");
