@@ -111,7 +111,7 @@ const verifySignUpBody = async (req,res,next) =>{
             // Checking User already exists or not 
             const userExistReason = await checkUserExists(emailID,phoneNumber);
             if(userExistReason !== ""){
-                return res.status(400).send({
+                return res.status(400).json({
                     message: "User Already Exists with "+userExistReason,
                     warning: "Use different Email ID or Phone Number or both based on Message"
                 })
@@ -145,7 +145,7 @@ const verifySignInBody = async (req,res,next) =>{
         const result = await checkUserIsNotVerified(user);
         if (!result) {
             logWithTime("🚫 Request Denied: User is already logged in.");
-            return res.status(400).send({
+            return res.status(400).json({
             success: false,
             message: "User is already logged in.",
             suggestion: "Please logout first before trying to login again."
@@ -173,7 +173,7 @@ const verifySignOutBody = async (req,res,next) => {
         const result = await checkUserIsNotVerified(user);
         if (result) {
             logWithTime("🚫 Logout Request Denied: User is already logged out.");
-            return res.status(400).send({
+            return res.status(400).json({
             success: false,
             message: "User is already logged out.",
             suggestion: "Please login first before trying to logout again."
@@ -198,7 +198,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         }
         if(req.foundUser.userID === adminID){
             logWithTime("🚫 Request Denied: Admin account cannot be activated.");
-            return res.status(403).send({
+            return res.status(403).json({
             success: false,
             message: "Admin account cannot be activated.",
             reason: "Admin is a system-level user and cannot be modified like a normal user."
@@ -210,7 +210,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         const user = req.foundUser;
         if(user.isActive === true){
             logWithTime("🚫 User Account Activation Request Denied: User Account is already Active.");
-            return res.status(400).send({
+            return res.status(400).json({
             success: false,
             message: "User Account is already Active.",
             suggestion: "Please deactivate your account first before trying to activate again."
@@ -229,7 +229,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
     try{
         if(req.body.userID === adminID){
             logWithTime("🚫 Request Denied: Admin account cannot be deactivated.");
-            return res.status(403).send({
+            return res.status(403).json({
             success: false,
             message: "Admin account cannot be deactivated.",
             reason: "Admin is a system-level user and cannot be modified like a normal user."
@@ -246,7 +246,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         const user = req.foundUser;
         if(user.isActive === false){
             logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
-            return res.status(400).send({
+            return res.status(400).json({
             success: false,
             message: "User Account is already Inactive.",
             suggestion: "Please activate your account first before trying to deactivate again."

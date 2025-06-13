@@ -14,7 +14,8 @@ const { logWithTime } = require("../Utils/timeStamps.utils");
 exports.provideUserDetails = async(req,res) => {
     try{
         // If Get Request has a User then We have to Extract its Details and give to the Admin
-        let user = fetchUser(req,res);
+        let verifyWith = await fetchUser(req,res);
+        if(verifyWith !== "")user = req.foundUser;
         // This Will Execute if It is Normal Request Made By User to View their Account Details
         if(!user)user = req.user; 
         const User_Account_Details = {
@@ -40,7 +41,7 @@ exports.provideUserDetails = async(req,res) => {
             User_Account_Details["ProfilePicUrl"] = user.profilePicUrl;
         }
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User`)
-        return res.status(200).send({
+        return res.status(200).json({
             message: "Here is User Account Details",
             User_Account_Details
         });

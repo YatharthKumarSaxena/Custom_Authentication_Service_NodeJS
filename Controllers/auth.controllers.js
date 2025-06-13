@@ -153,7 +153,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     try{
         generatedUserID= await makeUserID(); // Generating Customer ID 
         if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
-            return res.status(507).send({
+            return res.status(507).json({
                 message: "User limit reached. Cannot register more users at this time."
             });
         }
@@ -198,7 +198,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         const newToken = makeTokenWithMongoID(user._id);
         if(!newToken){
             logWithTime("❌ Token generation failed after successful registration!");
-            return res.status(500).send({
+            return res.status(500).json({
                 message: "User registered but login (token generation) failed. Please try logging in manually.",
                 userDisplayDetails
             });
@@ -209,7 +209,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         await user.save();
         console.log(userGeneralDetails);
     /* 3. Return the response back to the User */
-        return res.status(201).send({
+        return res.status(201).json({
             message: "Congratulations, Your Registration as well as login is Done Successfully :- ",
             userDisplayDetails,
             jwtToken: newToken
@@ -245,7 +245,7 @@ exports.signIn = async (req,res) => {
             user.lastLogin = new Date(); // Update Last Login Time of User
             await user.save();
             logWithTime("🔐 User with "+user.userID+" is Successfully logged in")
-            res.status(200).send({
+            res.status(200).json({
                 message: "Welcome "+user.name+", You are successfully logged in",
                 userID: user.userID,
                 token: token
@@ -278,7 +278,7 @@ exports.signOut = async (req,res) => {
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
         else logWithTime("🔓 User with "+user.userID+" is Successfully logged out")
-        res.status(200).send({
+        res.status(200).json({
             message: user.name+", You are successfully logged out",
             userID: user.userID,
         })
@@ -300,7 +300,7 @@ exports.activateUserAccount = async(req,res) => {
         await user.save();
         // Activation success log
         logWithTime(`✅ Account activated for UserID: ${user.userID}`);
-        return res.status(200).send({
+        return res.status(200).json({
             success: true,
             message: "Account activated successfully.",
             suggestion: "Please login to continue."
@@ -324,7 +324,7 @@ exports.deactivateUserAccount = async(req,res) => {
         await user.save();
         // Deactivation success log
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID}`);
-        return res.status(200).send({
+        return res.status(200).json({
             success: true,
             message: "Account deactivated successfully.",
             notice: "You are logged out"

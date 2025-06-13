@@ -27,7 +27,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
     logWithTime("⚠️ Missing required fields in the request:");
     console.log(resource);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(400).send({
+    return res.status(400).json({
         warning: "The following required field(s) are missing:",
         fields: resource,
         message: "Please provide the required fields to proceed."
@@ -42,7 +42,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
 exports.throwInternalServerError = (res) => {
     logWithTime("💥 Internal Server Error occurred.");
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(500).send({
+    return res.status(500).json({
         response: "An internal server error occurred while processing your request.",
         message: "We apologize for the inconvenience. Please try again later."
     });
@@ -57,7 +57,7 @@ exports.throwInvalidResourceError = (res,resource) => {
     logWithTime("⚠️ Invalid "+resource);
     logWithTime("❌ Invalid Credentials! Please try again.");
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(401).send({
+    return res.status(401).json({
         type: "InvalidResource",
         resource: resource,
         warning: "Invalid "+ resource + "Entered",
@@ -73,7 +73,7 @@ exports.throwInvalidResourceError = (res,resource) => {
 exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
     logWithTime("⛔️ Access Denied: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(403).send({
+    return res.status(403).json({
         type: "AccessDenied",
         warning: reason,
         message: "You do not have the necessary permissions to perform this action."
@@ -89,7 +89,7 @@ exports.throwBlockedAccountError = (res) => {
     const reason = "Your account is currently blocked.";
     logWithTime("⛔️ Blocked Account: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(403).send({
+    return res.status(403).json({
         type: "BlockedAccount",
         warning: reason,
         message: "Please contact support if you believe this is an error."

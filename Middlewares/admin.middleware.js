@@ -35,7 +35,7 @@ const verifyAdminUserViewRequest = async(req,res,next) => {
         const reason = req.query.reason;
         // 🔒 Validate whether the reason is one of the valid enums
         if (!Object.values(AdminActionReasons).includes(reason)) {
-            return res.status(400).send({
+            return res.status(400).json({
                 success: false,
                 message: "❌ Invalid reason provided. Allowed reasons are: " + Object.values(AdminActionReasons).join(", ")
             });

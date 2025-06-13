@@ -87,7 +87,7 @@ exports.createCategory = async (req,res) => {
             createdAt: category.createdAt
         }
         console.log(categoryGeneralDetails);
-        return res.status(201).send({
+        return res.status(201).json({
             message: "New Category is created Successfully",
             details:"Here is your New Basic Category Details given below:-", 
             name: category.name,

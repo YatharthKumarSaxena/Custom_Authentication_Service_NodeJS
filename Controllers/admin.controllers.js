@@ -10,7 +10,7 @@ exports.blockUserAccount = async(req,res) => {
     try{
         if(req.body.requestedUserID === adminID){
             logWithTime("🛡️👨‍💼 Admin cannot be blocked");
-            return res.status(403).send({ success: false, message: "Admin cannot be blocked." });
+            return res.status(403).json({ success: false, message: "Admin cannot be blocked." });
         }
         const user = await UserModel.findOne({
             $or:[
@@ -25,7 +25,7 @@ exports.blockUserAccount = async(req,res) => {
         }
         if(user.isBlocked){
             logWithTime(`⚠️ User (${user.userID}) is already blocked`);
-            return res.status(400).send({
+            return res.status(400).json({
                 success: false,
                 message: `User (${user.userID}) is already blocked.`
             });
@@ -34,7 +34,7 @@ exports.blockUserAccount = async(req,res) => {
         user.isBlocked = true;
         await user.save();
         logWithTime(`✅ User (${user.userID}) has been successfully blocked`);
-        return res.status(200).send({
+        return res.status(200).json({
             success: true,
             message: `User (${user.userID}) has been successfully blocked.`
         });
@@ -49,7 +49,7 @@ exports.unblockUserAccount = async(req,res) => {
     try{
         if(req.body.requestedUserID === adminID){
             logWithTime("🛡️👨‍💼 Admin cannot be unblocked");
-            return res.status(403).send({ success: false, message: "Admin cannot be unblocked." });
+            return res.status(403).json({ success: false, message: "Admin cannot be unblocked." });
         }
         const user = await UserModel.findOne({
             $or:[
@@ -64,7 +64,7 @@ exports.unblockUserAccount = async(req,res) => {
         }
         if(!user.isBlocked){
             logWithTime(`⚠️ User (${user.userID}) is already unblocked`);
-            return res.status(400).send({
+            return res.status(400).json({
                 success: false,
                 message: `User (${user.userID}) is already unblocked.`
             });
@@ -73,7 +73,7 @@ exports.unblockUserAccount = async(req,res) => {
         user.isBlocked = false;
         await user.save();
         logWithTime(`✅ User (${user.userID}) has been successfully unblocked`);
-        return res.status(200).send({
+        return res.status(200).json({
             success: true,
             message: `User (${user.userID}) has been successfully unblocked.`
         });

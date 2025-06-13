@@ -29,7 +29,7 @@ const isUserAccountActive = async(req,res,next) => {
         }
         if(user.isActive === false){
             logWithTime(`🚫 Access Denied: User Account (${user.userID}) is Deactivated.`);
-            res.status(403).send({
+            res.status(403).json({
                 success: false,
                 message: "Your account is currently deactivated.",
                 suggestion: "Please activate your account before continuing."
@@ -107,7 +107,7 @@ const checkUserIsVerified = async(req,res,next) => {
     const isNotVerified = await checkUserIsNotVerified(user);
     if(isNotVerified){
         logWithTime("⏰ Session expired. Please log in again to continue accessing your account.");
-        res.status(401).send({
+        res.status(401).json({
             success: false,
             message: "⏰ Session expired. Please log in again to continue accessing your account.",
             code: "TOKEN_EXPIRED"
@@ -131,7 +131,7 @@ const verifyToken = (req,res,next) => {
     const authHeader = req.headers["authorization"] || req.headers["x-access-token"]; // Check if the token is present in the Header
     const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
     if(!token){ // Means Token is not Present
-        return res.status(403).send({
+        return res.status(403).json({
             message: "No token found: ⚠️ Unauthorized"
         })
     }
@@ -187,7 +187,7 @@ const validateUserIDMatch = async (req, res, next) => {
         const providedUserID = String(req.foundUser._id);
         if(!providedUserID || req.user.id !== providedUserID){
             logWithTime(`⚠️ User ID mismatch: tokenUserID(${req.user.userID}) vs request(${verifyWith}) whose user id is (${req.foundUser.userID})`);
-            return res.status(403).send({ message: "User ID mismatch: Access Denied" });
+            return res.status(403).json({ message: "User ID mismatch: Access Denied" });
         }
         if(!res.headersSent)return next();
     }catch(err){
