@@ -51,7 +51,8 @@ const isUserAccountActive = async(req,res,next) => {
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
     try{
-        let userID = req.user.userID;
+        let userID;
+        userID = req?.user?.userID;
         if(!userID) userID = req.body.userID;
         if(!userID && req.foundUser) userID = req.foundUser.userID;
         if(!userID){ // Get request has no body 
@@ -163,7 +164,7 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    let userID = req?.body?.userID || req?.user?.userID;
+    let userID = req?.user?.userID || req?.body?.userID;
     if(userID === adminID){
         // Very next line should be:
         if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID

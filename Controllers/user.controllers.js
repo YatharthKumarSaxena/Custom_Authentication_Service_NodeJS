@@ -8,12 +8,13 @@
 
 // Extracting the required modules
 const {errorMessage,throwInternalServerError} = require("../Configs/message.configs");
+const { fetchUser } = require("../Middlewares/helperMiddlewares");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 
 exports.provideUserDetails = async(req,res) => {
     try{
         // If Get Request has a User then We have to Extract its Details and give to the Admin
-        let user = req.foundUser;
+        let user = fetchUser(req,res);
         // This Will Execute if It is Normal Request Made By User to View their Account Details
         if(!user)user = req.user; 
         const User_Account_Details = {
@@ -29,7 +30,7 @@ exports.provideUserDetails = async(req,res) => {
         }
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User`)
         return res.status(200).send({
-            message: "Here is your User Account Details",
+            message: "Here is User Account Details",
             User_Account_Details
         });
     }catch(err){
