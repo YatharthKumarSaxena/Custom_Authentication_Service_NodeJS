@@ -3,7 +3,7 @@ const idPrefixes = require("./idPrefixes.config").admin
 const IP_Address_Code = require("./ipAddress.config").IP_Address_Code
 const adminUserID = 100000;
 const adminID = idPrefixes + IP_Address_Code + String(adminUserID);
-const SALT = 8 // For Encryption 8 is used as by default SALT
+const SALT = 12 // For Encryption 8 is used as by default SALT
 module.exports = {
     userRegistrationCapacity: 100000, // This Monolithic Machine can handle 1 Lakh User Data
     adminUserID:adminUserID,
@@ -31,5 +31,15 @@ module.exports = {
         ],
         userType: "Admin",
         userID: adminID
-    }
+    },
+    // 🎯 Admin Action Reasons - Enum Based Design
+    AdminActionReasons: Object.freeze({
+        CHECK_USER_ACTIVITY: "ToCheckUserActivity",
+        VERIFY_ACCOUNT_STATUS: "ToVerifyAccountStatus",
+        AUDIT_LOG_PURPOSE: "ToAuditUserLogs",
+        RESET_PASSWORD_REQUESTED: "PasswordResetVerification",
+        USER_RAISED_ISSUE: "UserRaisedIssue",
+        ACCOUNT_VERIFICATION: "VerifyUserManually"
+        // Add more as your system scales
+    })
 }

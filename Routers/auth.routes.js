@@ -123,7 +123,6 @@ module.exports = (app) => {
     // - Returns full account details of the logged-in user
     app.get(GET_USER_ACCOUNT_DETAILS, [
         commonUsedMiddleware.verifyToken,
-        commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified

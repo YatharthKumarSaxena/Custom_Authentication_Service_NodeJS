@@ -7,7 +7,7 @@ const UserModel = require("../Models/User.model");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
 const {secretCode,adminID} = require("../Configs/userID.config");
-const { makeTokenByUserID, makeTokenWithMongoID } = require("../Utils/issueToken.utils");
+const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
 
 // ✅ Checking if User Account is Active
@@ -51,7 +51,7 @@ const isUserAccountActive = async(req,res,next) => {
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
     try{
-        let userID = req.foundUserID;
+        let userID = req.user.userID;
         if(!userID) userID = req.body.userID;
         if(!userID && req.foundUser) userID = req.foundUser.userID;
         if(!userID){ // Get request has no body 
@@ -145,7 +145,6 @@ const verifyToken = (req,res,next) => {
                 logWithTime("⚠️ Invalid Malformed token (ID missing) Provided");
                 return throwResourceNotFoundError(res,"ID");
             }
-            req.foundUserID = decoded.id;
             const user = await UserModel.findById(decoded.id);
             if (!user) {
                 return throwResourceNotFoundError(res, "User");
@@ -164,7 +163,7 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    let userID = req.body.userID;
+    let userID = req?.body?.userID || req?.user?.userID;
     if(userID === adminID){
         // Very next line should be:
         if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID
