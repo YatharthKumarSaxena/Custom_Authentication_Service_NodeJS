@@ -16,7 +16,16 @@ const checkUpdateMyProfileRequest = (req,res,next) => {
                 message: "No changes detected. Your profile remains the same."
             })
         }
-        const immutableFields = ["userID", "userType", "isVerified", "isBlocked", "jwtTokenIssuedAt", "createdAt", "updatedAt", "isActive", "lastLogin"];
+        // 🚫 Fields Not Allowed to Be Modified
+        const immutableFields = [
+            "_id", "__v",                     // Mongo internal
+            "userID", "userType",             // Identity + Role
+            "isVerified", "isBlocked",        // Security status
+            "jwtTokenIssuedAt",               // Token control
+            "createdAt", "updatedAt",         // System timestamps
+            "isActive", "lastLogin",          // Lifecycle flags
+            "verificationToken"               // Token used for verifying email/phone
+        ];
         let attemptedFields = [];
         for (let field of immutableFields) {
             if (field in req.body) {
