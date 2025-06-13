@@ -8,6 +8,7 @@ const commonUsedMiddleware = require("../Middlewares/commonUsed.middleware");
 const adminMiddleware = require("../Middlewares/admin.middleware");
 const adminController = require("../Controllers/admin.controllers");
 const userController = require("../Controllers/user.controllers");
+const userMiddleware = require("../Middlewares/user.middleware");
 
 // 🛣️ Destructuring Required URIs for cleaner usage below
 const SIGNUP = URIS.AUTH_ROUTES.SIGNUP;
@@ -18,7 +19,8 @@ const UNBLOCK_USER = URIS.ADMIN_ROUTES.USERS.UNBLOCK_USER;
 const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
 const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 const GET_USER_ACCOUNT_DETAILS = URIS.USER_ROUTES.FETCH_MY_PROFILE;
-const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.FETCH_USER_DETAILS
+const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.FETCH_USER_DETAILS;
+const UPDATE_USER_PROFILE = URIS.USER_ROUTES.UPDATE_PROFILE;
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -142,4 +144,22 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified,
         adminMiddleware.verifyAdminUserViewRequest
     ],userController.provideUserDetails);
+
+    // 👤 Authenticated User: Update Own Profile Details
+    // 🔒 Middleware:
+    // - Validates token (ensures the requester is logged in)
+    // - Confirms user is not blocked (e.g. by admin)
+    // - Confirms user's account is active (not deactivated/suspended)
+    // - Confirms user has verified their identity (e.g. via OTP/email)
+    // - Prevents updates to restricted/immutable fields (like userID, userType, etc.)
+    // 🛠️ Controller:
+    // - Updates only the allowed and changed fields (name, email, address, etc.)
+    // - Responds with either a success message + updated fields OR no changes made
+    app.patch(UPDATE_USER_PROFILE,[
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive,
+        commonUsedMiddleware.checkUserIsVerified,
+        userMiddleware.checkUpdateMyProfileRequest
+    ],userController.updateUserProfile);
 };
