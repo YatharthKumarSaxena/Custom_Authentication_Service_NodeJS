@@ -56,3 +56,13 @@ exports.provideUserDetails = async(req,res) => {
         return throwInternalServerError(res);
     }
 }
+
+exports.updateUserProfile = async(req,res) => {
+    try{
+        
+    }catch(err){
+        logWithTime("⚠️ An Error Occurred while updating the User Profile");
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}
