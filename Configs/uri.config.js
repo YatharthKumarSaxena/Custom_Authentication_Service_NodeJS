@@ -4,6 +4,8 @@ const BASE_PATH = "/ecomm";
 // API versioning (helps us move from /v1 to /v2 easily)
 const API_VERSION = "/api/v1"; 
 
+// API Prefix that is Base Path + API Version
+const API_PREFIX = `${BASE_PATH}${API_VERSION}`
 /* 
   ⚙️ What is `${}` and `` ?
   - These are part of JavaScript's Template Literals (introduced in ES6).
@@ -12,32 +14,36 @@ const API_VERSION = "/api/v1";
 */
 
 // 👇 Defining major base segments once to avoid repetition (DRY Principle)
-const AUTH_BASE = `${BASE_PATH}${API_VERSION}/auth`;               // /ecomm/api/v1/auth
-const USER_BASE = `${BASE_PATH}${API_VERSION}/users`;             // /ecomm/api/v1/users
-const ADMIN_CATEGORY_BASE = `${BASE_PATH}${API_VERSION}/admin/categories`; // /ecomm/api/v1/admin/categories
-const PUBLIC_CATEGORY_BASE = `${BASE_PATH}${API_VERSION}/categories`;      // /ecomm/api/v1/categories
+const AUTH_BASE = `${API_PREFIX}/auth`;                         // /ecomm/api/v1/auth
+const USER_BASE = `${API_PREFIX}/users`;                        // /ecomm/api/v1/users
+const ADMIN_BASE = `${API_PREFIX}/admin`;                       // /ecomm/api/v1/admin
+const ADMIN_CATEGORY_BASE = `${ADMIN_BASE}/categories`;         // /ecomm/api/v1/admin/categories
+const PUBLIC_CATEGORY_BASE = `${API_PREFIX}/categories`;        // /ecomm/api/v1/categories
 
 // 🔁 Exporting all route constants, grouped by modules (Auth, User, Admin, Category)
 module.exports = {
     // 🧾 Routes related to user authentication & account management
     AUTH_ROUTES: {
-        SIGNUP: `${AUTH_BASE}/signup`,                  // POST /ecomm/api/v1/auth/signup
-        SIGNIN: `${AUTH_BASE}/signin`,                  // POST /ecomm/api/v1/auth/signin
-        SIGNOUT: `${AUTH_BASE}/signout`,                // POST /ecomm/api/v1/auth/signout
-        BLOCK_USER: `${AUTH_BASE}/block`,               // PATCH /ecomm/api/v1/auth/block
-        UNBLOCK_USER: `${AUTH_BASE}/unblock`,           // PATCH /ecomm/api/v1/auth/unblock
-        DEACTIVATE_USER: `${AUTH_BASE}/deactivate`,     // PATCH /ecomm/api/v1/auth/deactivate
-        ACTIVATE_USER: `${AUTH_BASE}/activate`,         // PATCH /ecomm/api/v1/auth/activate
-        FETCH_USER_DETAILS: `${AUTH_BASE}/fetch`        // GET   /ecomm/api/v1/auth/fetch
+        SIGNUP: `${AUTH_BASE}/signup`,                          // POST /ecomm/api/v1/auth/signup
+        SIGNIN: `${AUTH_BASE}/signin`,                          // POST /ecomm/api/v1/auth/signin
+        SIGNOUT: `${AUTH_BASE}/signout`,                        // POST /ecomm/api/v1/auth/signout
+        DEACTIVATE_USER: `${AUTH_BASE}/deactivate`,             // PATCH /ecomm/api/v1/auth/deactivate
+        ACTIVATE_USER: `${AUTH_BASE}/activate`,                 // PATCH /ecomm/api/v1/auth/activate
     },
 
     // 👤 Routes accessible by the logged-in user (like updating their profile)
     USER_ROUTES: {
-        UPDATE_PROFILE: `${USER_BASE}/update`           // PATCH /ecomm/api/v1/users/update
+        UPDATE_PROFILE: `${USER_BASE}/update`,                  // PATCH /ecomm/api/v1/users/update
+        FETCH_MY_PROFILE: `${USER_BASE}/fetch`                  // GET   /ecomm/api/v1/users/fetch
     },
 
     // 🛠️ Admin-specific routes (e.g. category creation, update, delete)
     ADMIN_ROUTES: {
+        USERS: {
+            BLOCK_USER: `${ADMIN_BASE}/block`,                  // PATCH /ecomm/api/v1/admin/block
+            UNBLOCK_USER: `${ADMIN_BASE}/unblock`,              // PATCH /ecomm/api/v1/admin/unblock
+            FETCH_USER_DETAILS: `${ADMIN_BASE}/users/fetch`     // GET /ecomm/api/v1/admin/users/fetch       
+        },
         CATEGORY: {
             CREATE: `${ADMIN_CATEGORY_BASE}`,                   // POST   /ecomm/api/v1/admin/categories
             DELETE: `${ADMIN_CATEGORY_BASE}/:categoryId`,       // DELETE /ecomm/api/v1/admin/categories/123

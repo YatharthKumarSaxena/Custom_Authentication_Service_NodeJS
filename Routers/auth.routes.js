@@ -18,6 +18,7 @@ const UNBLOCK_USER = URIS.AUTH_ROUTES.UNBLOCK_USER;
 const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
 const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 const GET_USER_ACCOUNT_DETAILS = URIS.AUTH_ROUTES.FETCH_USER_DETAILS;
+const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -115,7 +116,6 @@ module.exports = (app) => {
     // 📄 Public User: Get Own Account Details
     // 🔒 Middleware:
     // - Validates token
-    // - Checks userID match
     // - Confirms user is not blocked
     // - Confirms user is active
     // - Confirms user is verified
@@ -127,4 +127,6 @@ module.exports = (app) => {
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified
     ], userController.provideUserDetails);
+
+
 };
