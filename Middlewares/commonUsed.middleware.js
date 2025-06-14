@@ -114,7 +114,8 @@ const checkUserIsVerified = async(req,res,next) => {
         })
         return;
     }
-    // 🆕 Always refresh token here
+    // Check Access Token Validity
+    // 🆕 If Access Token Expired Generate a new Access Token for it
     const newToken = makeTokenWithMongoID(user._id);
     if(!newToken)return; // If token not found just return
     user.jwtTokenIssuedAt = Date.now();
@@ -137,14 +138,39 @@ const verifyToken = (req,res,next) => {
     }
     // Now Verifying whether the provided JWT Token is valid token or not
     jwt.verify(token,secretCode,async (err,decoded)=>{
-        if(err){
-            return throwAccessDeniedError(res,"⚠️ UnAuthorized Token Provided !");
-        }
         try{
-            if (!decoded || !decoded.id) {
-                //  Validate Token Payload Strictly
-                logWithTime("⚠️ Invalid Malformed token (ID missing) Provided");
-                return throwResourceNotFoundError(res,"ID");
+            if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid
+                // If Refresh Token is Valid then generate new Access token
+                const refreshToken = req?.cookies?.refreshToken;
+                if (!refreshToken) {
+                    logWithTime("⚠️ Refresh Token not provided in Cookies")
+                    return throwAccessDeniedError(res, "No refresh token provided");
+                }
+                // Fetch User by JWT Token
+                const user = await UserModel.findOne({refreshToken: refreshToken});
+                if(!user){
+                    logWithTime("⚠️ Invalid Refresh Token provided in Cookies")
+                    return throwAccessDeniedError(res, "Invalid refresh token provided");
+                }
+                const isRefreshTokenInvalid = await checkUserIsNotVerified(user);
+                if(isRefreshTokenInvalid){
+                    //  Validate Token Payload Strictly
+                    logWithTime(`⚠️ Access Denied, User with userID: (${user.userID}) is logged out`);
+                    return res.status(403).send({
+                        message: "Access Denied to perform action",
+                        reason: "You are not logged in, please login to continue"
+                    });
+                }
+                if(res.headersSent)return;
+                // Logic to generate new access token
+                const accessToken = await makeTokenWithMongoID(user._id);
+                // Set this token in Response Headers
+                req.user = user;
+                res.setHeader("x-access-token", accessToken);
+                // Smart signal to frontend that Access token is Refreshed now
+                res.setHeader("x-token-refreshed", "true"); 
+                res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
+                if(!res.headersSent)return next();
             }
             const user = await UserModel.findById(decoded.id);
             if (!user) {

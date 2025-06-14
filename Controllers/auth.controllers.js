@@ -7,7 +7,7 @@
 */
 
 // Extracting the required modules
-const {userRegistrationCapacity,adminUserID,IP_Address_Code,SALT} = require("../Configs/userID.config");
+const {userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken} = require("../Configs/userID.config");
 const UserModel = require("../Models/User.model");
 const CounterModel = require("../Models/ID_Generator.model");
 const bcryptjs = require("bcryptjs")
@@ -139,7 +139,7 @@ function signInWithToken(request){
     const user = request.foundUser;
     const verifyWith = request.verifyWith;
     logWithTime(`User is logged in by ${verifyWith}`);
-    const token = makeTokenWithMongoID(user._id);
+    const token = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken);
     return token || "";
 }
 
@@ -205,24 +205,27 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             phoneNumber: user.phoneNumber,
             address: user.address
         }
-        const newToken = makeTokenWithMongoID(user._id);
-        if(!newToken){
-            logWithTime("❌ Token generation failed after successful registration!");
+        // Refresh Token Generation
+        const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken)
+        if(!refreshToken){
+            logWithTime("❌ Refresh Token generation failed after successful registration!");
             return res.status(500).json({
                 message: "User registered but login (token generation) failed. Please try logging in manually.",
                 userDisplayDetails
             });
         }
+        user.refreshToken = refreshToken;
+        user.isVerified = true;
+        await user.save(); // save token in DB
+        const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
         logWithTime("User is successfully logged in on registration!");
         logWithTime("👤 New User Details:- ");
-        user.isVerified = true;
-        await user.save();
         console.log(userGeneralDetails);
     /* 3. Return the response back to the User */
         return res.status(201).json({
             message: "Congratulations, Your Registration as well as login is Done Successfully :- ",
             userDisplayDetails,
-            jwtToken: newToken
+            jwtToken: accessToken
         })
     }catch(err){
         logWithTime("⚠️ Error happened while creating a new User");

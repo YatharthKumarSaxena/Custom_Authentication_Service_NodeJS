@@ -1,5 +1,5 @@
 // Extracting required Modules, their functions and values
-const {expiryTimeOfJWTtoken} = require("../Configs/userID.config");
+const {expiryTimeOfRefreshToken} = require("../Configs/userID.config");
 const {throwInvalidResourceError,throwResourceNotFoundError} = require("../Configs/errorHandler.configs");
 const UserModel = require("../Models/User.model");
 
@@ -8,7 +8,7 @@ const checkUserIsNotVerified = async(user) => {
     if(user.isVerified === false)return true; // SignOut Introduces this Feature
     const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
     const currentTime = Date.now(); // In milli second current time is return
-    if(currentTime > tokenIssueTime + expiryTimeOfJWTtoken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
+    if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
         user.isVerified = false;
         await user.save(); // 👈 Add this line
         return true; // 🧠 session expired, response already sent
