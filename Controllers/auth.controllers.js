@@ -224,6 +224,11 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         });
         await user.save(); // save token in DB
         const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+        // Generate Access Token for User
+        res.setHeader("x-access-token", accessToken);
+        // Smart signal to frontend that Access token is Refreshed now
+        res.setHeader("x-token-refreshed", "true"); 
+        res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
         logWithTime("User is successfully logged in on registration!");
         logWithTime("👤 New User Details:- ");
         console.log(userGeneralDetails);
@@ -231,7 +236,6 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         return res.status(201).json({
             message: "Congratulations, Your Registration as well as login is Done Successfully :- ",
             userDisplayDetails,
-            jwtToken: accessToken
         })
     }catch(err){
         logWithTime("⚠️ Error happened while creating a new User");
@@ -263,12 +267,23 @@ exports.signIn = async (req,res) => {
             user.isVerified = true; // Marked User as Verified
             user.jwtTokenIssuedAt = new Date(); // Update JWT token issued time
             user.lastLogin = new Date(); // Update Last Login Time of User
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: false, // 🟡 Temporarily allow Postman/browser JS to read
+                secure: false,   // 🧪 Optional in localhost, but true in prod
+                sameSite: "Lax", // Postman compatibility
+                maxAge: expiryTimeOfRefreshToken * 1000
+            });
             await user.save();
+            const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+            // Generate Access Token for User
+            res.setHeader("x-access-token", accessToken);
+            // Smart signal to frontend that Access token is Refreshed now
+            res.setHeader("x-token-refreshed", "true"); 
+            res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
             logWithTime("🔐 User with "+user.userID+" is Successfully logged in");
             res.status(200).json({
                 message: "Welcome "+user.name+", You are successfully logged in",
                 userID: user.userID,
-                token: refreshToken
             })
         }
         else{
@@ -342,7 +357,10 @@ exports.deactivateUserAccount = async(req,res) => {
             return throwInvalidResourceError("Password");
         }
         user.isActive = false;
-        user.isVerified = false; // Forcibly Log Out User when its Account is Deactivated
+        // Forcibly Log Out User when its Account is Deactivated
+        user.refreshToken = null;
+        user.isVerified = false;
+        res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         await user.save();
         // Deactivation success log
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID}`);

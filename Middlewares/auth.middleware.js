@@ -142,7 +142,7 @@ const verifySignInBody = async (req,res,next) =>{
         }
         const user = req.foundUser;
         // ✅ Now Check if User is Already Logged In
-        const result = await checkUserIsNotVerified(user);
+        const result = await checkUserIsNotVerified(user,res);
         if (!result) {
             logWithTime("🚫 Request Denied: User is already logged in.");
             return res.status(400).json({
@@ -170,7 +170,7 @@ const verifySignOutBody = async (req,res,next) => {
         }
         const user = req.foundUser;
         // ✅ Now Check if User is Already Logged Out 
-        const result = await checkUserIsNotVerified(user);
+        const result = await checkUserIsNotVerified(user,res);
         if (result) {
             logWithTime("🚫 Logout Request Denied: User is already logged out.");
             return res.status(400).json({

@@ -104,7 +104,7 @@ const checkUserIsVerified = async(req,res,next) => {
         }
         req.user = user; // 🧷 Attach for future use
     }
-    const isNotVerified = await checkUserIsNotVerified(user);
+    const isNotVerified = await checkUserIsNotVerified(user,res);
     if(isNotVerified){
         logWithTime("⏰ Session expired. Please log in again to continue accessing your account.");
         res.status(401).json({
@@ -152,7 +152,7 @@ const verifyToken = (req,res,next) => {
                     logWithTime("⚠️ Invalid Refresh Token provided in Cookies")
                     return throwAccessDeniedError(res, "Invalid refresh token provided");
                 }
-                const isRefreshTokenInvalid = await checkUserIsNotVerified(user);
+                const isRefreshTokenInvalid = await checkUserIsNotVerified(user,res);
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly
                     logWithTime(`⚠️ Access Denied, User with userID: (${user.userID}) is logged out`);

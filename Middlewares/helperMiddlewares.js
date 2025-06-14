@@ -4,13 +4,14 @@ const {throwInvalidResourceError,throwResourceNotFoundError} = require("../Confi
 const UserModel = require("../Models/User.model");
 
 // DRY Principle followed by this Code
-const checkUserIsNotVerified = async(user) => {
+const checkUserIsNotVerified = async(user,res) => {
     if(user.isVerified === false)return true; // SignOut Introduces this Feature
     const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
     const currentTime = Date.now(); // In milli second current time is return
     if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
         user.isVerified = false;
         user.refreshToken = null;
+        res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         await user.save(); // 👈 Add this line
         return true; // 🧠 session expired, response already sent
     }
