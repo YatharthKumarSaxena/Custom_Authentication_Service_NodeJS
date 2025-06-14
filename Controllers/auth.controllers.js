@@ -251,17 +251,18 @@ exports.signIn = async (req,res) => {
         let isPasswordValid = checkPasswordIsValid(req,user);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
-            const token = signInWithToken(req);
-            if(token === "")return;
+            const refreshToken = signInWithToken(req);
+            if(refreshToken === "")return;
+            user.refreshToken = refreshToken;
             user.isVerified = true; // Marked User as Verified
             user.jwtTokenIssuedAt = new Date(); // Update JWT token issued time
             user.lastLogin = new Date(); // Update Last Login Time of User
             await user.save();
-            logWithTime("🔐 User with "+user.userID+" is Successfully logged in")
+            logWithTime("🔐 User with "+user.userID+" is Successfully logged in");
             res.status(200).json({
                 message: "Welcome "+user.name+", You are successfully logged in",
                 userID: user.userID,
-                token: token
+                token: refreshToken
             })
         }
         else{
@@ -284,7 +285,9 @@ exports.signOut = async (req,res) => {
                 return throwInvalidResourceError(res,"UserID");
             }
         }
+        user.refreshToken = null;
         user.isVerified = false;
+        res.clearCookie("refreshToken", { httpOnly: true, sameSite: "Strict", secure: true });
         await user.save();
         if (!user.isActive) {
             logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout.`);
