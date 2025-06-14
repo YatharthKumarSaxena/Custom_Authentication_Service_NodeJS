@@ -216,6 +216,12 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         }
         user.refreshToken = refreshToken;
         user.isVerified = true;
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: false, // 🟡 Temporarily allow Postman/browser JS to read
+            secure: false,   // 🧪 Optional in localhost, but true in prod
+            sameSite: "Lax", // Postman compatibility
+            maxAge: expiryTimeOfRefreshToken * 1000
+        });
         await user.save(); // save token in DB
         const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
         logWithTime("User is successfully logged in on registration!");
