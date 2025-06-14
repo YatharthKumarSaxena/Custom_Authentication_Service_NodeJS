@@ -1,6 +1,8 @@
 // 📁 This is the File from where the whole Project Will Start Running
 // 📁 Entry Point of the Project
 
+require("dotenv").config(); // Installed Node.js package
+
 // 🔹 Extracting Required Modules to make Our Application
 const express = require("express"); // Extract Express Module
 const mongoose = require("mongoose"); // Extract Mongoose Module
@@ -9,7 +11,7 @@ const app = express(); // App is an Express Function
 const dbConfigs = require("./Configs/db.config");
 const UserModel = require("./Models/User.model"); 
 const userID_Model = require("./Configs/userID.config");
-const functionModel = require("./Configs/message.configs");
+const functionModel = require("./Configs/errorHandler.configs");
 const errorMessage = functionModel.errorMessage;
 const { logWithTime } = require("./Utils/timeStamps.utils");
 const {makeTokenWithMongoID} = require("./Utils/issueToken.utils");

@@ -2,7 +2,7 @@
 const jwt = require("jsonwebtoken");
 const {secretCode,expiryTimeOfJWTtoken} = require("../Configs/userID.config");
 const { logWithTime } = require("./timeStamps.utils");
-const { errorMessage } = require("../Configs/message.configs");
+const { errorMessage } = require("../Configs/errorHandler.configs");
 
 exports.makeTokenWithMongoID = (mongoID) => {
     try {

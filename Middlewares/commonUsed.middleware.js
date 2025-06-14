@@ -5,7 +5,7 @@ const UserModel = require("../Models/User.model");
 // Extracting Required Functions and Values
 
 const { logWithTime } = require("../Utils/timeStamps.utils");
-const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/message.configs");
+const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/errorHandler.configs");
 const {secretCode,adminID} = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");

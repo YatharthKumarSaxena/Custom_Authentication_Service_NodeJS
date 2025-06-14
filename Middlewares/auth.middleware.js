@@ -7,7 +7,7 @@
 
 // Extracting the Required Modules
 const UserModel = require("../Models/User.model");
-const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/message.configs");
+const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { checkUserIsNotVerified,fetchUser} = require("./helperMiddlewares");
 const { adminID } = require("../Configs/userID.config");

@@ -1,34 +1,34 @@
 const bcryptjs = require("bcryptjs");
-const idPrefixes = require("./idPrefixes.config").admin
-const IP_Address_Code = require("./ipAddress.config").IP_Address_Code
-const adminUserID = 100000;
-const adminID = idPrefixes + IP_Address_Code + String(adminUserID);
-const SALT = 12 // For Encryption 8 is used as by default SALT
+const adminPrefixes = require("./idPrefixes.config").admin;
+const IP_Address_Code = require("./ipAddress.config").IP_Address_Code;
+const adminUserID = Number(process.env.ADMIN_USER_ID);
+const adminID = adminPrefixes + IP_Address_Code + String(adminUserID);
+const SALT = Number(process.env.SALT);
 module.exports = {
-    userRegistrationCapacity: 100000, // This Monolithic Machine can handle 1 Lakh User Data
+    userRegistrationCapacity: Number(process.env.USER_REGISTRATION_CAPACITY),
     adminUserID:adminUserID,
     adminID: adminID, // Admin userID
     IP_Address_Code: IP_Address_Code, // Unique per machine
     SALT: SALT,
-    secretCode: "b89a72cf5e10b1d65ad2e4f98213e01a647ec498df4a86a1c904a1775eec49c27a7e492dfc6b5c4a13ac0f7bc50df35643ce7df53c7fd10f4ff748297e3fc107",
-    expiryTimeOfAccessToken: 240, // JWT Token will expire after 240 Seconds
-    expiryTimeOfRefreshToken: 10080, // User will be Logged In For 7 days
+    secretCode: process.env.JWT_SECRET,
+    expiryTimeOfAccessToken: Number(process.env.ACCESS_TOKEN_EXPIRY),
+    expiryTimeOfRefreshToken: Number(process.env.REFRESH_TOKEN_EXPIRY),
     adminUser:{
-        name: "Yatharth",
-        phoneNumber: "7310871289",
+        name: process.env.ADMIN_NAME,
+        phoneNumber: process.env.ADMIN_PHONE,
         // Password is Encypted to make the Password more complicated to crack
         // When Someone by Chance get access to Database if password is stored in Encrypted format
         // It makes it complicated to decode and hence it increases the security of User Data Privacy
         // There are so many methods for Hashing , in this project I used SALT Based Hashing
         // SALT is bascially a Random Text (Can be String or Number) is added to password
-        password: bcryptjs.hashSync("yatharth@123",SALT),
-        emailID: "yatharthsaxena5667@gmail.com",
+        password: bcryptjs.hashSync(process.env.ADMIN_PASSWORD_PLAIN,SALT),
+        emailID: process.env.ADMIN_EMAIL_ID,
         address: [
-            {localAddress: "Sasni Gate",
-            city: "Aligarh",
-            pincode: "202001",
-            state: "Uttar Pradesh",
-            country: "India"}
+            {localAddress: process.env.ADMIN_LOCAL_ADDRESS,
+            city: process.env.ADMIN_CITY,
+            pincode: process.env.ADMIN_PINCODE,
+            state: process.env.ADMIN_STATE,
+            country: process.env.ADMIN_COUNTRY}
         ],
         userType: "Admin",
         userID: adminID

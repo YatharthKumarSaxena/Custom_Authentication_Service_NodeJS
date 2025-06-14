@@ -1,6 +1,6 @@
 // Extracting required Modules, their functions and values
 const {expiryTimeOfJWTtoken} = require("../Configs/userID.config");
-const {throwInvalidResourceError,throwResourceNotFoundError} = require("../Configs/message.configs");
+const {throwInvalidResourceError,throwResourceNotFoundError} = require("../Configs/errorHandler.configs");
 const UserModel = require("../Models/User.model");
 
 // DRY Principle followed by this Code

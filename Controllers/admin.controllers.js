@@ -1,7 +1,7 @@
 // This file will include the controller logic for all powers of Admin
 
 // Extract the Required Modules
-const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../Configs/message.configs");
+const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const UserModel = require("../Models/User.model");
 const {adminID} = require("../Configs/userID.config");

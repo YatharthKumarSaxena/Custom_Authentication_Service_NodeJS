@@ -1,6 +1,6 @@
 // Middleware Code For Admin Controller
 
-const { throwResourceNotFoundError, errorMessage, throwInternalServerError } = require("../Configs/message.configs");
+const { throwResourceNotFoundError, errorMessage, throwInternalServerError } = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { AdminActionReasons } = require("../Configs/userID.config");
 

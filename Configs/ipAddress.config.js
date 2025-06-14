@@ -1,3 +1,3 @@
 module.exports = {
-    IP_Address_Code: "1", // Unique per machine
+    IP_Address_Code: process.env.IP_ADDRESS_CODE, // Unique per machine
 }

@@ -2,6 +2,6 @@
 // Hence DB_URL can change , hence it is a configurable value and placed in Configs Folder 
 // Note:- For Windows , instead of localhost use 0.0.0.0
 module.exports = {
-    DB_NAME: "ecommerce_db",
-    DB_URL: "mongodb://localhost/ecommerce_db"
+    DB_NAME: process.env.DB_NAME,
+    DB_URL: process.env.DB_URL
 }

@@ -1,4 +1,4 @@
-const { errorMessage, throwInternalServerError } = require("../Configs/message.configs");
+const { errorMessage, throwInternalServerError } = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { adminID } = require("../Configs/userID.config");
 

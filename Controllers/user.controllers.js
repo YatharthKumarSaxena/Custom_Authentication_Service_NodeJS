@@ -7,7 +7,7 @@
 */
 
 // Extracting the required modules
-const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../Configs/message.configs");
+const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../Configs/errorHandler.configs");
 const { fetchUser } = require("../Middlewares/helperMiddlewares");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { adminID } = require("../Configs/userID.config");
