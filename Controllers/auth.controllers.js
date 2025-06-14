@@ -15,6 +15,7 @@ const {throwInvalidResourceError,errorMessage,throwInternalServerError} = requir
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const {makeTokenWithMongoID} = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
+const {httpOnly,secure,domain,sameSite} = require("../Configs/cookies.config");
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -217,9 +218,9 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         user.refreshToken = refreshToken;
         user.isVerified = true;
         res.cookie("refreshToken", refreshToken, {
-            httpOnly: false, // 🟡 Temporarily allow Postman/browser JS to read
-            secure: false,   // 🧪 Optional in localhost, but true in prod
-            sameSite: "Lax", // Postman compatibility
+            httpOnly: httpOnly, // 🟡 Temporarily allow Postman/browser JS to read
+            secure: secure,   // 🧪 Optional in localhost, but true in prod
+            sameSite: sameSite, // Postman compatibility
             maxAge: expiryTimeOfRefreshToken * 1000
         });
         await user.save(); // save token in DB
@@ -268,9 +269,9 @@ exports.signIn = async (req,res) => {
             user.jwtTokenIssuedAt = new Date(); // Update JWT token issued time
             user.lastLogin = new Date(); // Update Last Login Time of User
             res.cookie("refreshToken", refreshToken, {
-                httpOnly: false, // 🟡 Temporarily allow Postman/browser JS to read
-                secure: false,   // 🧪 Optional in localhost, but true in prod
-                sameSite: "Lax", // Postman compatibility
+                httpOnly: httpOnly, // 🟡 Temporarily allow Postman/browser JS to read
+                secure: secure,   // 🧪 Optional in localhost, but true in prod
+                sameSite: sameSite, // Postman compatibility
                 maxAge: expiryTimeOfRefreshToken * 1000
             });
             await user.save();
