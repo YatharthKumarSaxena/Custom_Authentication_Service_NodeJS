@@ -10,6 +10,7 @@ const checkUserIsNotVerified = async(user) => {
     const currentTime = Date.now(); // In milli second current time is return
     if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
         user.isVerified = false;
+        user.refreshToken = null;
         await user.save(); // 👈 Add this line
         return true; // 🧠 session expired, response already sent
     }
