@@ -108,8 +108,9 @@ const userSchema = mongoose.Schema({
     lastLogin:{
         type: Date,
     },
-    verificationToken: {
-        type: String // for OTP / email verification link
+    refreshToken: {
+        type: String, // Stores Refresh Token (For SignOut Purpose)
+        default: null
     },
     jwtTokenIssuedAt: {
         type: Date,

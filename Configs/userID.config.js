@@ -10,8 +10,9 @@ module.exports = {
     adminID: adminID, // Admin userID
     IP_Address_Code: IP_Address_Code, // Unique per machine
     SALT: SALT,
-    secretCode: "This is secret code for JSON Web Token",
-    expiryTimeOfJWTtoken: 240, // JWT Token will expire after 240 Seconds
+    secretCode: "b89a72cf5e10b1d65ad2e4f98213e01a647ec498df4a86a1c904a1775eec49c27a7e492dfc6b5c4a13ac0f7bc50df35643ce7df53c7fd10f4ff748297e3fc107",
+    expiryTimeOfAccessToken: 240, // JWT Token will expire after 240 Seconds
+    expiryTimeOfRefreshToken: 10080, // User will be Logged In For 7 days
     adminUser:{
         name: "Yatharth",
         phoneNumber: "7310871289",
