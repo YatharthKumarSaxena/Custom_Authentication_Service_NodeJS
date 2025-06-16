@@ -39,6 +39,31 @@ async function checkUserExists(emailID,phoneNumber){
     }
 }
 
+// For Delivery Services this field checking become Mandatory
+const verifyAddressField = async (req, res, next) => {
+    try{
+        const address = req?.user?.address || req?.body?.address;
+        if(!Array.isArray(address) || address.length === 0 || Object.keys(address[0]).length === 0){
+            return throwResourceNotFoundError(res, "Address");
+        }
+        const addr = address[0];
+        let missingFields = [];
+        if (!addr.localAddress) missingFields.push("Local Address");
+        if (!addr.city) missingFields.push("City");
+        if (!addr.pincode) missingFields.push("Pincode");
+        if (!addr.state) missingFields.push("State");
+        if (!addr.country) missingFields.push("Country");
+        if (missingFields.length > 0) {
+            return throwResourceNotFoundError(res, missingFields.join(", "));
+        }
+        if (!res.headersSent) return next();
+    }catch (err){
+        logWithTime("⚠️ Error occurred while validating the Address field (Delivery Service)");
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+};
+
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
@@ -66,44 +91,6 @@ const verifySignUpBody = async (req,res,next) =>{
             if(userIsValid)reason = reason+"Password";
             else reason = reason+" ,Password";
             userIsValid = false;
-        }
-        // Check Address is present in Request Body or not
-        if (
-        !Array.isArray(req.body.address) || 
-        req.body.address.length === 0 || 
-        Object.keys(req.body.address[0]).length === 0  // <-- Empty object check
-        ) {
-            if(userIsValid)reason = reason+"Address";
-            else reason = reason+" and Address";
-            userIsValid = false;
-        }
-        else{ // Check inner Address details are present or not
-            const address = req.body.address[0];
-            if(!address.localAddress){
-                if(userIsValid)reason = reason+"Local Address field in Address field";
-                else reason = reason+", Local Address field in Address field";
-                userIsValid = false;
-            }
-            if(!address.city){
-                if(userIsValid)reason = reason+"City field in Address field";
-                else reason = reason+", City field in Address field";
-                userIsValid = false;
-            }
-            if(!address.pincode){
-                if(userIsValid)reason = reason+"Pincode field in Address field";
-                else reason = reason+", Pincode field in Address field";
-                userIsValid = false;
-            }
-            if(!address.state){
-                if(userIsValid)reason = reason+"State field in Address field";
-                else reason = reason+", State field in Address field";
-                userIsValid = false;
-            }
-            if(!address.country){
-                if(userIsValid)reason = reason+"and Country field in Address field";
-                else reason = reason+" and Country field in Address field";
-                userIsValid = false;
-            }
         }
         if(userIsValid){ // Check that User Exists with Phone Number or Email ID
             let emailID = req.body.emailID;
@@ -237,7 +224,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
-        const user = req.foundUser;
+        const user = req.user;
         if(user.isActive === false){
             logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
             return res.status(400).json({
@@ -259,5 +246,6 @@ module.exports = {
     verifySignInBody: verifySignInBody,
     verifySignOutBody: verifySignOutBody,
     verifyActivateUserAccountBody: verifyActivateUserAccountBody,
-    verifyDeactivateUserAccountBody: verifyDeactivateUserAccountBody
+    verifyDeactivateUserAccountBody: verifyDeactivateUserAccountBody,
+    verifyAddressField: verifyAddressField
 }
