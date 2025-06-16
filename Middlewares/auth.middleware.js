@@ -251,6 +251,33 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
     }
 }
 
+const verifyChangePasswordBody = async(req,res,next) => {
+    try{
+        if(!req.body.oldPassword){
+            return throwResourceNotFoundError(res,"Old Password");
+        }
+        if(!req.body.newPassword){
+            return throwResourceNotFoundError(res,"New Password");
+        }
+        const oldPassword = req.body.oldPassword;
+        const newPassword = req.body.newPassword;
+        if(oldPassword === newPassword){
+
+        }
+        if(newPassword.length <8){ // Checking Password Length Must Be Greather than or equal to 8
+
+        }
+        if(){ // Checking Given New Password Format is correct or not
+
+        }
+        if(!res.headersSent)return next();
+    }catch(err){
+        logWithTime("⚠️ Error happened while validating that Change Password Request Body");
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}
+
 module.exports = {
     verifySignUpBody: verifySignUpBody,
     verifySignInBody: verifySignInBody,

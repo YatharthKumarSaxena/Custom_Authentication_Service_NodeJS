@@ -12,9 +12,14 @@ const mongoose = require("mongoose");
  * Phone Number
  * isVerified
  * isActive
+ * isBlocked
  * UserType
  * lastLogin
- * verificationToken
+ * dateOfBirth
+ * gender
+ * profilePicUrl
+ * jwtTokenIssuedAt
+ * refreshToken
 */
 
 // Defined Document Structure of a User
