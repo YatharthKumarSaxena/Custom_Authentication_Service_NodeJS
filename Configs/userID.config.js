@@ -16,6 +16,8 @@ module.exports = {
     adminUser:{
         name: process.env.ADMIN_NAME,
         phoneNumber: process.env.ADMIN_PHONE,
+        gender: "Male",
+        dateOfBirth: new Date("2005-05-25"),
         // Password is Encypted to make the Password more complicated to crack
         // When Someone by Chance get access to Database if password is stored in Encrypted format
         // It makes it complicated to decode and hence it increases the security of User Data Privacy

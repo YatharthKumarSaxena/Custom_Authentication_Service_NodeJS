@@ -114,7 +114,7 @@ const userSchema = mongoose.Schema({
     },
     jwtTokenIssuedAt: {
         type: Date,
-        default: Date.now
+        default: null
     }
 },{timestamps:true,versionKey:false})
 

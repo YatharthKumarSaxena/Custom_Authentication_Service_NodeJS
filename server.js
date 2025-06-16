@@ -6,13 +6,12 @@ require("dotenv").config(); // Installed Node.js package
 // 🔹 Extracting Required Modules to make Our Application
 const express = require("express"); // Extract Express Module
 const mongoose = require("mongoose"); // Extract Mongoose Module
-const serverConfigs = require("./Configs/server.config");
+const {PORT_NUMBER} = require("./Configs/server.config");
 const app = express(); // App is an Express Function
-const dbConfigs = require("./Configs/db.config");
+const {DB_URL} = require("./Configs/db.config");
 const UserModel = require("./Models/User.model"); 
-const userID_Model = require("./Configs/userID.config");
-const functionModel = require("./Configs/errorHandler.configs");
-const errorMessage = functionModel.errorMessage;
+const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./Configs/userID.config");
+const {errorMessage,} = require("./Configs/errorHandler.configs");
 const { logWithTime } = require("./Utils/timeStamps.utils");
 const {makeTokenWithMongoID} = require("./Utils/issueToken.utils");
 
@@ -24,7 +23,7 @@ app.use(express.json()); // Converts the JSON Object Requests into JavaScript Ob
 */
 
 // 🔹 And password + random text are encrypted to make password more complicated to crackConnection with MongoDB
-mongoose.connect(dbConfigs.DB_URL); // Specifying where to connect
+mongoose.connect(DB_URL); // Specifying where to connect
 
 const db = mongoose.connection; // Ordering to Connect
 
@@ -50,16 +49,23 @@ async function init(){ // To use await we need to make function Asynchronous
         }
         else{ // Since findOne returns null when no user found this statement will execute if no Admin User exists
             try{
-                const user = await UserModel.create(userID_Model.adminUser);
-                const newToken = makeTokenWithMongoID(user._id);
-                if(newToken){
-                    logWithTime("👑 Welcome Admin, you are successfully logged in!");
-                    logWithTime("🔐 Here is your token for secure access:");
-                    user.isVerified = true;
-                    await user.save();
-                    console.log("📦 JWT Token: ", newToken);
-                }
+                const user = await UserModel.create(adminUser);
                 logWithTime("👑 Admin User Created Successfully");
+                const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken);
+                if(refreshToken){
+                    logWithTime("👑 Welcome Admin, you are successfully logged in!");
+                    logWithTime("🔐 Here is your refresh token");
+                    user.isVerified = true;
+                    user.jwtTokenIssuedAt = Date.now();
+                    await user.save();
+                    console.log("📦 JWT Refresh Token: ", refreshToken);
+                }
+                const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+                if(accessToken){
+                    logWithTime("Use this Access Token for further Actions!");
+                    logWithTime("🔐 Here is your access token");
+                    console.log("📦 JWT Access Token: ", accessToken);
+                }
                 logWithTime("Admin User details are given below:- ");
                 console.log(user);
             }catch(err){
@@ -79,7 +85,7 @@ async function init(){ // To use await we need to make function Asynchronous
 require("./Routers/auth.routes")(app)
 
 // 🔹 Initializing Server by Express
-app.listen(serverConfigs.PORT_NUMBER,()=>{
+app.listen(PORT_NUMBER,()=>{
     // Check Server is Running or not
-    logWithTime("🚀 Server has Started at Port Number: "+serverConfigs.PORT_NUMBER); 
+    logWithTime("🚀 Server has Started at Port Number: "+PORT_NUMBER); 
 });
