@@ -6,7 +6,7 @@ const UserModel = require("../Models/User.model");
 
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError} = require("../Configs/errorHandler.configs");
-const {secretCode,adminID} = require("../Configs/userID.config");
+const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
 
@@ -40,7 +40,7 @@ const isUserAccountActive = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("An Error occurred while checking User Account is active or not");
+        logWithTime("⚠️ An Error occurred while checking User Account is active or not");
         errorMessage(err);
         if (!res.headersSent) {
             return throwInternalServerError(res);
@@ -69,7 +69,7 @@ const isUserBlocked = async(req,res,next) => {
             let user = req.foundUser || req.user;
             if(!user)user = await UserModel.findOne({userID: userID});
             if(!user){
-                logWithTime("Invalid User ID entered by you");
+                logWithTime("⚠️ Invalid User ID entered by you");
                 return throwInvalidResourceError(res,"UserID");
             }
             if(user.isBlocked){
@@ -83,7 +83,7 @@ const isUserBlocked = async(req,res,next) => {
             if (!res.headersSent) return next();
         }
     }catch(err){
-        logWithTime("An Error occurred while checking User is blocked or not");
+        logWithTime("⚠️ An Error occurred while checking User is blocked or not");
         errorMessage(err);
         if (!res.headersSent) {
             return throwInternalServerError(res);
@@ -94,36 +94,35 @@ const isUserBlocked = async(req,res,next) => {
 // Check that User is Verified or Not
 // Act as middleware for verifyToken and isAdmin function
 const checkUserIsVerified = async(req,res,next) => {
-    let user = req.user;
-    if(!user){
-        let userID = req?.user?.userID || req?.body?.userID;
-        user = await UserModel.findOne({ userID: userID });
-        if (!user) {
-            logWithTime("❌ User not found while verifying.");
-            return throwResourceNotFoundError(res, "User");
+    try{
+        let user = req.user;
+        if(!user){
+            let userID = req?.user?.userID || req?.body?.userID;
+            user = await UserModel.findOne({ userID: userID });
+            if (!user) {
+                logWithTime("❌ User not found while verifying.");
+                return throwResourceNotFoundError(res, "User");
+            }
+            req.user = user; // 🧷 Attach for future use
         }
-        req.user = user; // 🧷 Attach for future use
+        const isNotVerified = await checkUserIsNotVerified(user,res);
+        if(isNotVerified){
+            logWithTime("⏰ Session expired. Please log in again to continue accessing your account.");
+            return res.status(401).json({
+                success: false,
+                message: "⏰ Session expired. Please log in again to continue accessing your account.",
+                code: "TOKEN_EXPIRED"
+            })
+        }
+        // Very next line should be:
+        if (!res.headersSent) return next();
+    }catch(err){
+        logWithTime("⚠️ An Error occurred while checking User is verified or not");
+        errorMessage(err);
+        if (!res.headersSent) {
+            return throwInternalServerError(res);
+        }
     }
-    const isNotVerified = await checkUserIsNotVerified(user,res);
-    if(isNotVerified){
-        logWithTime("⏰ Session expired. Please log in again to continue accessing your account.");
-        res.status(401).json({
-            success: false,
-            message: "⏰ Session expired. Please log in again to continue accessing your account.",
-            code: "TOKEN_EXPIRED"
-        })
-        return;
-    }
-    // Check Access Token Validity
-    // 🆕 If Access Token Expired Generate a new Access Token for it
-    const newToken = makeTokenWithMongoID(user._id);
-    if(!newToken)return; // If token not found just return
-    user.jwtTokenIssuedAt = Date.now();
-    await user.save();
-    logWithTime("✅ User with "+user.userID+" token is verified");
-    res.setHeader("x-refreshed-token", `Bearer ${newToken}`);
-    // Very next line should be:
-    if (!res.headersSent) return next();
 }
 
 // Logic to Verify Token and Update jwtTokenIssuedAt time
@@ -132,6 +131,7 @@ const verifyToken = (req,res,next) => {
     const authHeader = req.headers["authorization"] || req.headers["x-access-token"]; // Check if the token is present in the Header
     const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
     if(!token){ // Means Token is not Present
+        logWithTime("❌ No Access Token provided")
         return res.status(403).json({
             message: "No token found: ⚠️ Unauthorized"
         })
@@ -163,7 +163,7 @@ const verifyToken = (req,res,next) => {
                 }
                 if(res.headersSent)return;
                 // Logic to generate new access token
-                const accessToken = await makeTokenWithMongoID(user._id);
+                const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
                 // Set this token in Response Headers
                 req.user = user;
                 res.setHeader("x-access-token", accessToken);
