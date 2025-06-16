@@ -163,20 +163,14 @@ const verifySignInBody = async (req,res,next) =>{
 const verifySignOutBody = async (req,res,next) => {
     // Validating the User SignIn Body
     try{
-        let verifyWith = await fetchUser(req,res);
-        if(verifyWith === ""){
-            logWithTime("Logout Request Cancelled")
-            return;
-        }
-        const user = req.foundUser;
         // ✅ Now Check if User is Already Logged Out 
-        const result = await checkUserIsNotVerified(user,res);
-        if (result) {
+        const isNotVerified = await checkUserIsNotVerified(user,res);
+        if (isNotVerified) {
             logWithTime("🚫 Logout Request Denied: User is already logged out.");
             return res.status(400).json({
-            success: false,
-            message: "User is already logged out.",
-            suggestion: "Please login first before trying to logout again."
+                success: false,
+                message: "User is already logged out.",
+                suggestion: "Please login first before trying to logout again."
             });
         }
         // Very next line should be:

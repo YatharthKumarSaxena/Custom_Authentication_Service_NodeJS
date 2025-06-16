@@ -9,6 +9,7 @@ const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwRes
 const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
+const { extractAccessToken, extractRefreshToken } = require("../Utils/extractToken")
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -127,10 +128,8 @@ const checkUserIsVerified = async(req,res,next) => {
 
 // Logic to Verify Token and Update jwtTokenIssuedAt time
 const verifyToken = (req,res,next) => {
-    //🔐 Bearer Token Handling	✅ Added	Supports frontend standards, avoids malformed headers.
-    const authHeader = req.headers["authorization"] || req.headers["x-access-token"]; // Check if the token is present in the Header
-    const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
-    if(!token){ // Means Token is not Present
+    const accessToken = extractAccessToken(req);
+    if(!accessToken){
         logWithTime("❌ No Access Token provided")
         return res.status(403).json({
             message: "No token found: ⚠️ Unauthorized"
@@ -140,18 +139,7 @@ const verifyToken = (req,res,next) => {
     jwt.verify(token,secretCode,async (err,decoded)=>{
         try{
             if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid
-                // If Refresh Token is Valid then generate new Access token
-                const refreshToken = req?.cookies?.refreshToken;
-                if (!refreshToken) {
-                    logWithTime("⚠️ Refresh Token not provided in Cookies")
-                    return throwAccessDeniedError(res, "No refresh token provided");
-                }
-                // Fetch User by JWT Token
-                const user = await UserModel.findOne({refreshToken: refreshToken});
-                if(!user){
-                    logWithTime("⚠️ Invalid Refresh Token provided in Cookies")
-                    return throwAccessDeniedError(res, "Invalid refresh token provided");
-                }
+                const user = req.user;
                 const isRefreshTokenInvalid = await checkUserIsNotVerified(user,res);
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly
@@ -165,18 +153,12 @@ const verifyToken = (req,res,next) => {
                 // Logic to generate new access token
                 const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
                 // Set this token in Response Headers
-                req.user = user;
                 res.setHeader("x-access-token", accessToken);
                 // Smart signal to frontend that Access token is Refreshed now
                 res.setHeader("x-token-refreshed", "true"); 
                 res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
                 if(!res.headersSent)return next();
             }
-            const user = await UserModel.findById(decoded.id);
-            if (!user) {
-                return throwResourceNotFoundError(res, "User");
-            }
-            req.user = user; // 🔥 Attach user object to request
             logWithTime("✅ Token Validated and User Fetched");
             // Very next line should be:
             if (!res.headersSent) return next();
@@ -205,6 +187,7 @@ const isAdmin = (req,res,next) => {
 // Validate Provided UserID and Token User ID are same or not
 const validateUserIDMatch = async (req, res, next) => {
     try{
+        // Check whether Access Token and Refresh token belongs to same ID or not
         const verifyWith = await fetchUser(req,res);
         if(!req.foundUser){
             logWithTime("❌ User not found during ID validation");
@@ -217,10 +200,57 @@ const validateUserIDMatch = async (req, res, next) => {
         }
         if(!res.headersSent)return next();
     }catch(err){
-        logWithTime("⚠️ An Error Occurred while validating the Provided User and User Obtained from Token")
+        logWithTime("⚠️ An Error Occurred while validating the Provided User and User Obtained from Token");
         errorMessage(err);
         return throwInternalServerError(res);
     }
+};
+
+const verifyTokenOwnership = async(req, res, next) => {
+  try {
+    // 1. Extract refresh token from cookies (assuming 'id' key stores the refresh token)
+    const refreshToken = req?.cookies?.id;
+    if (!refreshToken) { // if refreshToken Not Found
+        logWithTime("⚠️ Refresh Token not provided in Cookies")
+        return throwAccessDeniedError(res, "No refresh token provided");
+    }
+    // 2. Verify refresh token
+    const decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    // 3. Check Whether Refresh Token Provided is Valid or Not
+    const tokenExists = await Token.findOne({ refreshToken: refreshToken }); // or Redis GET
+    if (!tokenExists) {
+        logWithTime("Access Denied as Invalid Refresh Token is being provided");
+        return throwAccessDeniedError(res,"Invalid Refresh Token");
+    }
+    // 4. Extract Access token
+    const accessToken = extractAccessToken(req);
+    if(!accessToken){
+        logWithTime("❌ No Access Token provided")
+        return res.status(403).json({
+            message: "No token found: ⚠️ Unauthorized"
+        })
+    }
+    let decodedAccess;
+    try {
+        decodedAccess = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+    } catch (err) {
+        logWithTime("Access token provided is invalid or expired");
+        return res.status(403).json({ message: "Invalid access token" });
+    }
+    // 5. Match both token owners
+    if (decodedAccess && decodedAccess.id !== decodedRefresh.id) {
+        logWithTime("Token mismatch: Access and Refresh tokens belong to different users");
+        return res.status(403).json({ message: "Token mismatch: user identities do not match" });
+    }
+    // ✅ Tokens are valid and synced – attach user to req
+    req.user = decodedRefresh;
+    // ✅ All checks passed
+    if(!res.headersSent)next();
+    } catch (err) {
+        logWithTime("⚠️ An Error Occurred while validating the tokens presence and validations")
+    errorMessage(err)
+    return throwInternalServerError(res);
+  }
 };
 
 module.exports = {
