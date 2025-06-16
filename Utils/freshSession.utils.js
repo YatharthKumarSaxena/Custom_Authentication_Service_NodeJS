@@ -1,6 +1,6 @@
 const { httpOnly,secure,sameSite } = require("../Configs/cookies.config");
 const { errorMessage,throwInternalServerError} = require("../Configs/errorHandler.configs");
-const { expiryTimeOfRefreshToken } = require("../Configs/userID.config");
+const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("./issueToken.utils"); 
 const { logWithTime } = require("./timeStamps.utils");
 
@@ -9,7 +9,7 @@ const resetRefreshToken = async(req,res) => {
         const user = req.user;
         const now = Date.now();
         const timeSinceLastIssued = now - user.jwtTokenIssuedAt;
-        const refreshThreshold = 2 * 24 * 60 * 60 * 1000; // e.g., rotate only if last token was issued 2 days ago
+        const refreshThreshold = refreshThresholdInMs;
         if (timeSinceLastIssued > refreshThreshold) {
             const refreshToken = makeTokenWithMongoID(user._id, expiryTimeOfRefreshToken);
             user.refreshToken = refreshToken;
@@ -27,7 +27,7 @@ const resetRefreshToken = async(req,res) => {
     }catch(err){
         logWithTime("⚠️ An Error occured while reseting the refresh token ");
         errorMessage(err);
-        return throwInternalServerError(res);
+        if (!res.headersSent)return throwInternalServerError(res);
     }
 }
 

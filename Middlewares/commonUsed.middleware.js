@@ -9,7 +9,8 @@ const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwRes
 const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
-const { extractAccessToken, extractRefreshToken } = require("../Utils/extractToken");
+const { extractAccessToken } = require("../Utils/extractToken");
+const { resetRefreshToken } = require("../Utils/freshSession.utils");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -116,16 +117,10 @@ const checkUserIsVerified = async(req,res,next) => {
             })
         }
         // Reset Refresh Token
-        const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken);
-        user.refreshToken = refreshToken;
-        user.jwtTokenIssuedAt = Date.now();
-        res.cookie("id", refreshToken, {
-            httpOnly: httpOnly,
-            secure: secure,
-            sameSite: sameSite,
-            maxAge: expiryTimeOfRefreshToken * 1000 // if expiry is in seconds
-        });
-        await user.save();
+        const isRefreshTokenReset = await resetRefreshToken(req,res);
+        if(isRefreshTokenReset){
+            logWithTime(`🔄 Refresh token rotated for userID: ${req.user.userID}`);
+        }
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
