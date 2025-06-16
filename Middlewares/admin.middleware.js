@@ -3,6 +3,7 @@
 const { throwResourceNotFoundError, errorMessage, throwInternalServerError } = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { AdminActionReasons } = require("../Configs/userID.config");
+const { validateSingleIdentifier } = require("../Utils/validateRequestBody.utils");
 
 // Verify Admin Body Request for Blocking / Unblocking a user
 const verifyAdminBlockUnblockBody = async(req,res,next) => {
@@ -10,9 +11,11 @@ const verifyAdminBlockUnblockBody = async(req,res,next) => {
         if(!req.body.reason){
             return throwResourceNotFoundError(res,"AdminID");
         }
-        if(!req.body.requestedUserID && !req.body.phoneNumber && !req.body.emailID){
+        if(!req.body.userID && !req.body.phoneNumber && !req.body.emailID){
             return throwResourceNotFoundError(res,"EmailID,Requested UserID or Phone Number(At least one of these fields)");
         }
+        const validateRequestBody = validateSingleIdentifier(req,res);
+        if(!validateRequestBody)return;
         const identifiers = [req.body.requestedUserID, req.body.phoneNumber, req.body.emailID].filter(Boolean);
         if (identifiers.length !== 1) {
             return res.status(400).json({
