@@ -9,7 +9,7 @@ const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwRes
 const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
-const { extractAccessToken } = require("../Utils/extractToken");
+const { extractAccessToken } = require("../Utils/extractToken.utils");
 const { resetRefreshToken } = require("../Utils/freshSession.utils");
 
 // ✅ Checking if User Account is Active

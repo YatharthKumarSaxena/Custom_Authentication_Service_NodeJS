@@ -11,6 +11,7 @@ const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = requi
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { checkUserIsNotVerified,fetchUser} = require("./helperMiddlewares");
 const { adminID } = require("../Configs/userID.config");
+const { validateSingleIdentifier } = require("../Utils/validateRequestBody.utils");
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 async function checkUserExists(emailID,phoneNumber){
@@ -122,6 +123,8 @@ const verifySignInBody = async (req,res,next) =>{
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
+        const validateRequestBody = validateSingleIdentifier(req,res);
+        if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
             logWithTime("Login Request Cancelled")
@@ -173,6 +176,8 @@ const verifySignOutBody = async (req,res,next) => {
 const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
+        const validateRequestBody = validateSingleIdentifier(req,res);
+        if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
             logWithTime("Activate Account Request Cancelled")
@@ -210,6 +215,8 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
 const verifyDeactivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
+        const validateRequestBody = validateSingleIdentifier(req,res);
+        if(!validateRequestBody)return;
         if(req.body.userID === adminID){
             logWithTime("🚫 Request Denied: Admin account cannot be deactivated.");
             return res.status(403).json({
