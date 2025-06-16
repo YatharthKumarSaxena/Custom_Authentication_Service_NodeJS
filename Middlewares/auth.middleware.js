@@ -35,7 +35,7 @@ async function checkUserExists(emailID,phoneNumber){
     }catch(err){
         logWithTime("⚠️ An Error occured while Checking whether User Exists or not");
         errorMessage(err);
-        return;
+        return throwInternalServerError(res);
     }
 }
 
@@ -150,6 +150,7 @@ const verifySignInBody = async (req,res,next) =>{
 const verifySignOutBody = async (req,res,next) => {
     // Validating the User SignIn Body
     try{
+        const user = req.user;
         // ✅ Now Check if User is Already Logged Out 
         const isNotVerified = await checkUserIsNotVerified(user,res);
         if (isNotVerified) {
@@ -200,7 +201,8 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Account Activation Request")
+        logWithTime("⚠️ Error happened while validating the User Account Activation Request");
+        errorMessage(err);
         return throwInternalServerError(res);
     }
 }
@@ -236,7 +238,8 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Account Deactivation Request")
+        logWithTime("⚠️ Error happened while validating the User Account Deactivation Request");
+        errorMessage(err);
         return throwInternalServerError(res);
     }
 }

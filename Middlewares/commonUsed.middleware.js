@@ -9,7 +9,7 @@ const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwRes
 const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../Configs/userID.config");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
-const { extractAccessToken, extractRefreshToken } = require("../Utils/extractToken")
+const { extractAccessToken, extractRefreshToken } = require("../Utils/extractToken");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -115,6 +115,17 @@ const checkUserIsVerified = async(req,res,next) => {
                 code: "TOKEN_EXPIRED"
             })
         }
+        // Reset Refresh Token
+        const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken);
+        user.refreshToken = refreshToken;
+        user.jwtTokenIssuedAt = Date.now();
+        res.cookie("id", refreshToken, {
+            httpOnly: httpOnly,
+            secure: secure,
+            sameSite: sameSite,
+            maxAge: expiryTimeOfRefreshToken * 1000 // if expiry is in seconds
+        });
+        await user.save();
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
@@ -136,7 +147,7 @@ const verifyToken = (req,res,next) => {
         })
     }
     // Now Verifying whether the provided JWT Token is valid token or not
-    jwt.verify(token,secretCode,async (err,decoded)=>{
+    jwt.verify(accessToken,secretCode,async (err,decoded)=>{
         try{
             if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid
                 const user = req.user;
@@ -239,4 +250,3 @@ module.exports = {
     isUserAccountActive: isUserAccountActive,
     verifyTokenOwnership: verifyTokenOwnership
 }
-
