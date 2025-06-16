@@ -253,22 +253,30 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
 
 const verifyChangePasswordBody = async(req,res,next) => {
     try{
-        if(!req.body.oldPassword){
+        const { oldPassword,newPassword } = req.body;
+        if(!oldPassword){
             return throwResourceNotFoundError(res,"Old Password");
         }
-        if(!req.body.newPassword){
+        if(!newPassword){
             return throwResourceNotFoundError(res,"New Password");
         }
-        const oldPassword = req.body.oldPassword;
-        const newPassword = req.body.newPassword;
         if(oldPassword === newPassword){
-
+            return res.status(400).json({
+                success: false,
+                message: "New password must be different from your current password."
+            });
         }
-        if(newPassword.length <8){ // Checking Password Length Must Be Greather than or equal to 8
-
+        // Check for minimum length
+        if (newPassword.length < 8) {
+            return throwInvalidResourceError(res, "Password must be at least 8 characters long");
         }
-        if(){ // Checking Given New Password Format is correct or not
-
+        // Strong Password Format: At least one letter, one digit, and one special character
+        const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/;
+        if (!strongPasswordRegex.test(newPassword)) {
+            return throwInvalidResourceError(
+                res,
+                "Password must contain at least one letter, one number, and one special character",
+            );
         }
         if(!res.headersSent)return next();
     }catch(err){
@@ -284,5 +292,6 @@ module.exports = {
     verifySignOutBody: verifySignOutBody,
     verifyActivateUserAccountBody: verifyActivateUserAccountBody,
     verifyDeactivateUserAccountBody: verifyDeactivateUserAccountBody,
-    verifyAddressField: verifyAddressField
+    verifyAddressField: verifyAddressField,
+    verifyChangePasswordBody: verifyChangePasswordBody
 }
