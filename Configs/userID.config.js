@@ -44,5 +44,19 @@ module.exports = {
         USER_RAISED_ISSUE: "UserRaisedIssue",
         ACCOUNT_VERIFICATION: "VerifyUserManually"
         // Add more as your system scales
+    }),
+    BLOCK_REASONS: Object.freeze({
+        POLICY_VIOLATION: "policy_violation",
+        SPAM_ACTIVITY: "spam_activity",
+        HARASSMENT: "harassment",
+        FRAUDULENT_BEHAVIOR: "fraudulent_behavior",
+        SUSPICIOUS_LOGIN: "suspicious_login",
+        OTHER: "other"
+    }),
+    UNBLOCK_REASONS: Object.freeze({
+        MANUAL_REVIEW_PASSED: "manual_review_passed",
+        USER_APPEAL_GRANTED: "user_appeal_granted",
+        SYSTEM_ERROR: "system_error",
+        OTHER: "other"
     })
 }

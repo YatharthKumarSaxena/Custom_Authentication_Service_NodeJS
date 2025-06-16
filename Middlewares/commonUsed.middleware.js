@@ -259,6 +259,7 @@ module.exports = {
     checkUserIsVerified: checkUserIsVerified,
     isUserBlocked: isUserBlocked,
     isUserAccountActive: isUserAccountActive,
-    validateUserIDMatch: validateUserIDMatch
+    validateUserIDMatch: validateUserIDMatch,
+    verifyTokenOwnership: verifyTokenOwnership
 }
 

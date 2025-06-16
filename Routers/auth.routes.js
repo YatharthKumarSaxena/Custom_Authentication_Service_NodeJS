@@ -52,14 +52,15 @@ module.exports = (app) => {
     // 📌 Controller:
     // - Logs user out by invalidating session/token
     app.post(SIGNOUT, [
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
-        commonUsedMiddleware.validateUserIDMatch,
         authMiddleware.verifySignOutBody
     ], authController.signOut);
 
     // 🚫 Admin Only: Block User Account
     // 🔒 Middleware:
-    // - Validates token
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
     // - Validates userID match
     // - Verifies admin identity from request body
     // - Confirms requester is an admin
@@ -67,8 +68,8 @@ module.exports = (app) => {
     // 📌 Controller:
     // - Blocks another user’s account
     app.patch(BLOCK_USER, [
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
-        commonUsedMiddleware.validateUserIDMatch,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -76,12 +77,14 @@ module.exports = (app) => {
 
     // ✅ Admin Only: Unblock User Account
     // 🔒 Middleware: (same as block user)
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
     // - Ensures only authorized verified admins can unblock users
     // 📌 Controller:
     // - Unblocks the specified user
     app.patch(UNBLOCK_USER, [
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
-        commonUsedMiddleware.validateUserIDMatch,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -100,15 +103,16 @@ module.exports = (app) => {
 
     // 🚫 Public User: Deactivate Own Account
     // 🔒 Middleware:
-    // - Validates token and userID
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
     // - Checks if account is already active and not blocked
     // - Ensures user is verified
     // - Validates input body with password + identification
     // 📌 Controller:
     // - Deactivates account and logs user out
     app.patch(DEACTIVATE_USER, [
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
-        commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
@@ -117,13 +121,15 @@ module.exports = (app) => {
 
     // 📄 Public User: Get Own Account Details
     // 🔒 Middleware:
-    // - Validates token
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
     // - Confirms user is not blocked
     // - Confirms user is active
     // - Confirms user is verified
     // 📌 Controller:
     // - Returns full account details of the logged-in user
     app.get(GET_USER_ACCOUNT_DETAILS, [
+        commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
@@ -132,13 +138,15 @@ module.exports = (app) => {
 
     // 🛡️ Admin Only: Get Any User's Account Details
     // 🔒 Middleware:
-    // - Validates token (checks if token is present and valid)
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
     // - Confirms the requester is an admin (role check)
     // - Confirms the admin is a verified user (e.g. admin is logout or not)
     // - Validates that the admin is requesting valid user data (input format & presence)
     // 📌 Controller:
     // - Returns full account details of the target user (based on userId provided in query/body)
     app.get(FETCH_USER_DETAILS_BY_ADMIN, [
+        commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified,
@@ -147,7 +155,8 @@ module.exports = (app) => {
 
     // 👤 Authenticated User: Update Own Profile Details
     // 🔒 Middleware:
-    // - Validates token (ensures the requester is logged in)
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
     // - Confirms user is not blocked (e.g. by admin)
     // - Confirms user's account is active (not deactivated/suspended)
     // - Confirms user has verified their identity (e.g. via OTP/email)
@@ -156,6 +165,7 @@ module.exports = (app) => {
     // - Updates only the allowed and changed fields (name, email, address, etc.)
     // - Responds with either a success message + updated fields OR no changes made
     app.patch(UPDATE_USER_PROFILE,[
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
