@@ -4,13 +4,22 @@
 const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const UserModel = require("../Models/User.model");
-const {adminID} = require("../Configs/userID.config");
+const {adminID,BLOCK_REASONS,UNBLOCK_REASONS} = require("../Configs/userID.config");
 
 exports.blockUserAccount = async(req,res) => {
     try{
+        // Check Requested User to be Blocked is Admin 
         if(req.body.requestedUserID === adminID){
             logWithTime("🛡️👨‍💼 Admin cannot be blocked");
             return res.status(403).json({ success: false, message: "Admin cannot be blocked." });
+        }
+        // Checking Provided Reasons for Blocking are Invalid
+        const blockReason = req.body.reason;
+        if (!Object.values(BLOCK_REASONS).includes(blockReason)) {
+            return res.status(400).json({
+                success: false,
+                message: `❌ Invalid block reason. Accepted reasons: ${Object.values(BLOCK_REASONS).join(", ")}`
+            });
         }
         const user = await UserModel.findOne({
             $or:[
@@ -47,9 +56,18 @@ exports.blockUserAccount = async(req,res) => {
 
 exports.unblockUserAccount = async(req,res) => {
     try{
+        // Check Requested User to be Unblocked is Admin 
         if(req.body.requestedUserID === adminID){
             logWithTime("🛡️👨‍💼 Admin cannot be unblocked");
             return res.status(403).json({ success: false, message: "Admin cannot be unblocked." });
+        }
+        // Checking Provided Reasons for Unblocking are Invalid
+        const unblockReason = req.body.reason;
+        if (!Object.values(UNBLOCK_REASONS).includes(unblockReason)) {
+            return res.status(400).json({
+                success: false,
+                message: `❌ Invalid unblock reason. Accepted reasons: ${Object.values(UNBLOCK_REASONS).join(", ")}`
+            });
         }
         const user = await UserModel.findOne({
             $or:[

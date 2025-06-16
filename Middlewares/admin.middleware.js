@@ -5,13 +5,20 @@ const { logWithTime } = require("../Utils/timeStamps.utils");
 const { AdminActionReasons } = require("../Configs/userID.config");
 
 // Verify Admin Body Request for Blocking / Unblocking a user
-const verifyAdminBody = async(req,res,next) => {
+const verifyAdminBlockUnblockBody = async(req,res,next) => {
     try{
-        if(!req.body.userID){
+        if(!req.body.reason){
             return throwResourceNotFoundError(res,"AdminID");
         }
         if(!req.body.requestedUserID && !req.body.phoneNumber && !req.body.emailID){
             return throwResourceNotFoundError(res,"EmailID,Requested UserID or Phone Number(At least one of these fields)");
+        }
+        const identifiers = [req.body.requestedUserID, req.body.phoneNumber, req.body.emailID].filter(Boolean);
+        if (identifiers.length !== 1) {
+            return res.status(400).json({
+                success: false,
+                message: "❌ Provide exactly one identifier: userID, phoneNumber, or emailID."
+            });
         }
         // Very next line should be:
         if (!res.headersSent) return next();
@@ -50,6 +57,6 @@ const verifyAdminUserViewRequest = async(req,res,next) => {
 }
 
 module.exports = {
-    verifyAdminBody:verifyAdminBody,
+    verifyAdminBlockUnblockBody: verifyAdminBlockUnblockBody,
     verifyAdminUserViewRequest: verifyAdminUserViewRequest
 }
