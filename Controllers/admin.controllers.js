@@ -9,7 +9,7 @@ const {adminID,BLOCK_REASONS,UNBLOCK_REASONS} = require("../Configs/userID.confi
 exports.blockUserAccount = async(req,res) => {
     try{
         // Check Requested User to be Blocked is Admin 
-        if(req.body.requestedUserID === adminID){
+        if(req.user.userID === adminID){
             logWithTime("🛡️👨‍💼 Admin cannot be blocked");
             return res.status(403).json({ success: false, message: "Admin cannot be blocked." });
         }
@@ -23,7 +23,7 @@ exports.blockUserAccount = async(req,res) => {
         }
         const user = await UserModel.findOne({
             $or:[
-                {userID: req.body.requestedUserID},
+                {userID: req.body.userID},
                 {phoneNumber: req.body.phoneNumber},
                 {emailID: req.body.emailID}
             ]
@@ -57,7 +57,7 @@ exports.blockUserAccount = async(req,res) => {
 exports.unblockUserAccount = async(req,res) => {
     try{
         // Check Requested User to be Unblocked is Admin 
-        if(req.body.requestedUserID === adminID){
+        if(req.body.userID === adminID){
             logWithTime("🛡️👨‍💼 Admin cannot be unblocked");
             return res.status(403).json({ success: false, message: "Admin cannot be unblocked." });
         }
@@ -71,13 +71,13 @@ exports.unblockUserAccount = async(req,res) => {
         }
         const user = await UserModel.findOne({
             $or:[
-                {userID: req.body.requestedUserID},
+                {userID: req.body.userID},
                 {phoneNumber: req.body.phoneNumber},
                 {emailID: req.body.emailID}
             ]
         })
         if(!user){
-            logWithTime(`⚠️ Invalid unblock request. Admin tried unblocking non-existent user: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID}`);
+            logWithTime(`⚠️ Invalid unblock request. Admin tried unblocking non-existent user: ${req.body?.userID || req.body?.phoneNumber || req.body?.emailID}`);
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
         }
         if(!user.isBlocked){

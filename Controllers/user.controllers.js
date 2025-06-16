@@ -10,7 +10,6 @@
 const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../Configs/errorHandler.configs");
 const { fetchUser } = require("../Middlewares/helperMiddlewares");
 const { logWithTime } = require("../Utils/timeStamps.utils");
-const { adminID } = require("../Configs/userID.config");
 
 exports.provideUserDetails = async(req,res) => {
     try{

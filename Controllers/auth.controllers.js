@@ -15,7 +15,7 @@ const {throwInvalidResourceError,errorMessage,throwInternalServerError} = requir
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const {makeTokenWithMongoID} = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
-const {httpOnly,secure,domain,sameSite} = require("../Configs/cookies.config");
+const {httpOnly,secure,sameSite} = require("../Configs/cookies.config");
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -263,7 +263,10 @@ exports.signIn = async (req,res) => {
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
             const refreshToken = signInWithToken(req);
-            if(refreshToken === "")return;
+            if (refreshToken === "") {
+                logWithTime("❌ Refresh token generation failed during login");
+                return throwInternalServerError(res);
+            }
             user.refreshToken = refreshToken;
             user.isVerified = true; // Marked User as Verified
             user.jwtTokenIssuedAt = new Date(); // Update JWT token issued time
@@ -299,17 +302,13 @@ exports.signIn = async (req,res) => {
 
 exports.signOut = async (req,res) => {
     try{
-        let user = req.foundUser;
+        let user = req.user;
         if(!user){
-            const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
-            user = await UserModel.findOne({userID: userID});
-            if(!user){
-                return throwInvalidResourceError(res,"UserID");
-            }
+            return throwInvalidResourceError(res,"UserID");
         }
         user.refreshToken = null;
         user.isVerified = false;
-        res.clearCookie("refreshToken", { httpOnly: true, sameSite: "Strict", secure: true });
+        res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
         await user.save();
         if (!user.isActive) {
             logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout.`);
@@ -352,10 +351,10 @@ exports.activateUserAccount = async(req,res) => {
 // Logic to deactivate user account
 exports.deactivateUserAccount = async(req,res) => {
     try{
-        const user = req.foundUser;
+        const user = req.user;
         let isPasswordValid = checkPasswordIsValid(req,user);
         if(!isPasswordValid){
-            return throwInvalidResourceError("Password");
+            return throwInvalidResourceError(res,"Password");
         }
         user.isActive = false;
         // Forcibly Log Out User when its Account is Deactivated
