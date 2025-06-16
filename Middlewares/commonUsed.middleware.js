@@ -184,28 +184,6 @@ const isAdmin = (req,res,next) => {
     }
 }
 
-// Validate Provided UserID and Token User ID are same or not
-const validateUserIDMatch = async (req, res, next) => {
-    try{
-        // Check whether Access Token and Refresh token belongs to same ID or not
-        const verifyWith = await fetchUser(req,res);
-        if(!req.foundUser){
-            logWithTime("❌ User not found during ID validation");
-            return;
-        }
-        const providedUserID = String(req.foundUser._id);
-        if(!providedUserID || req.user.id !== providedUserID){
-            logWithTime(`⚠️ User ID mismatch: tokenUserID(${req.user.userID}) vs request(${verifyWith}) whose user id is (${req.foundUser.userID})`);
-            return res.status(403).json({ message: "User ID mismatch: Access Denied" });
-        }
-        if(!res.headersSent)return next();
-    }catch(err){
-        logWithTime("⚠️ An Error Occurred while validating the Provided User and User Obtained from Token");
-        errorMessage(err);
-        return throwInternalServerError(res);
-    }
-};
-
 const verifyTokenOwnership = async(req, res, next) => {
   try {
     // 1. Extract refresh token from cookies (assuming 'id' key stores the refresh token)
@@ -259,7 +237,6 @@ module.exports = {
     checkUserIsVerified: checkUserIsVerified,
     isUserBlocked: isUserBlocked,
     isUserAccountActive: isUserAccountActive,
-    validateUserIDMatch: validateUserIDMatch,
     verifyTokenOwnership: verifyTokenOwnership
 }
 
