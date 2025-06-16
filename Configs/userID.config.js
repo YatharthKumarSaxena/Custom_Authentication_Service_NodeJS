@@ -23,7 +23,7 @@ module.exports = {
         // It makes it complicated to decode and hence it increases the security of User Data Privacy
         // There are so many methods for Hashing , in this project I used SALT Based Hashing
         // SALT is bascially a Random Text (Can be String or Number) is added to password
-        password: bcryptjs.hashSync(process.env.ADMIN_PASSWORD_PLAIN,SALT),
+        password: process.env.ADMIN_PASSWORD,
         emailID: process.env.ADMIN_EMAIL_ID,
         address: [
             {localAddress: process.env.ADMIN_LOCAL_ADDRESS,
