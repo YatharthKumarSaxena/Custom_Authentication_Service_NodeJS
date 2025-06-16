@@ -87,11 +87,23 @@ const verifySignUpBody = async (req,res,next) =>{
             else reason = reason+" ,Phone Number";
             userIsValid = false;
         }
-        // Check Password is present in Request Body or not
+         // Check Password is present in Request Body or not
         if(!req.body.password){
             if(userIsValid)reason = reason+"Password";
             else reason = reason+" ,Password";
             userIsValid = false;
+        } else {
+            // ✅ Move these two checks inside the "else" of password
+            if (req.body.password.length < 8) {
+                return throwInvalidResourceError(res, "Password must be at least 8 characters long");
+            }
+            const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/;
+            if (!strongPasswordRegex.test(req.body.password)) {
+                return throwInvalidResourceError(
+                    res,
+                    "Password must contain at least one letter, one number, and one special character",
+                );
+            }
         }
         if(userIsValid){ // Check that User Exists with Phone Number or Email ID
             let emailID = req.body.emailID;
