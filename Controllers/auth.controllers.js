@@ -431,6 +431,7 @@ exports.deactivateUserAccount = async(req,res) => {
         user.refreshToken = null;
         user.isVerified = false;
         user.devices.length = 0;
+        user.lastDeactivatedAt = Date.now();
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         await user.save();
         // Deactivation success log

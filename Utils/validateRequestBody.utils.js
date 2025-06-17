@@ -40,7 +40,14 @@ async function checkUserExists(emailID,phoneNumber){
     }
 }
 
+// 📦 Utility to get a device from user's devices array by deviceID
+const getDeviceByID = (user, deviceID) => {
+    if (!user?.devices?.length) return null;
+    return user.devices.find(d => d.deviceID === deviceID) || null;
+};
+
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
-  checkUserExists: checkUserExists
+  checkUserExists: checkUserExists,
+  getDeviceByID: getDeviceByID
 }
