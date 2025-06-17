@@ -16,7 +16,7 @@ const { logWithTime } = require("../Utils/timeStamps.utils");
 const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
 const { httpOnly,secure,sameSite } = require("../Configs/cookies.config");
-const { checkUserExists } = require("../Utils/validateRequestBody.utils");
+const { checkUserExists, getDeviceByID } = require("../Utils/validateRequestBody.utils");
 const { checkUserIsNotVerified } = require("../Middlewares/helperMiddlewares");
 
 /*
@@ -291,12 +291,19 @@ exports.signIn = async (req,res) => {
             }
             req.foundUser = user;
         }
-        const device = createDeviceField(req,res);
-        if(!device)return;
+        const device = getDeviceByID(user,req.deviceID)
+        if(device){
+            device.lastUsedAt = Date.now();
+            await user.save();
+            logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device (${req.body.device.deviceID})`);
+            return res.status(400).json({
+                success: false,
+                message: "User is already logged in.",
+                suggestion: "Please logout first before trying to login again."
+            });
+        };
+        device = createDeviceField(req,res);
         user = req.foundUser;
-        const isDeviceAlreadyPresent = user.devices.some(device =>
-            device.deviceID === req.deviceID
-        );
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user,res);
         if (!result) {
@@ -305,21 +312,6 @@ exports.signIn = async (req,res) => {
                 success: false,
                 message: "User is already logged in.",
                 suggestion: "Please logout first before trying to login again."
-            });
-        }
-        // Check User is trying to login at same device
-        if(isDeviceAlreadyPresent){
-            const index = user.devices.findIndex(device =>
-                device.deviceID === req.body.device.deviceID
-            );
-            if(index !== -1){
-                user.devices[index].lastUsedAt = Date.now();
-                await user.save();
-            }
-            logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device (${req.body.device.deviceID})`);
-            return res.status(403).send({
-                message: "Access Denied: You cannot do multiple login on same device",
-                suggestion: "Log out from this device to continue Log In"
             });
         }
         // Check Password is Correct or Not
