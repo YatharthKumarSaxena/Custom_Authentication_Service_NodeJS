@@ -21,6 +21,7 @@ const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 const GET_USER_ACCOUNT_DETAILS = URIS.USER_ROUTES.FETCH_MY_PROFILE;
 const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.FETCH_USER_DETAILS;
 const UPDATE_USER_PROFILE = URIS.USER_ROUTES.UPDATE_PROFILE;
+const CHANGE_PASSWORD = URIS.AUTH_ROUTES.CHANGE_PASSWORD;
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -172,4 +173,13 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified,
         userMiddleware.checkUpdateMyProfileRequest
     ],userController.updateUserProfile);
+
+    app.patch(CHANGE_PASSWORD,[
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive,
+        commonUsedMiddleware.checkUserIsVerified,
+        authMiddleware.verifyChangePasswordBody
+    ],authController.changePassword);
 };

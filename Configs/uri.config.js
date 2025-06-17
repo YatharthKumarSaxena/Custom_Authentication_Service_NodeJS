@@ -30,6 +30,7 @@ module.exports = {
         SIGNOUT: `${AUTH_BASE}/signout`,                        // POST /ecomm/api/v1/auth/signout
         DEACTIVATE_USER: `${AUTH_BASE}/deactivate`,             // PATCH /ecomm/api/v1/auth/deactivate
         ACTIVATE_USER: `${AUTH_BASE}/activate`,                 // PATCH /ecomm/api/v1/auth/activate
+        CHANGE_PASSWORD: `${AUTH_BASE}/password`                // PATCH /ecomm/api/v1/auth/password
     },
 
     // 👤 Routes accessible by the logged-in user (like updating their profile)

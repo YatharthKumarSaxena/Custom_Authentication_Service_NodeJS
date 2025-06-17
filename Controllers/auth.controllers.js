@@ -380,8 +380,10 @@ exports.deactivateUserAccount = async(req,res) => {
 exports.changePassword = async(req,res) => {
     try{
         const user = req.user;
-        const password = req.body.password;
+        const password = req.body.newPassword;
         user.password = await bcrypt.hash(password, SALT); // Password is Encrypted
+        user.refreshToken = null;
+        user.isVerified = false;
         await user.save();
         return res.status(200).json({
             success: true,
