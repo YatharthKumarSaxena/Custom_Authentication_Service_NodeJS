@@ -87,6 +87,11 @@ const verifySignUpBody = async (req,res,next) =>{
             else reason = reason+" ,Phone Number";
             userIsValid = false;
         }
+        if(!req.body.device){
+            if(userIsValid)reason = reason+"Device Information";
+            else reason = reason+" ,Device Information";
+            userIsValid = false;           
+        }
          // Check Password is present in Request Body or not
         if(!req.body.password){
             if(userIsValid)reason = reason+"Password";
@@ -105,19 +110,7 @@ const verifySignUpBody = async (req,res,next) =>{
                 );
             }
         }
-        if(userIsValid){ // Check that User Exists with Phone Number or Email ID
-            let emailID = req.body.emailID;
-            let phoneNumber = req.body.phoneNumber;
-            // Checking User already exists or not 
-            const userExistReason = await checkUserExists(emailID,phoneNumber);
-            if(userExistReason !== ""){
-                return res.status(400).json({
-                    message: "User Already Exists with "+userExistReason,
-                    warning: "Use different Email ID or Phone Number or both based on Message"
-                })
-            }
-        }
-        else{ // Throw Error as User Details are not properly given
+        if(!userIsValid){ // Throw Error as User Details are not properly given
             return throwResourceNotFoundError(res,reason);
         }
         // Very next line should be:
@@ -135,6 +128,9 @@ const verifySignInBody = async (req,res,next) =>{
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
         }
+        if(!req.body.device){
+            return throwResourceNotFoundError(res,"Device Information");
+        }
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
@@ -143,16 +139,6 @@ const verifySignInBody = async (req,res,next) =>{
             return;
         }
         const user = req.foundUser;
-        // ✅ Now Check if User is Already Logged In
-        const result = await checkUserIsNotVerified(user,res);
-        if (!result) {
-            logWithTime("🚫 Request Denied: User is already logged in.");
-            return res.status(400).json({
-            success: false,
-            message: "User is already logged in.",
-            suggestion: "Please logout first before trying to login again."
-            });
-        }
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){

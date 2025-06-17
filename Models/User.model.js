@@ -130,7 +130,6 @@ const userSchema = mongoose.Schema({
              _id: false,
             deviceID: { type: String, required: true }, // e.g. generated UUID
             deviceName: { type: String }, // e.g. Redmi Note 8, Chrome on Mac
-            refreshToken: { type: String, required: true },
             addedAt: { type: Date, default: Date.now },
             lastUsedAt: { type: Date, default: Date.now }
         }

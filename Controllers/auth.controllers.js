@@ -148,7 +148,17 @@ function signInWithToken(request){
 exports.signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
-
+    // Check that User Exists with Phone Number or Email ID
+    let emailID = request_body.emailID.trim().toLowerCase();
+    let phoneNumber = request_body.phoneNumber.trim();
+    // Checking User already exists or not 
+    const userExistReason = await checkUserExists(emailID,phoneNumber);
+    if(userExistReason !== ""){
+        return res.status(400).json({
+            message: "User Already Exists with "+userExistReason,
+            warning: "Use different Email ID or Phone Number or both based on Message"
+        })
+    }
     /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
     let generatedUserID; // To resolve Scope Resolution Issue
     try{
@@ -168,14 +178,18 @@ exports.signUp = async (req,res) => { // Made this function async to use await
       ✅ SRP: User object is composed here only once after getting all required parts.
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
-    const password = await bcrypt.hash(password, SALT); // Password is Encrypted
+    const password = await bcrypt.hash(request_body.password, SALT); // Password is Encrypted
+    const device = request_body.device;
+    device.addedAt = Date.now();
+    device.lastUsedAt = Date.now();
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
         emailID: request_body.emailID,
         password: password,
-        address: request_body.address,
-        userID: generatedUserID
+        address: [request_body.address],
+        userID: generatedUserID,
+        devices: [device]
     }
     // 🟨 Optional Fields Handling
     if(request_body.gender) {
@@ -195,7 +209,8 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             emailID: user.emailID,
             userID: user.userID,
             userType: user.userType,
-            createdAt: user.createdAt
+            createdAt: user.createdAt,
+            devices: [device]
         }
         const userDisplayDetails = {
             details:"Here is your Basic Profile Details given below:-", 
@@ -214,14 +229,16 @@ exports.signUp = async (req,res) => { // Made this function async to use await
                 userDisplayDetails
             });
         }
-        user.refreshToken = refreshToken;
-        user.isVerified = true;
         res.cookie("refreshToken", refreshToken, {
             httpOnly: httpOnly, // 🟡 Temporarily allow Postman/browser JS to read
             secure: secure,   // 🧪 Optional in localhost, but true in prod
             sameSite: sameSite, // Postman compatibility
             maxAge: expiryTimeOfRefreshToken * 1000
         });
+        user.refreshToken = refreshToken;
+        user.isVerified = true;
+        user.loginCount = 1;
+        user.lastLogin = Date.now();
         await user.save(); // save token in DB
         const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
         // Generate Access Token for User
@@ -256,6 +273,35 @@ exports.signIn = async (req,res) => {
             }
             req.foundUser = user;
         }
+        user = req.foundUser;
+        const isDeviceAlreadyPresent = user.devices.some(device =>
+            device.deviceID === req.body.device.deviceID
+        );
+        // ✅ Now Check if User is Already Logged In
+        const result = await checkUserIsNotVerified(user,res);
+        if (!result) {
+            logWithTime("🚫 Request Denied: User is already logged in.");
+            return res.status(400).json({
+                success: false,
+                message: "User is already logged in.",
+                suggestion: "Please logout first before trying to login again."
+            });
+        }
+        // Check User is trying to login at same device
+        if(isDeviceAlreadyPresent){
+            const index = user.devices.findIndex(device =>
+                device.deviceID === req.body.device.deviceID
+            );
+            if(index !== -1){
+                user.devices[index].lastUsedAt = Date.now();
+                await user.save();
+            }
+            logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device (${req.body.device.deviceID})`);
+            return res.status(403).send({
+                message: "Access Denied: You cannot do multiple login on same device",
+                suggestion: "Log out from this device to continue Log In"
+            });
+        }
         // Check Password is Correct or Not
         let isPasswordValid = await checkPasswordIsValid(req,user);
         if(isPasswordValid){ // Login the User
@@ -265,16 +311,18 @@ exports.signIn = async (req,res) => {
                 logWithTime("❌ Refresh token generation failed during login");
                 return throwInternalServerError(res);
             }
-            user.refreshToken = refreshToken;
-            user.isVerified = true; // Marked User as Verified
-            user.jwtTokenIssuedAt = new Date(); // Update JWT token issued time
-            user.lastLogin = new Date(); // Update Last Login Time of User
             res.cookie("refreshToken", refreshToken, {
                 httpOnly: httpOnly, // 🟡 Temporarily allow Postman/browser JS to read
                 secure: secure,   // 🧪 Optional in localhost, but true in prod
                 sameSite: sameSite, // Postman compatibility
                 maxAge: expiryTimeOfRefreshToken * 1000
             });
+            user.refreshToken = refreshToken;
+            user.isVerified = true; // Marked User as Verified
+            user.jwtTokenIssuedAt = Date.now(); // Update JWT token issued time
+            user.lastLogin = Date.now(); // Update Last Login Time of User
+            user.loginCount = user.loginCount + 1;
+            user.devices.push(req.body.device);
             await user.save();
             const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
             // Generate Access Token for User
@@ -283,7 +331,7 @@ exports.signIn = async (req,res) => {
             res.setHeader("x-token-refreshed", "true"); 
             res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
             logWithTime("🔐 User with "+user.userID+" is Successfully logged in");
-            res.status(200).json({
+            return res.status(200).json({
                 message: "Welcome "+user.name+", You are successfully logged in",
                 userID: user.userID,
             })
