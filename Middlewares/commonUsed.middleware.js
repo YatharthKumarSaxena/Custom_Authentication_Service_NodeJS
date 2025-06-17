@@ -237,11 +237,33 @@ const verifyTokenOwnership = async(req, res, next) => {
   }
 };
 
+const verifyDeviceField = async (req,res,next) => {
+    try{
+        const deviceID = req.headers["x-device-uuid"];
+        const deviceName = req.headers["x-device-type"]; // Optional
+        // Device ID is mandatory
+        if (!deviceID || deviceID.trim() === "") {
+            return throwInvalidResourceError(res, "Device UUID (x-device-uuid) is required in request headers");
+        }
+        // Attach to request object for later use in controller
+        req.deviceID = deviceID;
+        if (deviceName && deviceName.trim() !== "") {
+            req.deviceName = deviceName;
+        }
+        if(!res.headersSent)next(); // Pass control to the next middleware/controller
+    }catch(err){
+        logWithTime("⚠️ Error occurred while validating the Device field ");
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}
+
 module.exports = {
     verifyToken: verifyToken,
     isAdmin: isAdmin,
     checkUserIsVerified: checkUserIsVerified,
     isUserBlocked: isUserBlocked,
     isUserAccountActive: isUserAccountActive,
-    verifyTokenOwnership: verifyTokenOwnership
+    verifyTokenOwnership: verifyTokenOwnership,
+    verifyDeviceField: verifyDeviceField
 }

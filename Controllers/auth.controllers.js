@@ -33,6 +33,23 @@ const checkPasswordIsValid = async(req,user) => {
     return isPasswordValid;
 }
 
+const createDeviceField = (req,res) => {
+    try{
+        const device = {
+            deviceID: req.deviceID,
+            addedAt: Date.now(),
+            lastUsedAt: Date.now()
+        };
+        if(req.deviceName)device.deviceName = req.deviceName;
+        return device;
+    }catch(err){
+        logWithTime(`🛑 An Error Occured in making the Device Field during SignUp/SignIn for user having userID: (${req.body.userID})`)
+        errorMessage(err);
+        throwInternalServerError(res);
+        return null;
+    }
+}
+
 // Increases the value of seq field in Customer Counter Document to generate unique ID for the new user
 async function increaseCustomerCounter(){
     try{
@@ -181,9 +198,8 @@ exports.signUp = async (req,res) => { // Made this function async to use await
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
     const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
-    const device = request_body.device;
-    device.addedAt = Date.now();
-    device.lastUsedAt = Date.now();
+    const device = createDeviceField(req,res);
+    if(!device)return;
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
@@ -275,9 +291,11 @@ exports.signIn = async (req,res) => {
             }
             req.foundUser = user;
         }
+        const device = createDeviceField(req,res);
+        if(!device)return;
         user = req.foundUser;
         const isDeviceAlreadyPresent = user.devices.some(device =>
-            device.deviceID === req.body.device.deviceID
+            device.deviceID === req.deviceID
         );
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user,res);
@@ -324,7 +342,7 @@ exports.signIn = async (req,res) => {
             user.jwtTokenIssuedAt = Date.now(); // Update JWT token issued time
             user.lastLogin = Date.now(); // Update Last Login Time of User
             user.loginCount = user.loginCount + 1;
-            user.devices.push(req.body.device);
+            user.devices.push(device);
             await user.save();
             const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
             // Generate Access Token for User

@@ -37,27 +37,6 @@ const verifyAddressField = async (req, res, next) => {
     }
 };
 
-const verifyDeviceField = async (req,res,next) => {
-    try{
-        const deviceID = req.headers["x-device-uuid"];
-        const deviceType = req.headers["x-device-type"]; // Optional
-        // Device ID is mandatory
-        if (!deviceID || deviceID.trim() === "") {
-            return throwInvalidResourceError(res, "Device UUID (x-device-uuid) is required in request headers");
-        }
-        // Attach to request object for later use in controller
-        req.deviceID = deviceID;
-        if (deviceType && deviceType.trim() !== "") {
-            req.deviceType = deviceType;
-        }
-        if(!res.headersSent)next(); // Pass control to the next middleware/controller
-    }catch(err){
-        logWithTime("⚠️ Error occurred while validating the Device field ");
-        errorMessage(err);
-        return throwInternalServerError(res);
-    }
-}
-
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
@@ -80,7 +59,7 @@ const verifySignUpBody = async (req,res,next) =>{
             else reason = reason+" ,Phone Number";
             userIsValid = false;
         }
-        if(!req.body.device){
+        if(!req.deviceID){
             if(userIsValid)reason = reason+"Device Information";
             else reason = reason+" ,Device Information";
             userIsValid = false;           
