@@ -144,6 +144,10 @@ const userSchema = mongoose.Schema({
     passwordChangedAt: {
         type: Date,
         default: null
+    },
+    lastDeactivatedAt: { 
+        type: Date,
+        default: null
     }
 },{timestamps:true,versionKey:false})
 
