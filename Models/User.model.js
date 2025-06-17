@@ -120,6 +120,30 @@ const userSchema = mongoose.Schema({
     jwtTokenIssuedAt: {
         type: Date,
         default: null
+    },
+    loginCount: {
+        type: Number,
+        default: 0 // Useful for analytics and login alerts
+    },
+    devices: [
+        {
+             _id: false,
+            deviceID: { type: String, required: true }, // e.g. generated UUID
+            deviceName: { type: String }, // e.g. Redmi Note 8, Chrome on Mac
+            refreshToken: { type: String, required: true },
+            addedAt: { type: Date, default: Date.now },
+            lastUsedAt: { type: Date, default: Date.now }
+        }
+    ],
+    otp: {
+        code: { type: String }, // 6-digit OTP (hashed ideally)
+        expiresAt: { type: Date },
+        verified: { type: Boolean, default: false },
+        resendCount: { type: Number, default: 0 } // Limit OTP abuse
+    },
+    passwordChangedAt: {
+        type: Date,
+        default: null
     }
 },{timestamps:true,versionKey:false})
 
