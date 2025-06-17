@@ -12,6 +12,35 @@ const validateSingleIdentifier = (req,res) => {
     return true;
 };
 
+// ✅ SRP: This function only checks for existing users via phoneNumber or emailID
+async function checkUserExists(emailID,phoneNumber){
+    try{
+        let count = 0;
+        let user1 = await UserModel.findOne({phoneNumber: phoneNumber})
+        let reason = "";
+        if(user1){
+            logWithTime("⚠️ User Already Exists with Phone Number: "+phoneNumber);
+            reason = "Phone Number: "+phoneNumber;
+            count++;
+        }
+        user1 = await UserModel.findOne({emailID: emailID});
+        if(user1){
+            logWithTime("⚠️ User Already Exists with Email ID: "+emailID);
+            if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
+            else reason = "Email ID: "+emailID;
+            count++;
+        }
+        if(count!==0)logWithTime("⚠️ Invalid Registration");
+        return reason;
+    }catch(err){
+        logWithTime("⚠️ An Error occured while Checking whether User Exists or not");
+        errorMessage(err);
+        throwInternalServerError(res);
+        return "";
+    }
+}
+
 module.exports = {
-  validateSingleIdentifier: validateSingleIdentifier
+  validateSingleIdentifier: validateSingleIdentifier,
+  checkUserExists: checkUserExists
 }

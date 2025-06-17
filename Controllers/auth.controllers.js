@@ -7,15 +7,17 @@
 */
 
 // Extracting the required modules
-const {userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken} = require("../Configs/userID.config");
+const { userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken } = require("../Configs/userID.config");
 const UserModel = require("../Models/User.model");
 const CounterModel = require("../Models/ID_Generator.model");
 const bcryptjs = require("bcryptjs")
-const {throwInvalidResourceError,errorMessage,throwInternalServerError} = require("../Configs/errorHandler.configs");
+const { throwInvalidResourceError,errorMessage,throwInternalServerError } = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
-const {makeTokenWithMongoID} = require("../Utils/issueToken.utils");
+const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
-const {httpOnly,secure,sameSite} = require("../Configs/cookies.config");
+const { httpOnly,secure,sameSite } = require("../Configs/cookies.config");
+const { checkUserExists } = require("../Utils/validateRequestBody.utils");
+const { checkUserIsNotVerified } = require("../Middlewares/helperMiddlewares");
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -87,7 +89,7 @@ async function createCustomerCounter(){
 // User ID Creation
 async function makeUserID(){
     let totalCustomers = 1; // By default as Admin User Already Exists 
-    let customerCounter // To remove Scope Resolution Issue
+    let customerCounter; // To remove Scope Resolution Issue
     try{
         customerCounter = await CounterModel.findOne({_id: "CUS"});
     }catch(err){
@@ -178,7 +180,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
       ✅ SRP: User object is composed here only once after getting all required parts.
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
-    const password = await bcrypt.hash(request_body.password, SALT); // Password is Encrypted
+    const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
     const device = request_body.device;
     device.addedAt = Date.now();
     device.lastUsedAt = Date.now();
