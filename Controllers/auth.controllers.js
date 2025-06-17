@@ -24,10 +24,10 @@ const {httpOnly,secure,sameSite} = require("../Configs/cookies.config");
   Operates on a single MongoDB document (id = "CUS"), treating it as a unique entity.
 */
 
-const checkPasswordIsValid = (req,user) => {
+const checkPasswordIsValid = async(req,user) => {
     const providedPassword = req.body.password;
     const actualPassword = user.password;
-    const isPasswordValid = bcryptjs.compareSync(providedPassword,actualPassword);
+    const isPasswordValid = await bcryptjs.compare(providedPassword, actualPassword);
     return isPasswordValid;
 }
 
@@ -44,7 +44,7 @@ async function increaseCustomerCounter(){
     }catch(err){
         logWithTime("🛑 An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
         errorMessage(err);
-        return;
+        return throwInternalServerError(res);
     }
 }
 
@@ -67,7 +67,7 @@ async function createCustomerCounter(){
     }catch(err){
         logWithTime("⚠️ An Error Occured while creating Customer Counter")
         errorMessage(err);
-        return;
+        return throwInternalServerError(res);
     } 
 }
 
@@ -160,21 +160,20 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         }
     }catch(err){
         logWithTime("⚠️ Error Occured while making the User ID");
-        errorMessage(err)
-        throwInternalServerError(res);
-        return;
+        errorMessage(err);
+        return throwInternalServerError(res);
     }
 
     /*
       ✅ SRP: User object is composed here only once after getting all required parts.
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
-
+    const password = await bcrypt.hash(password, SALT); // Password is Encrypted
     const User = {
         name: request_body.name,
         phoneNumber: request_body.phoneNumber,
         emailID: request_body.emailID,
-        password: bcryptjs.hashSync(request_body.password,SALT), // Password is Encrypted
+        password: password,
         address: request_body.address,
         userID: generatedUserID
     }
@@ -241,8 +240,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     }catch(err){
         logWithTime("⚠️ Error happened while creating a new User");
         errorMessage(err);
-        throwInternalServerError(res);
-        return;
+        return throwInternalServerError(res);
     }
 }
 
@@ -259,7 +257,7 @@ exports.signIn = async (req,res) => {
             req.foundUser = user;
         }
         // Check Password is Correct or Not
-        let isPasswordValid = checkPasswordIsValid(req,user);
+        let isPasswordValid = await checkPasswordIsValid(req,user);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
             const refreshToken = signInWithToken(req);
@@ -295,7 +293,8 @@ exports.signIn = async (req,res) => {
             return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging in the User")
+        logWithTime("⚠️ Error occurred while logging in the User");
+        errorMessage(err);
         return throwInternalServerError(res);
     }  
 }
@@ -321,6 +320,7 @@ exports.signOut = async (req,res) => {
         })
     }catch(err){
         logWithTime("⚠️ Error occurred while logging out the User");
+        errorMessage(err);
         return throwInternalServerError(res);
     }
 }
@@ -329,7 +329,7 @@ exports.signOut = async (req,res) => {
 exports.activateUserAccount = async(req,res) => {
     try{
         const user = req.foundUser;
-        let isPasswordValid = checkPasswordIsValid(req,user);
+        let isPasswordValid = await checkPasswordIsValid(req,user);
         if(!isPasswordValid){
             return throwInvalidResourceError(res,"Password");
         }
@@ -344,6 +344,7 @@ exports.activateUserAccount = async(req,res) => {
         });
     }catch(err){
         logWithTime("⚠️ Error occurred while activating the User Account");
+        errorMessage(err)
         return throwInternalServerError(res);
     }
 }
@@ -352,7 +353,7 @@ exports.activateUserAccount = async(req,res) => {
 exports.deactivateUserAccount = async(req,res) => {
     try{
         const user = req.user;
-        let isPasswordValid = checkPasswordIsValid(req,user);
+        let isPasswordValid = await checkPasswordIsValid(req,user);
         if(!isPasswordValid){
             return throwInvalidResourceError(res,"Password");
         }
@@ -371,6 +372,24 @@ exports.deactivateUserAccount = async(req,res) => {
         });
     }catch(err){
         logWithTime("⚠️ Error occurred while deactivating the User Account");
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}
+
+exports.changePassword = async(req,res) => {
+    try{
+        const user = req.user;
+        const password = req.body.password;
+        user.password = await bcrypt.hash(password, SALT); // Password is Encrypted
+        await user.save();
+        return res.status(200).json({
+            success: true,
+            message: "Your password has been changed successfully."
+        });
+    }catch(err){
+        logWithTime(`⚠️ Error occurred while changing the password of User with User ID (${req.user.userID})`);
+        errorMessage(err);
         return throwInternalServerError(res);
     }
 }
