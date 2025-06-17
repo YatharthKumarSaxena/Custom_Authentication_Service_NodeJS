@@ -6,7 +6,6 @@
 /* If an Error Occured in Middleware then Middleware will throw an Error , Request will not be forwarded to Controller */
 
 // Extracting the Required Modules
-const UserModel = require("../Models/User.model");
 const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/errorHandler.configs");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 const { checkUserIsNotVerified,fetchUser} = require("./helperMiddlewares");
@@ -32,11 +31,32 @@ const verifyAddressField = async (req, res, next) => {
         }
         if (!res.headersSent) return next();
     }catch (err){
-        logWithTime("⚠️ Error occurred while validating the Address field (Delivery Service)");
+        logWithTime("⚠️ Error occurred while validating the Address field ");
         errorMessage(err);
         return throwInternalServerError(res);
     }
 };
+
+const verifyDeviceField = async (req,res,next) => {
+    try{
+        const deviceID = req.headers["x-device-uuid"];
+        const deviceType = req.headers["x-device-type"]; // Optional
+        // Device ID is mandatory
+        if (!deviceID || deviceID.trim() === "") {
+            return throwInvalidResourceError(res, "Device UUID (x-device-uuid) is required in request headers");
+        }
+        // Attach to request object for later use in controller
+        req.deviceID = deviceID;
+        if (deviceType && deviceType.trim() !== "") {
+            req.deviceType = deviceType;
+        }
+        if(!res.headersSent)next(); // Pass control to the next middleware/controller
+    }catch(err){
+        logWithTime("⚠️ Error occurred while validating the Device field ");
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}
 
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
