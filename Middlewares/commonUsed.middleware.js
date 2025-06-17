@@ -11,6 +11,7 @@ const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
 const { extractAccessToken } = require("../Utils/extractToken.utils");
 const { resetRefreshToken } = require("../Utils/freshSession.utils");
+const { getDeviceByID } = require("../Utils/validateRequestBody.utils");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -239,12 +240,21 @@ const verifyTokenOwnership = async(req, res, next) => {
 
 const verifyDeviceField = async (req,res,next) => {
     try{
+        const user = req.user;
         const deviceID = req.headers["x-device-uuid"];
         const deviceName = req.headers["x-device-type"]; // Optional
         // Device ID is mandatory
         if (!deviceID || deviceID.trim() === "") {
-            return throwInvalidResourceError(res, "Device UUID (x-device-uuid) is required in request headers");
+            return throwResourceNotFoundError(res, "Device UUID (x-device-uuid) is required in request headers");
         }
+        // Check whether Device ID belongs to User or Not
+        const device = getDeviceByID(user,deviceID);
+        if(!device){
+            return throwInvalidResourceError(res,"Device ID");
+        }
+        // ✅ 3. Update lastUsedAt
+        device.lastUsedAt = Date.now();
+        await user.save(); // Ensure it's persisted
         // Attach to request object for later use in controller
         req.deviceID = deviceID;
         if (deviceName && deviceName.trim() !== "") {

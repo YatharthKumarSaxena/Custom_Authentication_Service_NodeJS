@@ -27,7 +27,7 @@ exports.blockUserAccount = async(req,res) => {
                 {phoneNumber: req.body.phoneNumber},
                 {emailID: req.body.emailID}
             ]
-        })
+        });
         if(!user){
             logWithTime(`⚠️ Invalid block request. Admin tried blocking non-existent user: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID}`);
             return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
