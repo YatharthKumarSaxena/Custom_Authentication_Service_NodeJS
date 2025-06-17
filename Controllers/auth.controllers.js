@@ -355,6 +355,7 @@ exports.signOut = async (req,res) => {
         }
         user.refreshToken = null;
         user.isVerified = false;
+        user.devices.length = 0;
         res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
         await user.save();
         if (!user.isActive) {
@@ -409,6 +410,7 @@ exports.deactivateUserAccount = async(req,res) => {
         // Forcibly Log Out User when its Account is Deactivated
         user.refreshToken = null;
         user.isVerified = false;
+        user.devices.length = 0;
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         await user.save();
         // Deactivation success log
@@ -432,7 +434,9 @@ exports.changePassword = async(req,res) => {
         user.password = await bcrypt.hash(password, SALT); // Password is Encrypted
         user.refreshToken = null;
         user.isVerified = false;
+        user.devices.length = 0;
         await user.save();
+        res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         return res.status(200).json({
             success: true,
             message: "Your password has been changed successfully."

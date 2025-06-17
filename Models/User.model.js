@@ -58,6 +58,7 @@ const userSchema = mongoose.Schema({
     address:[
         {
             _id: false,
+            type: { type: String, enum: ['Home', 'Office', 'Other'], default: 'Home' },
             localAddress:{
                 type: String,
                 required: false
