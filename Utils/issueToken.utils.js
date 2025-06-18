@@ -15,7 +15,7 @@ exports.makeTokenWithMongoID = (mongoID,expiryTimeOfToken) => {
         );
         return newToken;
     } catch (err) {
-        logWithTime("An Error Occurred while creating the token");
+        logWithTime("`❌ An Internal Error Occurred while creating the token");
         errorMessage(err);
         return null;
     }

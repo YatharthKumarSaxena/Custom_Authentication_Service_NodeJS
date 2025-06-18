@@ -1,14 +1,14 @@
 const validateSingleIdentifier = (req,res) => {
     const identifiers = [req.body.phoneNumber, req.body.emailID, req.body.userID].filter(Boolean);
     if (identifiers.length !== 1) {
-        logWithTime("🧷 Invalid input: More than one or no identifier provided.");
+        logWithTime(`🧷 Invalid input: More than one or no identifier provided for UserID: (${req.user.userID}) from device id: (${req.deviceID}).`);
         res.status(400).send({
             success: false,
             message: "❌ Provide exactly one identifier: userID, phoneNumber, or emailID."
         }) 
         return false;
     }
-    logWithTime("🧩 Valid identifier input detected.");
+    logWithTime(`🧩 Valid identifier input detected for UserID: (${req.user.userID}) from device id: (${req.deviceID}).`);
     return true;
 };
 
@@ -33,7 +33,7 @@ async function checkUserExists(emailID,phoneNumber){
         if(count!==0)logWithTime("⚠️ Invalid Registration");
         return reason;
     }catch(err){
-        logWithTime("⚠️ An Error occured while Checking whether User Exists or not");
+        logWithTime(`❌ An Internal Error occurred reseting refresh token for phone number: (${phoneNumber}) and emailID: (${emailID}).`);
         errorMessage(err);
         throwInternalServerError(res);
         return "";

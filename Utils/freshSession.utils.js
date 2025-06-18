@@ -25,7 +25,8 @@ const resetRefreshToken = async(req,res) => {
         }
         return false;
     }catch(err){
-        logWithTime("⚠️ An Error occured while reseting the refresh token ");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error occurred reseting refresh token for User (${userID}).Request is made from device id: (${req.deviceID})`);
         errorMessage(err);
         if (!res.headersSent)return throwInternalServerError(res);
     }
