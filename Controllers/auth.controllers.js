@@ -188,7 +188,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             });
         }
     }catch(err){
-        logWithTime(`⚠️ Error Occured while making the User ID of Phone Number: (${req.body.phoneNumber}) and EmailID (${req.body.emailID})`);
+        logWithTime(`⚠️ Error Occured while making the User ID of Phone Number: (${req.body.phoneNumber}) and EmailID (${req.body.emailID}) from device id: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -221,7 +221,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     }
     try{
         const user = await UserModel.create(User);
-        logWithTime("🟢 User Created Successfully, Registration Successfull");
+        logWithTime(`🟢 User (${user.userID}) Created Successfully, Registration Successfull from device id: (${req.deviceID})`);
         const userGeneralDetails = {
             name: user.name,
             emailID: user.emailID,
@@ -241,7 +241,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         // Refresh Token Generation
         const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken)
         if(!refreshToken){
-            logWithTime("❌ Refresh Token generation failed after successful registration!");
+            logWithTime(`❌ Refresh Token generation failed after successful registration for User (${user.userID})!. User registered from device id: (${req.deviceID})`);
             return res.status(500).json({
                 message: "User registered but login (token generation) failed. Please try logging in manually.",
                 userDisplayDetails
@@ -264,7 +264,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         // Smart signal to frontend that Access token is Refreshed now
         res.setHeader("x-token-refreshed", "true"); 
         res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
-        logWithTime("User is successfully logged in on registration!");
+        logWithTime(`🟢 User (${user.userID}) is successfully logged in on registration from device id: (${req.deviceID})!`);
         logWithTime("👤 New User Details:- ");
         console.log(userGeneralDetails);
     /* 3. Return the response back to the User */
@@ -273,7 +273,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             userDisplayDetails,
         })
     }catch(err){
-        logWithTime(`❌ Internal Error: Error Occured while creating the User having Phone Number: (${req.body.phoneNumber}) and EmailID: (${req.body.emailID})`);
+        logWithTime(`❌ Internal Error: Error Occured while creating the User having Phone Number: (${req.body.phoneNumber}) and EmailID: (${req.body.emailID}) from device id: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -295,7 +295,7 @@ exports.signIn = async (req,res) => {
         if(device){
             device.lastUsedAt = Date.now();
             await user.save();
-            logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device (${req.body.device.deviceID})`);
+            logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device id (${req.deviceID})`);
             return res.status(400).json({
                 success: false,
                 message: "User is already logged in.",
@@ -307,7 +307,7 @@ exports.signIn = async (req,res) => {
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user,res);
         if (!result) {
-            logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.`);
+            logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.User tried this from device id: (${req.deviceID})`);
             return res.status(400).json({
                 success: false,
                 message: "User is already logged in.",
@@ -320,7 +320,7 @@ exports.signIn = async (req,res) => {
             // Sign with JWT Token
             const refreshToken = signInWithToken(req);
             if (refreshToken === "") {
-                logWithTime(`❌ Refresh token generation failed during login of User with userID: (${user.userID})`);
+                logWithTime(`❌ Refresh token generation failed during login of User with userID: (${user.userID}) from device id: (${req.deviceID})`);
                 return throwInternalServerError(res);
             }
             res.cookie("refreshToken", refreshToken, {
@@ -342,19 +342,19 @@ exports.signIn = async (req,res) => {
             // Smart signal to frontend that Access token is Refreshed now
             res.setHeader("x-token-refreshed", "true"); 
             res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
-            logWithTime("🔐 User with "+user.userID+" is Successfully logged in");
+            logWithTime(`🔐 User with (${user.userID}) is Successfully logged in from device id: (${req.deviceID})`);
             return res.status(200).json({
                 message: "Welcome "+user.name+", You are successfully logged in",
                 userID: user.userID,
             })
         }
         else{
-            logWithTime(`❌ Incorrect Password provided by User with userID: (${user.userID}) for Login Purpose`);
+            logWithTime(`❌ Incorrect Password provided by User with userID: (${user.userID}) for Login Purpose from device id: (${req.deviceID})`);
             return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while logging in the User with userID: (${userID})`);
+        logWithTime(`❌ Internal Error occurred while logging in the User with userID: (${userID}) from device id: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }  
@@ -372,17 +372,17 @@ exports.signOut = async (req,res) => {
         res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
         await user.save();
         if (user.isBlocked) {
-            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from all devices.`);
+            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from all devices from (${req.deviceID}).`);
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
-        else logWithTime("🔓 User with "+user.userID+" is Successfully logged out from all devices")
+        else logWithTime(`🔓 User with (${user.userID}) is Successfully logged out from all devices. User used device having device ID: (${req.deviceID})`);
         return res.status(200).json({
             message: user.name+", You are successfully logged out from all devices",
             userID: user.userID,
         })
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while logging out the User with userID: (${userID}) from all devices`);
+        logWithTime(`❌ Internal Error occurred while logging out the User with userID: (${userID} from all devices.User tried this using device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -401,7 +401,7 @@ exports.signOutFromSpecificDevice = async(req,res) => {
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user,res);
         if(result){
-            logWithTime("🚫 Request Denied: User is already logged out from all devices.");
+            logWithTime(`🚫 Request Denied: User (${user.userID}) is already logged out from device ID: (${req.deviceID}). User tried this using device ID: (${req.deviceID})`);
             return res.status(400).json({
                 success: false,
                 message: "User is already logged out from all devices.",
@@ -416,7 +416,7 @@ exports.signOutFromSpecificDevice = async(req,res) => {
         user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
         await user.save();
         if (user.isBlocked) {
-            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from device: ${req.deviceID}.`);
+            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from device id: ${req.deviceID}.`);
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
         else logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
@@ -444,7 +444,7 @@ exports.activateUserAccount = async(req,res) => {
         user.isActive = true;
         await user.save();
         // Activation success log
-        logWithTime(`✅ Account activated for UserID: ${user.userID}`);
+        logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
         return res.status(200).json({
             success: true,
             message: "Account activated successfully.",
@@ -452,7 +452,7 @@ exports.activateUserAccount = async(req,res) => {
         });
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while activating the User Account with userID: (${userID})`);
+        logWithTime(`❌ Internal Error occurred while activating the User Account with userID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err)
         errorMessage(err)
         return throwInternalServerError(res);
@@ -476,7 +476,7 @@ exports.deactivateUserAccount = async(req,res) => {
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         await user.save();
         // Deactivation success log
-        logWithTime(`🚫 Account deactivated for UserID: ${user.userID}`);
+        logWithTime(`🚫 Account deactivated for UserID: ${user.userID} from device id: (${req.deviceID})`);
         return res.status(200).json({
             success: true,
             message: "Account deactivated successfully.",
@@ -484,7 +484,7 @@ exports.deactivateUserAccount = async(req,res) => {
         });
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while deactivating the User Account with userID: (${userID})`);
+        logWithTime(`❌ Internal Error occurred while deactivating the User Account with userID: (${userID}) from device id: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -500,14 +500,14 @@ exports.changePassword = async(req,res) => {
         user.devices.length = 0;
         await user.save();
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
-        logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully `);
+        logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
         return res.status(200).json({
             success: true,
             message: "Your password has been changed successfully."
         });
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while changing the password of User with userID: (${userID})`);
+        logWithTime(`❌ Internal Error occurred while changing the password of User with userID: (${userID}) from device id: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
