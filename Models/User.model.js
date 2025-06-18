@@ -126,6 +126,10 @@ const userSchema = mongoose.Schema({
         type: Number,
         default: 0 // Useful for analytics and login alerts
     },
+    blockReason: {
+        type: String,
+        default: null
+    },
     devices: [
         {
              _id: false,
