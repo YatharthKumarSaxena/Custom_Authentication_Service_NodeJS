@@ -85,8 +85,8 @@ exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
   Handles Blocked Account responses.
 */
 
-exports.throwBlockedAccountError = (res) => {
-    const reason = "Your account is currently blocked.";
+exports.throwBlockedAccountError = (req,res) => {
+    const reason = req.user.blockReason;
     logWithTime("⛔️ Blocked Account: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(403).json({
