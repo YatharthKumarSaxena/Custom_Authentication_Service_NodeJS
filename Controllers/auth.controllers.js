@@ -500,7 +500,7 @@ exports.changePassword = async(req,res) => {
         user.devices.length = 0;
         await user.save();
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
-        logWithTime(`User Password with userID: (${user.userID}) is changed Succesfully `);
+        logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully `);
         return res.status(200).json({
             success: true,
             message: "Your password has been changed successfully."

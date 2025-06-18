@@ -19,7 +19,8 @@ const verifyAdminBlockUnblockBody = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ An Error occurred while validating the Admin Body Request for blocking/unblocking users")
+        const userID = req?.foundUser?.userID || req?.body?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while verifying the Admin Body Request with ID: (${req.user.userID}) on device having device ID: (${req.deviceID}) on user with userID: (${userID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -43,10 +44,11 @@ const verifyAdminUserViewRequest = async(req,res,next) => {
                 message: "❌ Invalid reason provided. Allowed reasons are: " + Object.values(AdminActionReasons).join(", ")
             });
         }
-        logWithTime(`🔍 Admin tried to check User Account Details of User having UserID: (${req.query.userID}) with reason: (${req.query.reason})`);
-        return next();
+        logWithTime(`🔍 Admin with id: (${req.user.userID})tried to check User Account Details of User having UserID: (${req.query.userID}) with reason: (${req.query.reason}) from device having device ID: (${req.deviceID})`);
+        if(!res.headersSent)return next();
     }catch(err){
-        logWithTime("⚠️ An Error occurred while validating the Admin Request while checking a User Account Details")
+        const userID = req?.query?.userID || req?.foundUser?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while verifying the Admin Body Request with ID: (${userID}) on device having device ID: (${req.deviceID}) to check User with userID : (${req.query.userID}) Profile`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
