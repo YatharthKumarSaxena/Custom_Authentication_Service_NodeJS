@@ -88,7 +88,8 @@ const verifySignUpBody = async (req,res,next) =>{
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Request");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign up Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -107,14 +108,15 @@ const verifySignInBody = async (req,res,next) =>{
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime("Login Request Cancelled")
+            logWithTime(`Login Request Cancelled for User (${req.user.userID}) from device ID: (${req.deviceID})`)
             return;
         }
         const user = req.foundUser;
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User SignIn Request");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign in Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -127,7 +129,7 @@ const verifySignOutBody = async (req,res,next) => {
         // ✅ Now Check if User is Already Logged Out 
         const isNotVerified = await checkUserIsNotVerified(user,res);
         if (isNotVerified) {
-            logWithTime("🚫 Logout Request Denied: User is already logged out.");
+            logWithTime(`🚫 Logout Request Denied: User (${req.user.userID}) is already logged out from device ID: (${req.deviceID})`);
             return res.status(400).json({
                 success: false,
                 message: "User is already logged out.",
@@ -137,7 +139,8 @@ const verifySignOutBody = async (req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Sign Out Request");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign out Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -150,11 +153,11 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime("Activate Account Request Cancelled")
+            logWithTime(`Activate Account with id: (${req.user.userID}) Request Cancelled. Request is done from (${req.deviceID})`);
             return;
         }
         if(req.foundUser.userID === adminID){
-            logWithTime("🚫 Request Denied: Admin account cannot be activated.");
+            logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be activated. Admin tried to do it from device ID: (${req.deviceID}).`);
             return res.status(403).json({
             success: false,
             message: "Admin account cannot be activated.",
@@ -166,7 +169,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         }
         const user = req.foundUser;
         if(user.isActive === true){
-            logWithTime("🚫 User Account Activation Request Denied: User Account is already Active.");
+            logWithTime(`🚫 User Account Activation Request Denied: User Account of User (${user.userID}) is already Active from device ID: (${req.deviceID}).`);
             return res.status(400).json({
             success: false,
             message: "User Account is already Active.",
@@ -176,7 +179,8 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Account Activation Request");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while verifying the Activate Account Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -188,7 +192,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         if(req.body.userID === adminID){
-            logWithTime("🚫 Request Denied: Admin account cannot be deactivated.");
+            logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be deactivated. Admin tried to do it from device ID: (${req.deviceID}).`);
             return res.status(403).json({
             success: false,
             message: "Admin account cannot be deactivated.",
@@ -197,7 +201,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         }
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime("Deactivate Account Request Cancelled")
+            logWithTime(`Deactivate Account with id: (${req.user.userID}) Request Cancelled. Request is done from (${req.deviceID})`);
             return;
         }
         if(!req.body.password){
@@ -215,7 +219,8 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating the User Account Deactivation Request");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while verifying the Deactivate Account Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -250,7 +255,8 @@ const verifyChangePasswordBody = async(req,res,next) => {
         }
         if(!res.headersSent)return next();
     }catch(err){
-        logWithTime("⚠️ Error happened while validating that Change Password Request Body");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while verifying the Change Password Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
