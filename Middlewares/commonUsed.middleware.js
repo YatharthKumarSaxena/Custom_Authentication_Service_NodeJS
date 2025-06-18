@@ -240,8 +240,14 @@ const verifyTokenOwnership = async(req, res, next) => {
             logWithTime("Token mismatch: Access and Refresh tokens belong to different users");
             return res.status(403).json({ message: "Token mismatch: user identities do not match" });
         }
+        // 🔍  Find user from DB
+        const user = await UserModel.findById(decodedRefresh.id);
         // ✅ Tokens are valid and synced – attach user to req
-        req.user = decodedRefresh;
+        req.user = user;
+        if (!user) {
+            logWithTime("User not found in DB for decoded token ID");
+            return throwResourceNotFoundError(res, "User");
+        }
         // ✅ All checks passed
         if(!res.headersSent)next();
         } catch (err) {
