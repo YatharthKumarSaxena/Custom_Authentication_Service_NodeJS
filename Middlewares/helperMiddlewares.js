@@ -11,6 +11,7 @@ const checkUserIsNotVerified = async(user,res) => {
     if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
         user.isVerified = false;
         user.refreshToken = null;
+        user.devices.length = 0;
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         await user.save(); // 👈 Add this line
         return true; // 🧠 session expired, response already sent

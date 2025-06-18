@@ -287,11 +287,11 @@ exports.signIn = async (req,res) => {
             const userID =  req?.foundUserID || req?.user?.userID || req?.body?.userID;
             user = await UserModel.findOne({userID: userID});
             if(!user){
-                return throwInvalidResourceError("UserID");
+                return throwInvalidResourceError(res,"UserID");
             }
             req.foundUser = user;
         }
-        const device = getDeviceByID(user,req.deviceID)
+        let device = getDeviceByID(user,req.deviceID)
         if(device){
             device.lastUsedAt = Date.now();
             await user.save();
@@ -375,7 +375,7 @@ exports.signOut = async (req,res) => {
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
         else logWithTime("🔓 User with "+user.userID+" is Successfully logged out")
-        res.status(200).json({
+        return res.status(200).json({
             message: user.name+", You are successfully logged out",
             userID: user.userID,
         })
@@ -383,6 +383,46 @@ exports.signOut = async (req,res) => {
         logWithTime("⚠️ Error occurred while logging out the User");
         errorMessage(err);
         return throwInternalServerError(res);
+    }
+}
+
+exports.signOutFromSpecificDevice = async(req,res) => {
+    try{
+        const user = req.user;
+        if(!user){
+            return throwInvalidResourceError(res,"UserID");
+        }
+        let device = getDeviceByID(user,req.deviceID)
+        if(!device){
+            return throwInvalidResourceError(res,"Device ID");
+        }
+        // ✅ Now Check if User is Already Logged In
+        const result = await checkUserIsNotVerified(user,res);
+        if(result){
+            logWithTime("🚫 Request Denied: User is already logged out.");
+            return res.status(400).json({
+                success: false,
+                message: "User is already logged out.",
+                suggestion: "Please login first before trying to logout again."
+            });
+        }
+        // Check if User is Logged in on this Single Device  
+        if(user.devices.length === 1){ 
+            // If yes then isVerified is changed to False
+            user.isVerified = false;
+        }
+        user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
+        await user.save();
+        logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
+        return res.status(200).json({
+            success: true,
+            message: "Successfully signed out from the specified device."
+        });
+
+    }catch(err){
+        logWithTime("⚠️ Error occurred while activating the User Account");
+        errorMessage(err)
+        return throwInternalServerError(res);        
     }
 }
 
