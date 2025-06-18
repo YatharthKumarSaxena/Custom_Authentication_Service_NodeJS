@@ -29,19 +29,25 @@ module.exports = (app) => {
 
     // 👤 Public User Signup Route
     // 🔒 Middleware:
+    // - Check whether Device provided belongs to user or not
     // - Validates required fields for creating a new user
     // 📌 Controller:
     // - Creates and stores user in DB
-    app.post(SIGNUP, [authMiddleware.verifySignUpBody], authController.signUp);
+    app.post(SIGNUP, [
+        commonUsedMiddleware.verifyDeviceField,
+        authMiddleware.verifySignUpBody
+    ], authController.signUp);
 
     // 🔐 Public User Signin Route
     // 🔒 Middleware:
+    // - Check whether Device provided belongs to user or not
     // - Verifies login credentials
     // - Checks if user is blocked or deactivated
     // - Checks User Account is acive
     // 📌 Controller:
     // - Logs user in and returns access token
     app.post(SIGNIN, [
+        commonUsedMiddleware.verifyDeviceField,
         authMiddleware.verifySignInBody,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive
@@ -115,11 +121,13 @@ module.exports = (app) => {
 
     // ✅ Public User: Activate Own Account
     // 🔒 Middleware:
+    // - Check whether Device provided belongs to user or not
     // - Ensures user is not blocked
     // - Verifies required credentials in body
     // 📌 Controller:
     // - Activates inactive user account
     app.patch(ACTIVATE_USER, [
+        commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isUserBlocked,
         authMiddleware.verifyActivateUserAccountBody
     ], authController.activateUserAccount);
