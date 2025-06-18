@@ -188,7 +188,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             });
         }
     }catch(err){
-        logWithTime("⚠️ Error Occured while making the User ID");
+        logWithTime(`⚠️ Error Occured while making the User ID of Phone Number: (${req.body.phoneNumber}) and EmailID (${req.body.emailID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -273,7 +273,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             userDisplayDetails,
         })
     }catch(err){
-        logWithTime("⚠️ Error happened while creating a new User");
+        logWithTime(`❌ Internal Error: Error Occured while creating the User having Phone Number: (${req.body.phoneNumber}) and EmailID: (${req.body.emailID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -307,7 +307,7 @@ exports.signIn = async (req,res) => {
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user,res);
         if (!result) {
-            logWithTime("🚫 Request Denied: User is already logged in.");
+            logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.`);
             return res.status(400).json({
                 success: false,
                 message: "User is already logged in.",
@@ -320,7 +320,7 @@ exports.signIn = async (req,res) => {
             // Sign with JWT Token
             const refreshToken = signInWithToken(req);
             if (refreshToken === "") {
-                logWithTime("❌ Refresh token generation failed during login");
+                logWithTime(`❌ Refresh token generation failed during login of User with userID: (${user.userID})`);
                 return throwInternalServerError(res);
             }
             res.cookie("refreshToken", refreshToken, {
@@ -349,11 +349,12 @@ exports.signIn = async (req,res) => {
             })
         }
         else{
-            logWithTime("❌ Incorrect Password")
+            logWithTime(`❌ Incorrect Password provided by User with userID: (${user.userID}) for Login Purpose`);
             return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging in the User");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while logging in the User with userID: (${userID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }  
@@ -380,7 +381,8 @@ exports.signOut = async (req,res) => {
             userID: user.userID,
         })
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging out the User from all Devices");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while logging out the User with userID: (${userID}) from all devices`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -424,7 +426,8 @@ exports.signOutFromSpecificDevice = async(req,res) => {
         });
 
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging out the User from Specific Devices");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while logging in the User with userID: (${userID}) on device having device ID: (${req.deviceID})`);
         errorMessage(err)
         return throwInternalServerError(res);        
     }
@@ -448,7 +451,9 @@ exports.activateUserAccount = async(req,res) => {
             suggestion: "Please login to continue."
         });
     }catch(err){
-        logWithTime("⚠️ Error occurred while activating the User Account");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while activating the User Account with userID: (${userID})`);
+        errorMessage(err)
         errorMessage(err)
         return throwInternalServerError(res);
     }
@@ -478,7 +483,8 @@ exports.deactivateUserAccount = async(req,res) => {
             notice: "You are logged out"
         });
     }catch(err){
-        logWithTime("⚠️ Error occurred while deactivating the User Account");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while deactivating the User Account with userID: (${userID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -494,12 +500,14 @@ exports.changePassword = async(req,res) => {
         user.devices.length = 0;
         await user.save();
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+        logWithTime(`User Password with userID: (${user.userID}) is changed Succesfully `);
         return res.status(200).json({
             success: true,
             message: "Your password has been changed successfully."
         });
     }catch(err){
-        logWithTime(`⚠️ Error occurred while changing the password of User with User ID (${req.user.userID})`);
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while changing the password of User with userID: (${userID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
