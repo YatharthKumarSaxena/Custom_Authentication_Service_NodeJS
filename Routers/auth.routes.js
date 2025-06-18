@@ -14,6 +14,7 @@ const userMiddleware = require("../Middlewares/user.middleware");
 const SIGNUP = URIS.AUTH_ROUTES.SIGNUP;
 const SIGNIN = URIS.AUTH_ROUTES.SIGNIN;
 const SIGNOUT = URIS.AUTH_ROUTES.SIGNOUT;
+const SIGNOUT_FROM_SPECIFIC_DEVICE = URIS.AUTH_ROUTES.SIGNOUT_FROM_SPECIFIC_DEVICE;
 const BLOCK_USER = URIS.ADMIN_ROUTES.USERS.BLOCK_USER;
 const UNBLOCK_USER = URIS.ADMIN_ROUTES.USERS.UNBLOCK_USER;
 const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
@@ -47,21 +48,35 @@ module.exports = (app) => {
 
     // 🔓 Public User Signout Route
     // 🔒 Middleware:
-    // - Validates token
-    // - Verifies userID in token and request match
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Validates signout body
     // 📌 Controller:
     // - Logs user out by invalidating session/token
     app.post(SIGNOUT, [
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         authMiddleware.verifySignOutBody
     ], authController.signOut);
+
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
+    // 📌 Controller:
+    // - Logs user out by invalidating session/token from Specific Device
+    app.post(SIGNOUT_FROM_SPECIFIC_DEVICE,[
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
+    ],authController.signOutFromSpecificDevice);
 
     // 🚫 Admin Only: Block User Account
     // 🔒 Middleware:
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Validates userID match
     // - Verifies admin identity from request body
     // - Confirms requester is an admin
@@ -71,6 +86,7 @@ module.exports = (app) => {
     app.patch(BLOCK_USER, [
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -80,12 +96,14 @@ module.exports = (app) => {
     // 🔒 Middleware: (same as block user)
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Ensures only authorized verified admins can unblock users
     // 📌 Controller:
     // - Unblocks the specified user
     app.patch(UNBLOCK_USER, [
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -106,6 +124,7 @@ module.exports = (app) => {
     // 🔒 Middleware:
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Checks if account is already active and not blocked
     // - Ensures user is verified
     // - Validates input body with password + identification
@@ -114,6 +133,7 @@ module.exports = (app) => {
     app.patch(DEACTIVATE_USER, [
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
@@ -124,6 +144,7 @@ module.exports = (app) => {
     // 🔒 Middleware:
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Confirms user is not blocked
     // - Confirms user is active
     // - Confirms user is verified
@@ -132,6 +153,7 @@ module.exports = (app) => {
     app.get(GET_USER_ACCOUNT_DETAILS, [
         commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified
@@ -141,6 +163,7 @@ module.exports = (app) => {
     // 🔒 Middleware:
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Confirms the requester is an admin (role check)
     // - Confirms the admin is a verified user (e.g. admin is logout or not)
     // - Validates that the admin is requesting valid user data (input format & presence)
@@ -149,6 +172,7 @@ module.exports = (app) => {
     app.get(FETCH_USER_DETAILS_BY_ADMIN, [
         commonUsedMiddleware.validateUserIDMatch,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified,
         adminMiddleware.verifyAdminUserViewRequest
@@ -158,6 +182,7 @@ module.exports = (app) => {
     // 🔒 Middleware:
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
     // - Confirms user is not blocked (e.g. by admin)
     // - Confirms user's account is active (not deactivated/suspended)
     // - Confirms user has verified their identity (e.g. via OTP/email)
@@ -168,18 +193,34 @@ module.exports = (app) => {
     app.patch(UPDATE_USER_PROFILE,[
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
         userMiddleware.checkUpdateMyProfileRequest
     ],userController.updateUserProfile);
 
+
+    // 👤 Authenticated User: Change their own Password
+    // 🔒 Middleware:
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Check whether Device provided belongs to user or not
+    // - Confirms user is not blocked (e.g. by admin)
+    // - Confirms user's account is active (not deactivated/suspended)
+    // - Confirms user is Logged in on that device
+    // - Prevents updates to restricted/immutable fields (like userID, userType, etc.)
+    // 🛠️ Controller:
+    // - Updates only the allowed and changed fields (name, email, address, etc.)
+    // - Responds with either a success message + updated fields OR no changes made
     app.patch(CHANGE_PASSWORD,[
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
         authMiddleware.verifyChangePasswordBody
     ],authController.changePassword);
+
 };

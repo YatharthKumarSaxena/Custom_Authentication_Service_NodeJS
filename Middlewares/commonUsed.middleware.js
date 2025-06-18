@@ -122,6 +122,15 @@ const checkUserIsVerified = async(req,res,next) => {
         if(isRefreshTokenReset){
             logWithTime(`🔄 Refresh token rotated for userID: ${req.user.userID}`);
         }
+        const deviceID = req.deviceID;
+        // Check whether Device ID belongs to User or Not
+        const device = getDeviceByID(user,deviceID);
+        if(!device){
+            return throwInvalidResourceError(res,"Device ID");
+        }
+        // ✅ 3. Update lastUsedAt
+        device.lastUsedAt = Date.now();
+        await user.save(); // Ensure it's persisted
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
@@ -247,14 +256,6 @@ const verifyDeviceField = async (req,res,next) => {
         if (!deviceID || deviceID.trim() === "") {
             return throwResourceNotFoundError(res, "Device UUID (x-device-uuid) is required in request headers");
         }
-        // Check whether Device ID belongs to User or Not
-        const device = getDeviceByID(user,deviceID);
-        if(!device){
-            return throwInvalidResourceError(res,"Device ID");
-        }
-        // ✅ 3. Update lastUsedAt
-        device.lastUsedAt = Date.now();
-        await user.save(); // Ensure it's persisted
         // Attach to request object for later use in controller
         req.deviceID = deviceID;
         if (deviceName && deviceName.trim() !== "") {

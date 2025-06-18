@@ -370,17 +370,17 @@ exports.signOut = async (req,res) => {
         user.devices.length = 0;
         res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
         await user.save();
-        if (!user.isActive) {
-            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout.`);
+        if (user.isBlocked) {
+            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from all devices.`);
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
-        else logWithTime("🔓 User with "+user.userID+" is Successfully logged out")
+        else logWithTime("🔓 User with "+user.userID+" is Successfully logged out from all devices")
         return res.status(200).json({
-            message: user.name+", You are successfully logged out",
+            message: user.name+", You are successfully logged out from all devices",
             userID: user.userID,
         })
     }catch(err){
-        logWithTime("⚠️ Error occurred while logging out the User");
+        logWithTime("⚠️ Error occurred while logging out the User from all Devices");
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -399,10 +399,10 @@ exports.signOutFromSpecificDevice = async(req,res) => {
         // ✅ Now Check if User is Already Logged In
         const result = await checkUserIsNotVerified(user,res);
         if(result){
-            logWithTime("🚫 Request Denied: User is already logged out.");
+            logWithTime("🚫 Request Denied: User is already logged out from all devices.");
             return res.status(400).json({
                 success: false,
-                message: "User is already logged out.",
+                message: "User is already logged out from all devices.",
                 suggestion: "Please login first before trying to logout again."
             });
         }
@@ -413,14 +413,18 @@ exports.signOutFromSpecificDevice = async(req,res) => {
         }
         user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
         await user.save();
-        logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
+        if (user.isBlocked) {
+            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from device: ${req.deviceID}.`);
+            return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
+        }
+        else logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
         return res.status(200).json({
             success: true,
             message: "Successfully signed out from the specified device."
         });
 
     }catch(err){
-        logWithTime("⚠️ Error occurred while activating the User Account");
+        logWithTime("⚠️ Error occurred while logging out the User from Specific Devices");
         errorMessage(err)
         return throwInternalServerError(res);        
     }
