@@ -38,6 +38,7 @@ module.exports = (app) => {
     // 🔒 Middleware:
     // - Verifies login credentials
     // - Checks if user is blocked or deactivated
+    // - Checks User Account is acive
     // 📌 Controller:
     // - Logs user in and returns access token
     app.post(SIGNIN, [
@@ -64,12 +65,14 @@ module.exports = (app) => {
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
     // - Check whether Device provided belongs to user or not
+    // - Check User is already logged out
     // 📌 Controller:
     // - Logs user out by invalidating session/token from Specific Device
     app.post(SIGNOUT_FROM_SPECIFIC_DEVICE,[
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.verifyDeviceField,
+        authMiddleware.verifySignOutBody
     ],authController.signOutFromSpecificDevice);
 
     // 🚫 Admin Only: Block User Account
@@ -77,7 +80,6 @@ module.exports = (app) => {
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
     // - Check whether Device provided belongs to user or not
-    // - Validates userID match
     // - Verifies admin identity from request body
     // - Confirms requester is an admin
     // - Ensures admin is verified
@@ -97,7 +99,9 @@ module.exports = (app) => {
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
     // - Check whether Device provided belongs to user or not
+    // - Check whether provided request body is valid
     // - Ensures only authorized verified admins can unblock users
+    // - Checks Admin is verified
     // 📌 Controller:
     // - Unblocks the specified user
     app.patch(UNBLOCK_USER, [
@@ -125,8 +129,8 @@ module.exports = (app) => {
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
     // - Check whether Device provided belongs to user or not
-    // - Checks if account is already active and not blocked
-    // - Ensures user is verified
+    // - Confirms user is not blocked
+    // - Confirms user is active
     // - Validates input body with password + identification
     // 📌 Controller:
     // - Deactivates account and logs user out
@@ -151,7 +155,7 @@ module.exports = (app) => {
     // 📌 Controller:
     // - Returns full account details of the logged-in user
     app.get(GET_USER_ACCOUNT_DETAILS, [
-        commonUsedMiddleware.validateUserIDMatch,
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isUserBlocked,
@@ -170,7 +174,7 @@ module.exports = (app) => {
     // 📌 Controller:
     // - Returns full account details of the target user (based on userId provided in query/body)
     app.get(FETCH_USER_DETAILS_BY_ADMIN, [
-        commonUsedMiddleware.validateUserIDMatch,
+        commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.isAdmin,
@@ -185,7 +189,7 @@ module.exports = (app) => {
     // - Check whether Device provided belongs to user or not
     // - Confirms user is not blocked (e.g. by admin)
     // - Confirms user's account is active (not deactivated/suspended)
-    // - Confirms user has verified their identity (e.g. via OTP/email)
+    // - Confirms user is Logged in on that device
     // - Prevents updates to restricted/immutable fields (like userID, userType, etc.)
     // 🛠️ Controller:
     // - Updates only the allowed and changed fields (name, email, address, etc.)
@@ -200,7 +204,6 @@ module.exports = (app) => {
         userMiddleware.checkUpdateMyProfileRequest
     ],userController.updateUserProfile);
 
-
     // 👤 Authenticated User: Change their own Password
     // 🔒 Middleware:
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
@@ -209,10 +212,10 @@ module.exports = (app) => {
     // - Confirms user is not blocked (e.g. by admin)
     // - Confirms user's account is active (not deactivated/suspended)
     // - Confirms user is Logged in on that device
-    // - Prevents updates to restricted/immutable fields (like userID, userType, etc.)
+    // - Checks provided request body is valid 
     // 🛠️ Controller:
-    // - Updates only the allowed and changed fields (name, email, address, etc.)
-    // - Responds with either a success message + updated fields OR no changes made
+    // - Updates the Password of User if it satisfies some constraints
+    // - Responds with either a success message + no changes made
     app.patch(CHANGE_PASSWORD,[
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
@@ -222,5 +225,4 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified,
         authMiddleware.verifyChangePasswordBody
     ],authController.changePassword);
-
 };
