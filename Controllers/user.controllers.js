@@ -45,13 +45,14 @@ exports.provideUserDetails = async(req,res) => {
         if(user.profilePicUrl){
             User_Account_Details["ProfilePicUrl"] = user.profilePicUrl;
         }
-        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User`)
+        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
         return res.status(200).json({
             message: "Here is User Account Details",
             User_Account_Details
         });
     }catch(err){
-        logWithTime("⚠️ An Error Occurred while providing the User Details");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -108,17 +109,20 @@ exports.updateUserProfile = async(req,res) => {
             }
         }
         if(updatedFields.length === 0){
+            logWithTime(`❌ User Account Details with User ID: (${user.userID}) is not modified from device ID: (${req.deviceID}) in Updation Request`);
             return res.status(200).json({
                 message: "No changes detected. Your profile remains the same."
             });
         }
         await user.save();
+        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is updated Successfully from device ID: (${req.deviceID})`);
         return res.status(200).json({
             message: "Profile updated successfully.",
             updatedFields
         });
     }catch(err){
-        logWithTime("⚠️ An Error Occurred while updating the User Profile");
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while updating the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
