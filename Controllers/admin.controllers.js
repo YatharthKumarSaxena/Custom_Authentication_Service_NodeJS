@@ -5,6 +5,7 @@ const { throwInvalidResourceError, throwInternalServerError, errorMessage } = re
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const {adminID,BLOCK_REASONS,UNBLOCK_REASONS} = require("../configs/user-id.config");
+const AuthLogModel = require("../models/auth-logs.model");
 
 exports.blockUserAccount = async(req,res) => {
     try{
@@ -105,3 +106,35 @@ exports.unblockUserAccount = async(req,res) => {
         return throwInternalServerError(res);
     }
 }
+
+exports.getUserAuthLogs = async (req, res) => {
+  try {
+    const { userID, eventType, startDate, endDate } = req.body;
+
+    const query = {};
+
+    if (userID) query.userID = userID;
+    if (eventType && Array.isArray(eventType) && eventType.length > 0) {
+      query.eventType = { $in: eventType };
+    }
+
+    if (startDate && endDate) {
+      query.timestamp = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    const logs = await AuthLogModel.find(query).sort({ timestamp: -1 });
+
+    return res.status(200).json({
+      message: "User authentication logs fetched successfully.",
+      total: logs.length,
+      logs: logs
+    });
+
+  } catch (error) {
+    console.error(`[❌ LOG FETCH ERROR]`, error);
+    return res.status(500).json({ message: "Internal Server Error while fetching logs." });
+  }
+};
