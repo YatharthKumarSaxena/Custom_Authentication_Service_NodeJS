@@ -9,7 +9,7 @@ const signUpAttemptsSchema = new mongoose.Schema({
     },
     attempts: {
         type: Number,
-        default: 0
+        default: 1
     },
     lastAttemptAt: {
         type: Date,
@@ -17,4 +17,4 @@ const signUpAttemptsSchema = new mongoose.Schema({
     }
 },{timestamps: true,versionKey: false});
 
-module.exports = mongoose.model("signUpAttempt",signUpAttemptsSchema)
+module.exports = mongoose.model("signUpAttempt",signUpAttemptsSchema);
