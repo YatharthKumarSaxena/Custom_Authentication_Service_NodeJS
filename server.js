@@ -3,17 +3,21 @@
 
 require("dotenv").config(); // Installed Node.js package
 
+// ✅ Trigger scheduled jobs on server start
+
+require("./cron-jobs"); // 👈 This will auto-load index.js by default
+
 // 🔹 Extracting Required Modules to make Our Application
 const express = require("express"); // Extract Express Module
 const mongoose = require("mongoose"); // Extract Mongoose Module
-const {PORT_NUMBER} = require("./Configs/server.config");
+const {PORT_NUMBER} = require("./configs/server.config");
 const app = express(); // App is an Express Function
-const {DB_URL} = require("./Configs/db.config");
-const UserModel = require("./Models/User.model"); 
-const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./Configs/userID.config");
-const {errorMessage,} = require("./Configs/errorHandler.configs");
-const { logWithTime } = require("./Utils/timeStamps.utils");
-const {makeTokenWithMongoID} = require("./Utils/issueToken.utils");
+const {DB_URL} = require("./configs/db.config");
+const UserModel = require("./models/user.model"); 
+const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./configs/user-id.config");
+const {errorMessage,} = require("./configs/error-handler.configs");
+const { logWithTime } = require("./utils/time-stamps.utils");
+const {makeTokenWithMongoID} = require("./utils/issue-token.utils");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
