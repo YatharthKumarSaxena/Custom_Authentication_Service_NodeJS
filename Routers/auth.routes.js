@@ -9,6 +9,8 @@ const adminMiddleware = require("../middlewares/admin.middleware");
 const adminController = require("../controllers/admin.controllers");
 const userController = require("../controllers/user.controllers");
 const userMiddleware = require("../middlewares/user.middleware");
+const rateLimiterForSignUP = require("../rate-limiters/sign-up.rate-limiter");
+const rateLimiter = require("../rate-limiters/api.rate-limiters");
 
 // 🛣️ Destructuring Required URIs for cleaner usage below
 const SIGNUP = URIS.AUTH_ROUTES.SIGNUP;
@@ -35,6 +37,7 @@ module.exports = (app) => {
     // - Creates and stores user in DB
     app.post(SIGNUP, [
         commonUsedMiddleware.verifyDeviceField,
+        rateLimiterForSignUP.signUpRateLimiter,
         authMiddleware.verifySignUpBody
     ], authController.signUp);
 
@@ -48,6 +51,7 @@ module.exports = (app) => {
     // - Logs user in and returns access token
     app.post(SIGNIN, [
         commonUsedMiddleware.verifyDeviceField,
+        rateLimiter.signInRateLimiter,
         authMiddleware.verifySignInBody,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive
@@ -65,6 +69,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        rateLimiter.signOutRateLimiter,
         authMiddleware.verifySignOutBody
     ], authController.signOut);
 
@@ -78,6 +83,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        rateLimiter.signOutRateLimiter,
         authMiddleware.verifySignOutBody
     ],authController.signOutFromSpecificDevice);
 
@@ -95,6 +101,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        rateLimiter.blockAccountRateLimiter,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -114,6 +121,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        rateLimiter.unblockAccountRateLimiter,
         adminMiddleware.verifyAdminBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
@@ -128,6 +136,7 @@ module.exports = (app) => {
     // - Activates inactive user account
     app.patch(ACTIVATE_USER, [
         commonUsedMiddleware.verifyDeviceField,
+        rateLimiter.activateAccountRateLimiter,
         commonUsedMiddleware.isUserBlocked,
         authMiddleware.verifyActivateUserAccountBody
     ], authController.activateUserAccount);
@@ -146,6 +155,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        rateLimiter.deactivateAccountRateLimiter,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
@@ -228,6 +238,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        rateLimiter.changePasswordRateLimiter,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
