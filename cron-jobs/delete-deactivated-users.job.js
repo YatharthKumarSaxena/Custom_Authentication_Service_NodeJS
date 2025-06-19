@@ -1,6 +1,6 @@
 const cron = require("node-cron");
-const UserModel = require("../Models/User.model");
-const { logWithTime } = require("../Utils/timeStamps.utils");
+const UserModel = require("../models/user.model");
+const { logWithTime } = require("../utils/time-stamps.utils");
 
 const deleteDeactivatedUsers = async () => {
   try {

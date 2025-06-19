@@ -1,6 +1,6 @@
-const SignUpAttempt = require("../Models/signUpAttempt.model");
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const { errorMessage } = require("../Configs/errorHandler.configs");
+const SignUpAttempt = require("../models/signUpAttempt.model");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const { errorMessage } = require("../configs/error-handler.configs");
 
 // You can adjust these limits as per your security policy
 const MAX_ATTEMPTS = 5;               // 📌 e.g., 5 attempts

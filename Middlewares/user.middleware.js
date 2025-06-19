@@ -1,6 +1,6 @@
-const { errorMessage, throwInternalServerError } = require("../Configs/errorHandler.configs");
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const { adminID } = require("../Configs/userID.config");
+const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const { adminID } = require("../configs/user-id.config");
 
 const checkUpdateMyProfileRequest = (req,res,next) => {
     try{

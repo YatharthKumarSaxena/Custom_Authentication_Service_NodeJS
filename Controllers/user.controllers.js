@@ -7,9 +7,9 @@
 */
 
 // Extracting the required modules
-const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../Configs/errorHandler.configs");
-const { fetchUser } = require("../Middlewares/helperMiddlewares");
-const { logWithTime } = require("../Utils/timeStamps.utils");
+const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../configs/error-handler.configs");
+const { fetchUser } = require("../middlewares/helper.middleware");
+const { logWithTime } = require("../utils/time-stamps.utils");
 
 exports.provideUserDetails = async(req,res) => {
     try{

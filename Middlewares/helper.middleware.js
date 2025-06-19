@@ -1,8 +1,8 @@
 // Extracting required Modules, their functions and values
-const {expiryTimeOfRefreshToken} = require("../Configs/userID.config");
-const {throwInvalidResourceError,throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/errorHandler.configs");
-const UserModel = require("../Models/User.model");
-const { logWithTime } = require("../Utils/timeStamps.utils");
+const {expiryTimeOfRefreshToken} = require("../configs/user-id.config");
+const {throwInvalidResourceError,throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../configs/error-handler.configs");
+const UserModel = require("../models/user.model");
+const { logWithTime } = require("../utils/time-stamps.utils");
 
 // DRY Principle followed by this Code
 const checkUserIsNotVerified = async(user,res) => {

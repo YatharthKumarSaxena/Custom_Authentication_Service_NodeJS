@@ -1,14 +1,14 @@
 // 📦 Extracting Configured URIs from central config (high maintainability)
-const URIS = require("../Configs/uri.config");
+const URIS = require("../configs/uri.config");
 
 // 📥 Importing Controllers (logic handlers) and Middleware (security, validations)
-const authController = require("../Controllers/auth.controllers");
-const authMiddleware = require("../Middlewares/auth.middleware");
-const commonUsedMiddleware = require("../Middlewares/commonUsed.middleware");
-const adminMiddleware = require("../Middlewares/admin.middleware");
-const adminController = require("../Controllers/admin.controllers");
-const userController = require("../Controllers/user.controllers");
-const userMiddleware = require("../Middlewares/user.middleware");
+const authController = require("../controllers/auth.controllers");
+const authMiddleware = require("../middlewares/auth.middleware");
+const commonUsedMiddleware = require("../middlewares/commonUsed.middleware");
+const adminMiddleware = require("../middlewares/admin.middleware");
+const adminController = require("../controllers/admin.controllers");
+const userController = require("../controllers/user.controllers");
+const userMiddleware = require("../middlewares/user.middleware");
 
 // 🛣️ Destructuring Required URIs for cleaner usage below
 const SIGNUP = URIS.AUTH_ROUTES.SIGNUP;

@@ -1,4 +1,4 @@
-const { createRateLimiter } = require("./createRateLimiterFactory");
+const { createRateLimiter } = require("./create-rate-limiter-factory");
 
 // ✅ middlewares/rateLimit_signin.js
 const signInRateLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5 per 15 mins

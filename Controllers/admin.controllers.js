@@ -1,10 +1,10 @@
 // This file will include the controller logic for all powers of Admin
 
 // Extract the Required Modules
-const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../Configs/errorHandler.configs");
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const UserModel = require("../Models/User.model");
-const {adminID,BLOCK_REASONS,UNBLOCK_REASONS} = require("../Configs/userID.config");
+const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const UserModel = require("../models/user.model");
+const {adminID,BLOCK_REASONS,UNBLOCK_REASONS} = require("../configs/user-id.config");
 
 exports.blockUserAccount = async(req,res) => {
     try{

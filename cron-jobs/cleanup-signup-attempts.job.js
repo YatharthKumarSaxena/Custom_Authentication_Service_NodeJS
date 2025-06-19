@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const SignUpAttempt = require("../Models/signUpAttempt.model");
+const SignUpAttempt = require("../models/signUpAttempt.model");
 const { logWithTime } = require("../Utils/timeStamps.utils");
 
 const cleanOldSignUpAttempts = async () => {

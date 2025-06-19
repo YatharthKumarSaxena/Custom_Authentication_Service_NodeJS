@@ -1,6 +1,6 @@
 const bcryptjs = require("bcryptjs");
-const adminPrefixes = require("./idPrefixes.config").admin;
-const IP_Address_Code = require("./ipAddress.config").IP_Address_Code;
+const adminPrefixes = require("./id-prefixes.config").admin;
+const IP_Address_Code = require("./ip-address.config").IP_Address_Code;
 const adminUserID = Number(process.env.ADMIN_USER_ID);
 const adminID = adminPrefixes + IP_Address_Code + String(adminUserID);
 const SALT = Number(process.env.SALT);

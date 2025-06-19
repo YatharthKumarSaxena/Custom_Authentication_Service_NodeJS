@@ -1,8 +1,8 @@
 // Extract the required Module
 const jwt = require("jsonwebtoken");
-const {secretCode} = require("../Configs/userID.config");
-const { logWithTime } = require("./timeStamps.utils");
-const { errorMessage } = require("../Configs/errorHandler.configs");
+const {secretCode} = require("../configs/user-id.config");
+const { logWithTime } = require("./time-stamps.utils");
+const { errorMessage } = require("../configs/error-handler.configs");
 
 exports.makeTokenWithMongoID = (mongoID,expiryTimeOfToken) => {
     try {

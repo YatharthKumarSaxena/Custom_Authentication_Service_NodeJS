@@ -7,17 +7,17 @@
 */
 
 // Extracting the required modules
-const { userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken } = require("../Configs/userID.config");
-const UserModel = require("../Models/User.model");
-const CounterModel = require("../Models/ID_Generator.model");
+const { userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken } = require("../configs/user-id.config");
+const UserModel = require("../models/user.model");
+const CounterModel = require("../models/id-generator.model");
 const bcryptjs = require("bcryptjs")
-const { throwInvalidResourceError,errorMessage,throwInternalServerError } = require("../Configs/errorHandler.configs");
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
-const prefixIDforCustomer = require("../Configs/idPrefixes.config").customer;
-const { httpOnly,secure,sameSite } = require("../Configs/cookies.config");
-const { checkUserExists, getDeviceByID } = require("../Utils/validateRequestBody.utils");
-const { checkUserIsNotVerified } = require("../Middlewares/helperMiddlewares");
+const { throwInvalidResourceError,errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
+const prefixIDforCustomer = require("../configs/id-prefixes.config").customer;
+const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
+const { checkUserExists, getDeviceByID } = require("../utils/auth.utils");
+const { checkUserIsNotVerified } = require("../middlewares/helper.middleware");
 
 /*
   ✅ Single Responsibility Principle (SRP): 

@@ -1,8 +1,8 @@
-const { httpOnly,secure,sameSite } = require("../Configs/cookies.config");
-const { errorMessage,throwInternalServerError} = require("../Configs/errorHandler.configs");
-const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../Configs/userID.config");
-const { makeTokenWithMongoID } = require("./issueToken.utils"); 
-const { logWithTime } = require("./timeStamps.utils");
+const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
+const { errorMessage,throwInternalServerError} = require("../configs/error-handler.configs");
+const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../configs/user-id.config");
+const { makeTokenWithMongoID } = require("./issue-token.utils"); 
+const { logWithTime } = require("./time-stamps.utils");
 
 const resetRefreshToken = async(req,res) => {
     try{

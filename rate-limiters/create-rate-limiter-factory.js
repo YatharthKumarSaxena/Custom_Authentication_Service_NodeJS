@@ -1,7 +1,7 @@
 // 🛡️ utils/rateLimiter.factory.js
-const { errorMessage } = require("../Configs/errorHandler.configs");
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const UserModel = require("../Models/User.model");
+const { errorMessage } = require("../configs/error-handler.configs");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const UserModel = require("../models/user.model");
 
 const createRateLimiter = (maxRequests, timeWindowInMs) => {
   return async (req, res, next) => {

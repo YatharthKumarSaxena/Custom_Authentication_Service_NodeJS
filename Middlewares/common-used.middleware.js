@@ -1,17 +1,17 @@
 // Extracting the Required Modules
 const jwt = require("jsonwebtoken");
-const UserModel = require("../Models/User.model");
+const UserModel = require("../models/user.model");
 
 // Extracting Required Functions and Values
 
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError} = require("../Configs/errorHandler.configs");
-const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../Configs/userID.config");
-const { makeTokenWithMongoID } = require("../Utils/issueToken.utils");
-const {checkUserIsNotVerified, fetchUser} = require("./helperMiddlewares");
-const { extractAccessToken } = require("../Utils/extractToken.utils");
-const { resetRefreshToken } = require("../Utils/freshSession.utils");
-const { getDeviceByID } = require("../Utils/validateRequestBody.utils");
+const { logWithTime } = require("../utils/timeStamps.utils");
+const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError} = require("../configs/error-handler.configs");
+const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../configs/user-id.config");
+const { makeTokenWithMongoID } = require("../utils/issueToken.utils");
+const {checkUserIsNotVerified, fetchUser} = require("./helper.middleware");
+const { extractAccessToken } = require("../utils/extractToken.utils");
+const { resetRefreshToken } = require("../utils/freshSession.utils");
+const { getDeviceByID } = require("../utils/validateRequestBody.utils");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {

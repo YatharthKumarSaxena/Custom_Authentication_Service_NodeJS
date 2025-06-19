@@ -6,11 +6,11 @@
 /* If an Error Occured in Middleware then Middleware will throw an Error , Request will not be forwarded to Controller */
 
 // Extracting the Required Modules
-const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../Configs/errorHandler.configs");
-const { logWithTime } = require("../Utils/timeStamps.utils");
-const { checkUserIsNotVerified,fetchUser} = require("./helperMiddlewares");
-const { adminID } = require("../Configs/userID.config");
-const { validateSingleIdentifier } = require("../Utils/validateRequestBody.utils");
+const {throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../configs/error-handler.configs");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const { checkUserIsNotVerified,fetchUser} = require("./helper.middleware");
+const { adminID } = require("../configs/user-id.config");
+const { validateSingleIdentifier } = require("../utils/auth.utils");
 
 // For Delivery Services this field checking become Mandatory
 const verifyAddressField = async (req, res, next) => {
