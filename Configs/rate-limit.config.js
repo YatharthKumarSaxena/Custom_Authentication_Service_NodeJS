@@ -4,23 +4,23 @@
 
 module.exports = {
   perDevice: {
+    activateAccount: {
+      maxRequests: 5,
+      windowMs: 20 * 60 * 1000,
+    },
+    signin: {
+      maxRequests: 5,
+      windowMs: 15 * 60 * 1000,
+    },
     signup: {
       maxAttempts: 5,
       windowMs: 15 * 60 * 1000, // 15 minutes
     }
   },
   perUserAndDevice: {
-    signin: {
-      maxRequests: 5,
-      windowMs: 15 * 60 * 1000,
-    },
     signout: {
       maxRequests: 10,
       windowMs: 15 * 60 * 1000,
-    },
-    activateAccount: {
-      maxRequests: 5,
-      windowMs: 20 * 60 * 1000,
     },
     deactivateAccount: {
       maxRequests: 3,

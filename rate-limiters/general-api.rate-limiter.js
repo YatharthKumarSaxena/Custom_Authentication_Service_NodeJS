@@ -1,14 +1,10 @@
 const { createRateLimiter } = require("./create-rate-limiter-factory");
 const { perUserAndDevice } = require("../configs/rate-limit.config");
 
-// ✅ middlewares/rateLimit_signin.js
-const signInRateLimiter = createRateLimiter(perUserAndDevice.signin.maxRequests, perUserAndDevice.signin.windowMs); 
+/* Factory Design Pattern is used here to create these same logic Rate Limiters */
 
 // ✅ middlewares/rateLimit_signout.js
 const signOutRateLimiter = createRateLimiter(perUserAndDevice.signout.maxRequests, perUserAndDevice.signout.windowMs);
-
-// ✅ middlewares/rateLimit_activateAccount.js
-const activateAccountRateLimiter = createRateLimiter(perUserAndDevice.activateAccount.maxRequests, perUserAndDevice.activateAccount.windowMs);
 
 // ✅ middlewares/rateLimit_deactivateAccount.js
 const deactivateAccountRateLimiter = createRateLimiter(perUserAndDevice.deactivateAccount.maxRequests, perUserAndDevice.deactivateAccount.windowMs);
@@ -23,11 +19,9 @@ const unblockAccountRateLimiter = createRateLimiter(perUserAndDevice.unblockUser
 const changePasswordRateLimiter = createRateLimiter(perUserAndDevice.changePassword.maxRequests, perUserAndDevice.changePassword.windowMs);
 
 module.exports = {
-    signInRateLimiter: signInRateLimiter,
     signOutRateLimiter: signOutRateLimiter,
     blockAccountRateLimiter: blockAccountRateLimiter,
     unblockAccountRateLimiter: unblockAccountRateLimiter,
-    activateAccountRateLimiter: activateAccountRateLimiter,
     deactivateAccountRateLimiter: deactivateAccountRateLimiter,
     changePasswordRateLimiter: changePasswordRateLimiter
 }
