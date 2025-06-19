@@ -55,45 +55,6 @@ const userSchema = mongoose.Schema({
         // No spaces allowed
         match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // simple regex for basic email format
     },
-    address:[
-        {
-            _id: false,
-            type: { type: String, enum: ['Home', 'Office', 'Other'], default: 'Home' },
-            localAddress:{
-                type: String,
-                required: false
-            },
-            city:{
-                type: String,
-                required: false
-            },
-            pincode:{
-                type: String,
-                required: false
-            },
-            state:{
-                type: String,
-                required: false
-            },
-            country:{
-                type: String,
-                required: false
-            }
-        }
-    ],
-    dateOfBirth:{
-        type: Date,
-        default: null
-    },
-    gender:{
-        type: String,
-        enum: ["Female","Male","Others"],
-        default: null
-    },
-    profilePicUrl: {
-        type: String,
-        default: null
-    },
     isActive:{ // This is controlled by Users only (For Soft Delete Account Purposes)
         type: Boolean,
         default: true

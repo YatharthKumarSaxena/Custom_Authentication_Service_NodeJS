@@ -17,8 +17,6 @@ module.exports = {
     adminUser:{
         name: process.env.ADMIN_NAME,
         phoneNumber: process.env.ADMIN_PHONE,
-        gender: "Male",
-        dateOfBirth: new Date("2005-05-25"),
         // Password is Encypted to make the Password more complicated to crack
         // When Someone by Chance get access to Database if password is stored in Encrypted format
         // It makes it complicated to decode and hence it increases the security of User Data Privacy
@@ -26,13 +24,6 @@ module.exports = {
         // SALT is bascially a Random Text (Can be String or Number) is added to password
         password: process.env.ADMIN_PASSWORD,
         emailID: process.env.ADMIN_EMAIL_ID,
-        address: [
-            {localAddress: process.env.ADMIN_LOCAL_ADDRESS,
-            city: process.env.ADMIN_CITY,
-            pincode: process.env.ADMIN_PINCODE,
-            state: process.env.ADMIN_STATE,
-            country: process.env.ADMIN_COUNTRY}
-        ],
         userType: "Admin",
         userID: adminID
     },

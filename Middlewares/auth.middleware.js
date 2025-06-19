@@ -12,31 +12,6 @@ const { checkUserIsNotVerified,fetchUser} = require("./helper.middleware");
 const { adminID } = require("../configs/user-id.config");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
 
-// For Delivery Services this field checking become Mandatory
-const verifyAddressField = async (req, res, next) => {
-    try{
-        const address = req?.user?.address || req?.body?.address;
-        if(!Array.isArray(address) || address.length === 0 || Object.keys(address[0]).length === 0){
-            return throwResourceNotFoundError(res, "Address");
-        }
-        const addr = address[0];
-        let missingFields = [];
-        if (!addr.localAddress) missingFields.push("Local Address");
-        if (!addr.city) missingFields.push("City");
-        if (!addr.pincode) missingFields.push("Pincode");
-        if (!addr.state) missingFields.push("State");
-        if (!addr.country) missingFields.push("Country");
-        if (missingFields.length > 0) {
-            return throwResourceNotFoundError(res, missingFields.join(", "));
-        }
-        if (!res.headersSent) return next();
-    }catch (err){
-        logWithTime("⚠️ Error occurred while validating the Address field ");
-        errorMessage(err);
-        return throwInternalServerError(res);
-    }
-};
-
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
@@ -268,6 +243,5 @@ module.exports = {
     verifySignOutBody: verifySignOutBody,
     verifyActivateUserAccountBody: verifyActivateUserAccountBody,
     verifyDeactivateUserAccountBody: verifyDeactivateUserAccountBody,
-    verifyAddressField: verifyAddressField,
     verifyChangePasswordBody: verifyChangePasswordBody
 }

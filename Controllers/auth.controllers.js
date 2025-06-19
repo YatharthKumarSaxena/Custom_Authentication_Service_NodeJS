@@ -205,19 +205,8 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         phoneNumber: request_body.phoneNumber,
         emailID: request_body.emailID,
         password: password,
-        address: [request_body.address],
         userID: generatedUserID,
         devices: [device]
-    }
-    // 🟨 Optional Fields Handling
-    if(request_body.gender) {
-        User["gender"] = request_body.gender;
-    }
-    if(request_body.dateOfBirth) {
-        User["dateOfBirth"] = new Date(request_body.dateOfBirth); 
-    }
-    if(request_body.profilePicUrl){
-        User["profilePicUrl"] = request_body.profilePicUrl;
     }
     try{
         const user = await UserModel.create(User);
@@ -236,7 +225,6 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             userID: user.userID,
             emailId: user.emailID,
             phoneNumber: user.phoneNumber,
-            address: user.address
         }
         // Refresh Token Generation
         const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken)
