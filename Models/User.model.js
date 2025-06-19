@@ -153,7 +153,7 @@ const userSchema = mongoose.Schema({
         type: Date,
         default: null
     }
-},{timestamps:true,versionKey:false})
+},{timestamps:true,versionKey:false});
 
 // Creating a Collection named Users that will Include User Documents / Records
 // module.exports convert the whole file into a Module
