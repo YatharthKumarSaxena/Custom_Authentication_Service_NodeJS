@@ -1,10 +1,11 @@
 const SignUpAttempt = require("../models/signUpAttempt.model");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { errorMessage } = require("../configs/error-handler.configs");
+const { perDevice } = require("../configs/rate-limit.config")
 
-// You can adjust these limits as per your security policy
-const MAX_ATTEMPTS = 5;               // 📌 e.g., 5 attempts
-const TIME_WINDOW_MS = 15 * 60 * 1000; // ⏳ 15 minutes
+
+const MAX_ATTEMPTS = perDevice.signup.maxAttempts;
+const TIME_WINDOW_MS = perDevice.signup.windowMs;
 
 const signUpRateLimiter = async (req, res, next) => {
     try {
