@@ -8,7 +8,7 @@ const authLogSchema = new mongoose.Schema({
   },
   eventType: {
     type: String,
-    enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE"],
+    enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE", "CHECK_AUTH_LOGS"],
     required: true
   },
   deviceID: {
@@ -26,6 +26,15 @@ const authLogSchema = new mongoose.Schema({
     type: String,
     enum: ["USER", "ADMIN"],
     default: "USER"
+  },
+  checkAuthLogDetails: {
+    adminID:{
+      type: String
+    },
+    filter:{
+      type: [String],
+      enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE", "CHECK_AUTH_LOGS"]
+    }
   }
 }, { timestamps: true, versionKey: false });
 

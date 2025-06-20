@@ -46,6 +46,15 @@ exports.blockUserAccount = async(req,res) => {
         user.blockReason = blockReason;
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID})`);
+        // Update data into auth.logs
+        const authLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "BLOCKED",
+            deviceID: req.deviceID,
+            performedBy: "ADMIN"
+        });
+        if(req.deviceName)authLog["deviceName"] = req.deviceName;
+        await authLog.save();
         return res.status(200).json({
             success: true,
             message: `User (${user.userID}) has been successfully blocked.`
@@ -96,6 +105,15 @@ exports.unblockUserAccount = async(req,res) => {
         user.blockReason = null;
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID})`);
+        // Update data into auth.logs
+        const authLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "UNBLOCKED",
+            deviceID: req.deviceID,
+            performedBy: "ADMIN"
+        });
+        if(req.deviceName)authLog["deviceName"] = req.deviceName;
+        await authLog.save();  
         return res.status(200).json({
             success: true,
             message: `User (${user.userID}) has been successfully unblocked.`
@@ -126,6 +144,20 @@ exports.getUserAuthLogs = async (req, res) => {
     }
 
     const logs = await AuthLogModel.find(query).sort({ timestamp: -1 });
+
+    // Update data into auth.logs
+    const authLog = await AuthLogModel.create({
+        userID: userID,
+        eventType: "CHECK_AUTH_LOGS",
+        deviceID: req.deviceID,
+        performedBy: "ADMIN",
+        checkAuthLogDetails: {
+            adminID: req.user.userID,
+            filter: eventType
+        }
+    });
+    if(req.deviceName)authLog["deviceName"] = req.deviceName;
+    await authLog.save();  
 
     return res.status(200).json({
       message: "User authentication logs fetched successfully.",
