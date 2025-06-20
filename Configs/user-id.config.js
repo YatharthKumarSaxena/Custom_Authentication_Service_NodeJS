@@ -50,5 +50,9 @@ module.exports = {
         USER_APPEAL_GRANTED: "user_appeal_granted",
         SYSTEM_ERROR: "system_error",
         OTHER: "other"
-    })
+    }),
+    deviceThreshold: {
+        ADMIN: 2,
+        CUSTOMERS: 5
+    }
 }

@@ -17,7 +17,7 @@ const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const prefixIDforCustomer = require("../configs/id-prefixes.config").customer;
 const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
-const { checkUserExists, getDeviceByID } = require("../utils/auth.utils");
+const { checkUserExists, getDeviceByID, checkThresholdExceeded, checkThresholdExceeded } = require("../utils/auth.utils");
 const { checkUserIsNotVerified } = require("../middlewares/helper.middleware");
 
 /*
@@ -309,6 +309,8 @@ exports.signIn = async (req,res) => {
                 suggestion: "Please logout first before trying to login again."
             });
         };
+        const checkThresholdExceeded = checkThresholdExceeded(req,res);
+        if(checkThresholdExceeded)return;
         device = createDeviceField(req,res);
         user = req.foundUser;
         // ✅ Now Check if User is Already Logged In

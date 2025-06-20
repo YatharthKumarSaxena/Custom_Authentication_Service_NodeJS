@@ -1,3 +1,5 @@
+const { deviceThreshold } = require("../configs/user-id.config");
+
 const validateSingleIdentifier = (req,res) => {
     const identifiers = [req.body.phoneNumber, req.body.emailID, req.body.userID].filter(Boolean);
     if (identifiers.length !== 1) {
@@ -46,8 +48,23 @@ const getDeviceByID = (user, deviceID) => {
     return user.devices.find(d => d.deviceID === deviceID) || null;
 };
 
+const checkThresholdExceeded = (req,res) => {
+    const user = req.user;
+    const thresholdLimit = (user.userType === "ADMIN")?deviceThreshold.ADMIN:deviceThreshold.CUSTOMERS;
+    if (user.devices.length >= thresholdLimit) {
+        logWithTime(`Login Request Denied as User (${user.userID}) has crossed threshold limit of device sessions. Request is made from deviceID: (${req.deviceID})`);
+        res.status(403).json({ 
+            success: false,
+            message: "❌ Device threshold exceeded. Please logout from another device." 
+        });
+        return true;
+    }
+    return false;
+}
+
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
   checkUserExists: checkUserExists,
-  getDeviceByID: getDeviceByID
+  getDeviceByID: getDeviceByID,
+  checkThresholdExceeded: checkThresholdExceeded
 }
