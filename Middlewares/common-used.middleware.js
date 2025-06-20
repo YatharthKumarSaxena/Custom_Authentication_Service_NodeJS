@@ -170,9 +170,9 @@ const verifyToken = (req,res,next) => {
                 }
                 if(res.headersSent)return;
                 // Logic to generate new access token
-                const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+                const newAccessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
                 // Set this token in Response Headers
-                res.setHeader("x-access-token", accessToken);
+                res.setHeader("x-access-token", newAccessToken);
                 // Smart signal to frontend that Access token is Refreshed now
                 res.setHeader("x-token-refreshed", "true"); 
                 res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");

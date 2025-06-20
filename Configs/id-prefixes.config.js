@@ -1,4 +1,4 @@
 module.exports = {
-    admin: "ADM",
-    customer: "CUS"
+    adminIDPrefix: "ADM",
+    customerIDPrefix: "CUS"
 }

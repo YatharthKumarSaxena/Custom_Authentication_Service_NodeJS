@@ -15,7 +15,7 @@ const validateSingleIdentifier = (req,res) => {
 };
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
-async function checkUserExists(emailID,phoneNumber){
+const checkUserExists = async(emailID,phoneNumber,res) => {
     try{
         let count = 0;
         let user1 = await UserModel.findOne({phoneNumber: phoneNumber})

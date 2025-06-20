@@ -17,8 +17,9 @@ const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const prefixIDforCustomer = require("../configs/id-prefixes.config").customer;
 const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
-const { checkUserExists, getDeviceByID, checkThresholdExceeded, checkThresholdExceeded } = require("../utils/auth.utils");
+const { checkUserExists, getDeviceByID, checkThresholdExceeded } = require("../utils/auth.utils");
 const { checkUserIsNotVerified } = require("../middlewares/helper.middleware");
+const { customerIDPrefix } = require("../configs/id-prefixes.config");
 
 /*
   ✅ Single Responsibility Principle (SRP): 
@@ -52,10 +53,10 @@ const createDeviceField = (req,res) => {
 }
 
 // Increases the value of seq field in Customer Counter Document to generate unique ID for the new user
-async function increaseCustomerCounter(){
+const increaseCustomerCounter = async(res) => {
     try{
         const customerCounter = await CounterModel.findOneAndUpdate(
-            { _id: "CUS" },
+            { _id: customerIDPrefix },
             { $inc: { seq: 1 } },
             { new: true } // This will force Mongo DB to return updated document
             // By Default MongoDB returns old documents even after updation
@@ -64,7 +65,8 @@ async function increaseCustomerCounter(){
     }catch(err){
         logWithTime("🛑 An Error Occured in findOneAndUpdate function applied on Customer Counter Document")
         errorMessage(err);
-        return throwInternalServerError(res);
+        throwInternalServerError(res);
+        return null;
     }
 }
 
@@ -75,7 +77,7 @@ async function increaseCustomerCounter(){
 */
 
 // Creates Customer Counter whose seq value starts with 1 initially
-async function createCustomerCounter(){
+const createCustomerCounter = async(res) => {
 // Create Customer Counter Document with seq value 1 
     try{
         const customerCounter = await CounterModel.create({
@@ -87,7 +89,8 @@ async function createCustomerCounter(){
     }catch(err){
         logWithTime("⚠️ An Error Occured while creating Customer Counter")
         errorMessage(err);
-        return throwInternalServerError(res);
+        throwInternalServerError(res);
+        return null;
     } 
 }
 
@@ -105,21 +108,25 @@ async function createCustomerCounter(){
 */
 
 // User ID Creation
-async function makeUserID(){
+const makeUserID = async(res) => {
     let totalCustomers = 1; // By default as Admin User Already Exists 
     let customerCounter; // To remove Scope Resolution Issue
     try{
-        customerCounter = await CounterModel.findOne({_id: "CUS"});
+        customerCounter = await CounterModel.findOne({_id: customerIDPrefix});
+        if(!customerCounter)return "";
     }catch(err){
         logWithTime("⚠️ An Error Occured while accessing the Customer Counter Document");
         errorMessage(err);
-        return;
+        throwInternalServerError(res);
+        return "";
     }
     if(customerCounter){ // Means Customer Counter Exist so Just increase Counter
-        totalCustomers = await increaseCustomerCounter();
+        totalCustomers = await increaseCustomerCounter(res);
+        if(!totalCustomers)return "";
     }
     else{ // Means Customer Counter does not exist 
-        customerCounter = await createCustomerCounter(); // returns object
+        customerCounter = await createCustomerCounter(res); // returns object
+        if(!customerCounter)return "";
         totalCustomers = customerCounter.seq; // extract 'seq' field 
     }
     let newID = totalCustomers;
@@ -156,11 +163,10 @@ async function makeUserID(){
 */
 
 /* Logic to Return JWT Token to the User */
-function signInWithToken(request){
-    const user = request.foundUser;
-    const verifyWith = request.verifyWith;
+const signInWithToken = async(req,res) => {
+    const verifyWith = req.verifyWith;
     logWithTime(`User is logged in by ${verifyWith}`);
-    const token = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken);
+    const token = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
     return token || "";
 }
 
@@ -172,7 +178,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     let emailID = request_body.emailID.trim().toLowerCase();
     let phoneNumber = request_body.phoneNumber.trim();
     // Checking User already exists or not 
-    const userExistReason = await checkUserExists(emailID,phoneNumber);
+    const userExistReason = await checkUserExists(emailID,phoneNumber,res);
     if(userExistReason !== ""){
         return res.status(400).json({
             message: "User Already Exists with "+userExistReason,
@@ -182,7 +188,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
     /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
     let generatedUserID; // To resolve Scope Resolution Issue
     try{
-        generatedUserID= await makeUserID(); // Generating Customer ID 
+        generatedUserID= await makeUserID(res); // Generating Customer ID 
         if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
             return res.status(507).json({
                 message: "User limit reached. Cannot register more users at this time."
@@ -237,7 +243,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             phoneNumber: user.phoneNumber,
         }
         // Refresh Token Generation
-        const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken)
+        const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken)
         if(!refreshToken){
             logWithTime(`❌ Refresh Token generation failed after successful registration for User (${user.userID})!. User registered from device id: (${req.deviceID})`);
             return res.status(500).json({
@@ -265,7 +271,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         });
         if(req.deviceName)loginLog["deviceName"] = req.deviceName;
         await loginLog.save();
-        const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+        const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
         // Generate Access Token for User
         res.setHeader("x-access-token", accessToken);
         // Smart signal to frontend that Access token is Refreshed now
@@ -309,8 +315,8 @@ exports.signIn = async (req,res) => {
                 suggestion: "Please logout first before trying to login again."
             });
         };
-        const checkThresholdExceeded = checkThresholdExceeded(req,res);
-        if(checkThresholdExceeded)return;
+        const isThresholdCrossed = checkThresholdExceeded(req,res);
+        if(isThresholdCrossed)return;
         device = createDeviceField(req,res);
         user = req.foundUser;
         // ✅ Now Check if User is Already Logged In
@@ -327,7 +333,7 @@ exports.signIn = async (req,res) => {
         let isPasswordValid = await checkPasswordIsValid(req,user);
         if(isPasswordValid){ // Login the User
             // Sign with JWT Token
-            const refreshToken = signInWithToken(req);
+            const refreshToken = await signInWithToken(req,res);
             if (refreshToken === "") {
                 logWithTime(`❌ Refresh token generation failed during login of User with userID: (${user.userID}) from device id: (${req.deviceID})`);
                 return throwInternalServerError(res);
@@ -354,7 +360,7 @@ exports.signIn = async (req,res) => {
             });
             if(req.deviceName)loginLog["deviceName"] = req.deviceName;
             await loginLog.save();
-            const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+            const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
             // Generate Access Token for User
             res.setHeader("x-access-token", accessToken);
             // Smart signal to frontend that Access token is Refreshed now
