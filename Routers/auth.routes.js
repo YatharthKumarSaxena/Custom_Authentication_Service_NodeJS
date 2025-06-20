@@ -232,6 +232,16 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified
     ],adminController.getUserAuthLogs);
 
+    // ✅ Admin Only: Check any user active device sessions 
+    // 🔒 Middleware:
+    // - Check whether Device provided or not
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
+    // - Confirms that provided user is Admin or not
+    // - Confirms user is Logged in on that device
+    // 🛠️ Controller:
+    // - Fetches the User active device sessions based on phone number, email ID or user ID  provided by the admin
     app.get(CHECK_USER_SESSIONS_BY_ADMIN,[
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
