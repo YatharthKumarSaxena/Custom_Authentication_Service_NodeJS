@@ -22,6 +22,7 @@ const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 const CHANGE_PASSWORD = URIS.AUTH_ROUTES.CHANGE_PASSWORD;
 const GET_USER_AUTH_LOGS =URIS.ADMIN_ROUTES.USERS.GET_USER_AUTH_LOGS;
 const CHECK_ACTIVE_SESSIONS = URIS.AUTH_ROUTES.CHECK_ACTIVE_SESSIONS;
+const CHECK_USER_SESSIONS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.GET_USER_ACTIVE_SESSIONS;
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -230,4 +231,14 @@ module.exports = (app) => {
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
     ],adminController.getUserAuthLogs);
+
+    app.get(CHECK_USER_SESSIONS_BY_ADMIN,[
+        commonUsedMiddleware.verifyDeviceField,
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        generalRateLimiter.getActiveDevicesRateLimiter,
+        commonUsedMiddleware.isAdmin,
+        commonUsedMiddleware.checkUserIsVerified,
+        adminMiddleware.verifyAdminCheckUserSessionsBody
+    ],authController.getActiveDevices);
 };

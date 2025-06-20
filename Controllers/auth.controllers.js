@@ -614,7 +614,27 @@ exports.getActiveDevices = async (req, res) => {
     );
 
     logWithTime(`📲 Fetched ${sortedDevices.length} active devices for User (${user.userID})`);
-
+    if(req?.query?.userID || req?.query?.emailID || req?.query?.phoneNumber){
+        // Update data into auth.logs
+        const getActiveDevicesLog = await AuthLogModel.create({
+            userID: req.user.userID,
+            eventType: "GET_ACTIVE_DEVICES_LOG",
+            deviceID: req.deviceID,
+            performedBy: req.user.userType,
+            adminActions: {
+                targetUserID: req.foundUser.userID
+            }
+        });
+        if(req.deviceName)getActiveDevicesLog["deviceName"] = req.deviceName;
+        await getActiveDevicesLog.save();  
+        logWithTime(`Admin (${req.user.userID}) fetched User (${req.foundUser.userID}) active device sessions from device id: (${req.deviceID})`);
+        return res.status(200).json({
+            success: true,
+            message: "Active devices fetched successfully.",
+            total: sortedDevices.length,
+            devices: sortedDevices
+        }); 
+    }
     // Update data into auth.logs
     const getActiveDevicesLog = await AuthLogModel.create({
         userID: req.user.userID,
@@ -624,8 +644,8 @@ exports.getActiveDevices = async (req, res) => {
     });
     if(req.deviceName)getActiveDevicesLog["deviceName"] = req.deviceName;
     await getActiveDevicesLog.save();  
-
-    return res.status(200).json({
+    logWithTime(`User (${req.user.userID}) fetched its active device sessions from device id: (${req.deviceID})`);
+    if(!res.headerSent)return res.status(200).json({
       success: true,
       message: "Active devices fetched successfully.",
       total: sortedDevices.length,
