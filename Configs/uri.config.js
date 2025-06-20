@@ -25,17 +25,19 @@ module.exports = {
         SIGNUP: `${AUTH_BASE}/signup`,                          // POST /ecomm/api/v1/auth/signup
         SIGNIN: `${AUTH_BASE}/signin`,                          // POST /ecomm/api/v1/auth/signin
         SIGNOUT: `${AUTH_BASE}/signout`,                        // POST /ecomm/api/v1/auth/signout
-        SIGNOUT_FROM_SPECIFIC_DEVICE: `${AUTH_BASE}/signout/device`, // POST /ecomm/api/v1/auth/signout/device
+        SIGNOUT_FROM_SPECIFIC_DEVICE: `${AUTH_BASE}/signout-device`, // POST /ecomm/api/v1/auth/signout-device
         DEACTIVATE_USER: `${AUTH_BASE}/deactivate`,             // PATCH /ecomm/api/v1/auth/deactivate
         ACTIVATE_USER: `${AUTH_BASE}/activate`,                 // PATCH /ecomm/api/v1/auth/activate
-        CHANGE_PASSWORD: `${AUTH_BASE}/password`                // PATCH /ecomm/api/v1/auth/password
+        CHANGE_PASSWORD: `${AUTH_BASE}/change-password`,        // PATCH /ecomm/api/v1/auth/change-password
+        CHECK_ACTIVE_SESSIONS: `${AUTH_BASE}/active-sessions`    // GET /ecomm/api/v1/auth/active-sessions
     },
 
     // 🛠️ Admin-specific routes (e.g. category creation, update, delete)
     ADMIN_ROUTES: {
         USERS: {
-            BLOCK_USER: `${ADMIN_BASE}/blockUser`,              // PATCH /ecomm/api/v1/admin/blockUser
-            UNBLOCK_USER: `${ADMIN_BASE}/unblockUser`,          // PATCH /ecomm/api/v1/admin/unblockUser
+            BLOCK_USER: `${ADMIN_BASE}/block-user`,              // PATCH /ecomm/api/v1/admin/block-user
+            UNBLOCK_USER: `${ADMIN_BASE}/unblock-user`,          // PATCH /ecomm/api/v1/admin/unblock-user
+            GET_USER_AUTH_LOGS: `${ADMIN_BASE}/auth-logs`       // GET / /ecomm/api/v1/admin/auth-logs
         },
     }
 }
