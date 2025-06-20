@@ -69,8 +69,8 @@ const userSchema = mongoose.Schema({
     },
     userType:{
         type: String,
-        enum: ["Customer","Admin"],
-        default: "Customer"
+        enum: ["CUSTOMER","ADMIN"],
+        default: "CUSTOMER"
     },
     refreshToken: {
         type: String, // Stores Refresh Token (For SignOut Purpose)
@@ -101,6 +101,10 @@ const userSchema = mongoose.Schema({
         resendCount: { type: Number, default: 0 } // Limit OTP abuse
     },
     lastLogin:{
+        type: Date,
+        default: null
+    },
+    lastLogout: {
         type: Date,
         default: null
     },

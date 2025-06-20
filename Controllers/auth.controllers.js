@@ -225,7 +225,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             userID: user.userID,
             eventType: "REGISTER",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)registerLog["deviceName"] = req.deviceName;
         await registerLog.save();
@@ -261,7 +261,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             userID: user.userID,
             eventType: "LOGIN",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)loginLog["deviceName"] = req.deviceName;
         await loginLog.save();
@@ -348,7 +348,7 @@ exports.signIn = async (req,res) => {
                 userID: user.userID,
                 eventType: "LOGIN",
                 deviceID: req.deviceID,
-                performedBy: "USER"
+                performedBy: user.userType
             });
             if(req.deviceName)loginLog["deviceName"] = req.deviceName;
             await loginLog.save();
@@ -384,6 +384,7 @@ exports.signOut = async (req,res) => {
         }
         user.refreshToken = null;
         user.isVerified = false;
+        user.lastLogout = Date.now();
         user.devices.length = 0;
         res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
         await user.save();
@@ -392,7 +393,7 @@ exports.signOut = async (req,res) => {
             userID: user.userID,
             eventType: "LOGOUT_ALL_DEVICE",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)logoutLog["deviceName"] = req.deviceName;
         await logoutLog.save();    
@@ -436,7 +437,10 @@ exports.signOutFromSpecificDevice = async(req,res) => {
         // Check if User is Logged in on this Single Device  
         if(user.devices.length === 1){ 
             // If yes then isVerified is changed to False
+            user.lastLogout = Date.now();
+            user.refreshToken = null;
             user.isVerified = false;
+            res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
         }
         user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
         await user.save();
@@ -450,7 +454,7 @@ exports.signOutFromSpecificDevice = async(req,res) => {
             userID: user.userID,
             eventType: "LOGOUT_SPECIFIC_DEVICE",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)logoutLog["deviceName"] = req.deviceName;
         await logoutLog.save();   
@@ -476,6 +480,7 @@ exports.activateUserAccount = async(req,res) => {
             return throwInvalidResourceError(res,"Password");
         }
         user.isActive = true;
+        user.activatedAt = Date.now();
         await user.save();
         // Activation success log
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
@@ -484,7 +489,7 @@ exports.activateUserAccount = async(req,res) => {
             userID: user.userID,
             eventType: "ACTIVATE",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)activateAccountLog["deviceName"] = req.deviceName;
         await activateAccountLog.save();  
@@ -515,8 +520,9 @@ exports.deactivateUserAccount = async(req,res) => {
         user.refreshToken = null;
         user.isVerified = false;
         user.devices.length = 0;
+        user.lastLogout = Date.now();
         user.lastDeactivatedAt = Date.now();
-        res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+        res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
         await user.save();
         // Deactivation success log
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID} from device id: (${req.deviceID})`);
@@ -525,7 +531,7 @@ exports.deactivateUserAccount = async(req,res) => {
             userID: user.userID,
             eventType: "DEACTIVATE",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)deactivateAccountLog["deviceName"] = req.deviceName;
         await deactivateAccountLog.save(); 
@@ -550,15 +556,17 @@ exports.changePassword = async(req,res) => {
         user.refreshToken = null;
         user.isVerified = false;
         user.devices.length = 0;
+        user.passwordChangedAt = Date.now();
+        user.lastLogout = Date.now();
         await user.save();
-        res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+        res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
         logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
         // Update data into auth.logs
         const changePasswordLog = await AuthLogModel.create({
             userID: user.userID,
             eventType: "CHANGED_PASSWORD",
             deviceID: req.deviceID,
-            performedBy: "USER"
+            performedBy: user.userType
         });
         if(req.deviceName)changePasswordLog["deviceName"] = req.deviceName;
         await changePasswordLog.save();     

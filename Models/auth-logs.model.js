@@ -24,17 +24,17 @@ const authLogSchema = new mongoose.Schema({
   },
   performedBy: {
     type: String,
-    enum: ["USER", "ADMIN"],
-    default: "USER"
+    enum: ["CUSTOMER", "ADMIN"],
+    default: "CUSTOMER"
   },
-  checkAuthLogDetails: {
-    adminID:{
+  adminActions: {
+    targetUserID:{
       type: String
     },
     filter:{
       type: [String],
-      enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE", "CHECK_AUTH_LOGS"]
-    }
+      enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE", "CHECK_AUTH_LOGS", "GET_ACTIVE_DEVICES_LOG"]
+    },
   }
 }, { timestamps: true, versionKey: false });
 
