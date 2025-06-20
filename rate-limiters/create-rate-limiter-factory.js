@@ -67,7 +67,7 @@ const createDeviceBasedRateLimiter = (maxRequests, timeWindowInMs) => {
       if (!deviceID) {
         logWithTime("User has not provided device id");
         return res.status(400).json({
-          message: "Device ID is required for sign-up rate limiting."
+          message: "Device ID is required for rate limiting."
         });
       }
 
