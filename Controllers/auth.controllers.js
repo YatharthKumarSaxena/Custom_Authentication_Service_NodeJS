@@ -9,6 +9,7 @@
 // Extracting the required modules
 const { userRegistrationCapacity,adminUserID,IP_Address_Code,SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const UserModel = require("../models/user.model");
+const AuthLogModel = require("../models/auth-logs.model");
 const CounterModel = require("../models/id-generator.model");
 const bcryptjs = require("bcryptjs")
 const { throwInvalidResourceError,errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
@@ -219,6 +220,15 @@ exports.signUp = async (req,res) => { // Made this function async to use await
             createdAt: user.createdAt,
             devices: [device]
         }
+        // Update data into auth.logs
+        const registerLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "REGISTER",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)registerLog["deviceName"] = req.deviceName;
+        await registerLog.save();
         const userDisplayDetails = {
             details:"Here is your Basic Profile Details given below:-", 
             name: user.name,
@@ -246,6 +256,15 @@ exports.signUp = async (req,res) => { // Made this function async to use await
         user.loginCount = 1;
         user.lastLogin = Date.now();
         await user.save(); // save token in DB
+        // Update data into auth.logs
+        const loginLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "LOGIN",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)loginLog["deviceName"] = req.deviceName;
+        await loginLog.save();
         const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
         // Generate Access Token for User
         res.setHeader("x-access-token", accessToken);
@@ -324,6 +343,15 @@ exports.signIn = async (req,res) => {
             user.loginCount = user.loginCount + 1;
             user.devices.push(device);
             await user.save();
+            // Update data into auth.logs
+            const loginLog = await AuthLogModel.create({
+                userID: user.userID,
+                eventType: "LOGIN",
+                deviceID: req.deviceID,
+                performedBy: "USER"
+            });
+            if(req.deviceName)loginLog["deviceName"] = req.deviceName;
+            await loginLog.save();
             const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
             // Generate Access Token for User
             res.setHeader("x-access-token", accessToken);
@@ -359,6 +387,15 @@ exports.signOut = async (req,res) => {
         user.devices.length = 0;
         res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
         await user.save();
+        // Update data into auth.logs
+        const logoutLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "LOGOUT_ALL_DEVICE",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)logoutLog["deviceName"] = req.deviceName;
+        await logoutLog.save();    
         if (user.isBlocked) {
             logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from all devices from (${req.deviceID}).`);
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
@@ -408,6 +445,15 @@ exports.signOutFromSpecificDevice = async(req,res) => {
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
         else logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
+        // Update data into auth.logs
+        const logoutLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "LOGOUT_SPECIFIC_DEVICE",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)logoutLog["deviceName"] = req.deviceName;
+        await logoutLog.save();   
         return res.status(200).json({
             success: true,
             message: "Successfully signed out from the specified device."
@@ -433,6 +479,7 @@ exports.activateUserAccount = async(req,res) => {
         await user.save();
         // Activation success log
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
+
         return res.status(200).json({
             success: true,
             message: "Account activated successfully.",
