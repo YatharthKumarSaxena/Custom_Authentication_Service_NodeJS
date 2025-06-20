@@ -84,6 +84,18 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    blockedBy : {
+        type: String,
+        default: null
+    },
+    unblockReason: {
+        type: String,
+        default: null
+    },
+    unblockedBy: {
+        type: String,
+        default: null
+    },
     devices: [
         {
              _id: false,

@@ -657,3 +657,44 @@ exports.getActiveDevices = async (req, res) => {
     return throwInternalServerError(res);
   }
 };
+
+exports.provideUserAccountDetails = async(req,res) => {
+    try{
+        const user = req.user; 
+        if(!user){
+            return throwResourceNotFoundError(res,"User");
+        }
+        const User_Account_Details = {
+            "Name": user.name,
+            "Customer ID": user.userID,
+            "Phone Number": user.phoneNumber,
+            "Email ID": user.emailID,
+            "Verified": user.isVerified,
+            "Last Login Time": user.lastLogin,
+            "Account Status": user.isActive ? "Activated" : "Deactivated",
+            "Blocked Account": user.isBlocked ? "Yes" : "No"
+        }
+        if(user.passwordChangedAt)User_Account_Details["Password Changed At"] = user.passwordChangedAt;
+        if(user.activatedAt)User_Account_Details["Activated Account At"] = user.activatedAt;
+        if(user.deactivatedAt)User_Account_Details["Deactivated Account At"] = user.deactivatedAt;
+        if(user.lastLogout)User_Account_Details["Last Logout At"] = user.lastLogout;
+        // Update data into auth.logs
+        const provideAccountDetailsLog = await AuthLogModel.create({
+            userID: req.user.userID,
+            eventType: "PROVIDE_ACCOUNT_DETAILS",
+            deviceID: req.deviceID,
+            performedBy: req.user.userType,
+        });        
+        await provideAccountDetailsLog.save();
+        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
+        return res.status(200).json({
+            message: "Here is User Account Details",
+            User_Account_Details
+        });
+    }catch(err){
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}

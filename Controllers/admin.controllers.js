@@ -178,3 +178,65 @@ exports.getUserAuthLogs = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error while fetching logs." });
   }
 };
+
+// For Admin Panel Service (Internal API Controller)
+exports.checkUserAccountStatus = async(req,res) => {
+    try{
+        // If Get Request has a User then We have to Extract its Details and give to the Admin
+        let user;
+        let verifyWith = await fetchUser(req,res);
+        if (res.headersSent) return; // If response is returned by fetchUser
+        if(verifyWith !== "")user = req.foundUser;
+        // This Will Execute if It is Normal Request Made By User to View their Account Details
+        if(!user)user = req.user; 
+        if(!user){
+            return throwResourceNotFoundError(res,"User");
+        }
+        const User_Account_Details = {
+            "Name": user.name,
+            "Customer ID": user.userID,
+            "Phone Number": user.phoneNumber,
+            "Email ID": user.emailID,
+            "Verified": user.isVerified,
+            "Login Count": user.loginCount,
+            "Account Status": user.isActive ? "Activated" : "Deactivated",
+            "Blocked Account": user.isBlocked ? "Yes" : "No"
+        }
+        if(user.passwordChangedAt)User_Account_Details["Password Changed At"] = user.passwordChangedAt;
+        if(user.lastLogin)User_Account_Details["Last Login Time"] = user.lastLogin;
+        if(user.activatedAt)User_Account_Details["Activated Account At"] = user.activatedAt;
+        if(user.deactivatedAt)User_Account_Details["Deactivated Account At"] = user.deactivatedAt;
+        if(user.lastLogout)User_Account_Details["Last Logout At"] = user.lastLogout;
+        if(user.blockedAt){
+            User_Account_Details["Blocked At"] = user.blockedAt;
+            User_Account_Details["Blocked By"] = user.blockedBy;
+            User_Account_Details["Block Reason"] = user.blockReason;
+        }
+        if(user.unblockedAt){
+            User_Account_Details["Unblocked At"] = user.unblockedAt;
+            User_Account_Details["Unblocked By"] = user.unblockedBy;
+            User_Account_Details["Unblock Reason"] = user.unblockReason;
+        }
+        // Update data into auth.logs
+        const provideAccountDetailsLog = await AuthLogModel.create({
+            userID: req.user.userID,
+            eventType: "PROVIDE_ACCOUNT_DETAILS",
+            deviceID: req.deviceID,
+            performedBy: req.user.userType,
+            adminActions: {
+                targetUserID: req.foundUser.userID
+            }
+        });        
+        await provideAccountDetailsLog.save();
+        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
+        return res.status(200).json({
+            message: "Here is User Account Details",
+            User_Account_Details
+        });
+    }catch(err){
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+}
