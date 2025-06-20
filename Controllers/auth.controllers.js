@@ -479,7 +479,15 @@ exports.activateUserAccount = async(req,res) => {
         await user.save();
         // Activation success log
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
-
+        // Update data into auth.logs
+        const activateAccountLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "ACTIVATE",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)activateAccountLog["deviceName"] = req.deviceName;
+        await activateAccountLog.save();  
         return res.status(200).json({
             success: true,
             message: "Account activated successfully.",
@@ -512,6 +520,15 @@ exports.deactivateUserAccount = async(req,res) => {
         await user.save();
         // Deactivation success log
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID} from device id: (${req.deviceID})`);
+        // Update data into auth.logs
+        const deactivateAccountLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "DEACTIVATE",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)deactivateAccountLog["deviceName"] = req.deviceName;
+        await deactivateAccountLog.save(); 
         return res.status(200).json({
             success: true,
             message: "Account deactivated successfully.",
@@ -536,6 +553,15 @@ exports.changePassword = async(req,res) => {
         await user.save();
         res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
         logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
+        // Update data into auth.logs
+        const changePasswordLog = await AuthLogModel.create({
+            userID: user.userID,
+            eventType: "CHANGED_PASSWORD",
+            deviceID: req.deviceID,
+            performedBy: "USER"
+        });
+        if(req.deviceName)changePasswordLog["deviceName"] = req.deviceName;
+        await changePasswordLog.save();     
         return res.status(200).json({
             success: true,
             message: "Your password has been changed successfully."
