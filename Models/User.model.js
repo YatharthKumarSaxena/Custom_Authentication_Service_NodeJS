@@ -72,15 +72,8 @@ const userSchema = mongoose.Schema({
         enum: ["Customer","Admin"],
         default: "Customer"
     },
-    lastLogin:{
-        type: Date,
-    },
     refreshToken: {
         type: String, // Stores Refresh Token (For SignOut Purpose)
-        default: null
-    },
-    jwtTokenIssuedAt: {
-        type: Date,
         default: null
     },
     loginCount: {
@@ -107,7 +100,27 @@ const userSchema = mongoose.Schema({
         verified: { type: Boolean, default: false },
         resendCount: { type: Number, default: 0 } // Limit OTP abuse
     },
+    lastLogin:{
+        type: Date,
+        default: null
+    },
+    jwtTokenIssuedAt: {
+        type: Date,
+        default: null
+    },
     passwordChangedAt: {
+        type: Date,
+        default: null
+    },
+    blockedAt: {
+        type: Date,
+        default: null
+    },
+    unblockedAt: {
+        type: Date,
+        default: null
+    },
+    activatedAt: {
         type: Date,
         default: null
     },

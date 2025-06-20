@@ -42,6 +42,7 @@ exports.blockUserAccount = async(req,res) => {
             });
         }
         // Block the user by setting isBlocked = true
+        user.blockedAt = Date.now();
         user.isBlocked = true;
         user.blockReason = blockReason;
         await user.save();
@@ -101,6 +102,7 @@ exports.unblockUserAccount = async(req,res) => {
             });
         }
         // Unblock the user by setting isBlocked = false
+        user.unblockedAt = Date.now();
         user.isBlocked = false;
         user.blockReason = null;
         await user.save();
@@ -168,5 +170,42 @@ exports.getUserAuthLogs = async (req, res) => {
   } catch (error) {
     console.error(`[❌ LOG FETCH ERROR]`, error);
     return res.status(500).json({ message: "Internal Server Error while fetching logs." });
+  }
+};
+
+// Controller to Fetch All Active Devices of a User
+exports.getActiveDevices = async (req, res) => {
+  try {
+    const user = req.user || req.foundUser; // depending on middleware flow
+    if (!user) {
+      return throwInvalidResourceError(res, "UserID");
+    }
+
+    if (!Array.isArray(user.devices) || user.devices.length === 0) {
+      logWithTime(`📭 No active devices found for User (${user.userID})`);
+      return res.status(200).json({
+        success: true,
+        message: "No active devices found for the user.",
+        total: 0,
+        devices: []
+      });
+    }
+
+    // Sort devices by lastUsedAt descending
+    const sortedDevices = user.devices.sort(
+      (a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt)
+    );
+
+    logWithTime(`📲 Fetched ${sortedDevices.length} active devices for User (${user.userID})`);
+    return res.status(200).json({
+      success: true,
+      message: "Active devices fetched successfully.",
+      total: sortedDevices.length,
+      devices: sortedDevices
+    });
+  } catch (err) {
+    const userID = req?.user?.userID || "UNKNOWN_USER";
+    logWithTime(`❌ Internal Error occurred while fetching active devices for userID: (${userID})`);
+    return throwInternalServerError(res);
   }
 };
