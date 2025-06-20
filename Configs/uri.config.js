@@ -17,6 +17,7 @@ const API_PREFIX = `${BASE_PATH}${API_VERSION}`
 // 👇 Defining major base segments once to avoid repetition (DRY Principle)
 const AUTH_BASE = `${API_PREFIX}/auth`;                         // /ecomm/api/v1/auth
 const ADMIN_BASE = `${API_PREFIX}/admin`;                       // /ecomm/api/v1/admin
+const USER_BASE = `${API_PREFIX}/users`;                        // /ecomm/api/v1/users
 
 // 🔁 Exporting all route constants, grouped by modules (Auth, User, Admin, Category)
 module.exports = {
@@ -31,14 +32,19 @@ module.exports = {
         CHANGE_PASSWORD: `${AUTH_BASE}/change-password`,        // PATCH /ecomm/api/v1/auth/change-password
         CHECK_ACTIVE_SESSIONS: `${AUTH_BASE}/active-sessions`   // GET /ecomm/api/v1/auth/active-sessions
     },
-
+    // 👤 Routes accessible by the logged-in user (like updating their profile)
+    USER_ROUTES: {
+        UPDATE_PROFILE: `${USER_BASE}/update-profile`,                  // PATCH /ecomm/api/v1/users/update-profile
+        FETCH_MY_PROFILE: `${USER_BASE}/fetch`                  // GET   /ecomm/api/v1/users/fetch
+    },
     // 🛠️ Admin-specific routes (e.g. category creation, update, delete)
     ADMIN_ROUTES: {
         USERS: {
             BLOCK_USER: `${ADMIN_BASE}/block-user`,              // PATCH /ecomm/api/v1/admin/block-user
             UNBLOCK_USER: `${ADMIN_BASE}/unblock-user`,          // PATCH /ecomm/api/v1/admin/unblock-user
             GET_USER_AUTH_LOGS: `${ADMIN_BASE}/auth-logs`,       // POST / /ecomm/api/v1/admin/auth-logs
-            GET_USER_ACTIVE_SESSIONS: `${ADMIN_BASE}/active-sessions`   // GET /ecomm/api/v1/admin/active-sessions
+            GET_USER_ACTIVE_SESSIONS: `${ADMIN_BASE}/active-sessions`,   // GET /ecomm/api/v1/admin/active-sessions
+            FETCH_USER_DETAILS: `${ADMIN_BASE}/fetch-user-details`     // GET /ecomm/api/v1/admin/users/fetch-user-details  
         },
     }
 }
