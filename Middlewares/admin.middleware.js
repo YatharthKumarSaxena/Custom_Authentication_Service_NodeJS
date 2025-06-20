@@ -25,6 +25,21 @@ const verifyAdminBlockUnblockBody = async(req,res,next) => {
     }
 }   
 
+const verifyAdminCheckUserSessionsBody = async(req,res,next) => {
+    try{
+        if (!(req.query.userID || req.query.emailID || req.query.phoneNumber)) {
+            return throwResourceNotFoundError(res, "User Identifier (userID/emailID/phoneNumber)");
+        }
+        // Very next line should be:
+        if (!res.headersSent) return next();
+    }catch(err){
+        const userID = req?.query?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ Internal Error occurred while verifying the Admin Body Request with ID: (${req.user.userID}) on device having device ID: (${req.deviceID}) on user with userID: (${userID})`);
+        errorMessage(err);
+        return throwInternalServerError(res); 
+    }
+}
 module.exports = {
-    verifyAdminBlockUnblockBody: verifyAdminBlockUnblockBody
+    verifyAdminBlockUnblockBody: verifyAdminBlockUnblockBody,
+    verifyAdminCheckUserSessionsBody: verifyAdminCheckUserSessionsBody
 }

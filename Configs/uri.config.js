@@ -37,7 +37,8 @@ module.exports = {
         USERS: {
             BLOCK_USER: `${ADMIN_BASE}/block-user`,              // PATCH /ecomm/api/v1/admin/block-user
             UNBLOCK_USER: `${ADMIN_BASE}/unblock-user`,          // PATCH /ecomm/api/v1/admin/unblock-user
-            GET_USER_AUTH_LOGS: `${ADMIN_BASE}/auth-logs`        // POST / /ecomm/api/v1/admin/auth-logs
+            GET_USER_AUTH_LOGS: `${ADMIN_BASE}/auth-logs`,       // POST / /ecomm/api/v1/admin/auth-logs
+            GET_USER_ACTIVE_SESSIONS: `${ADMIN_BASE}/active-sessions`   // GET /ecomm/api/v1/admin/active-sessions
         },
     }
 }
