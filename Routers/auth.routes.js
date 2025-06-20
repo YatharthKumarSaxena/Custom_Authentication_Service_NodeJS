@@ -6,7 +6,9 @@ const authController = require("../controllers/auth.controllers");
 const authMiddleware = require("../middlewares/auth.middleware");
 const commonUsedMiddleware = require("../middlewares/commonUsed.middleware");
 const adminMiddleware = require("../middlewares/admin.middleware");
+const internalApiMiddleware = require("../middlewares/internal.api.middleware");
 const adminController = require("../controllers/admin.controllers");
+const internalApiController = require("../controllers/internal.api.controllers");
 const specialRateLimiter = require("../rate-limiters/special-api-rate-limiter");
 const generalRateLimiter = require("../rate-limiters/general-api.rate-limiter");
 
@@ -23,6 +25,9 @@ const CHANGE_PASSWORD = URIS.AUTH_ROUTES.CHANGE_PASSWORD;
 const GET_USER_AUTH_LOGS =URIS.ADMIN_ROUTES.USERS.GET_USER_AUTH_LOGS;
 const CHECK_ACTIVE_SESSIONS = URIS.AUTH_ROUTES.CHECK_ACTIVE_SESSIONS;
 const CHECK_USER_SESSIONS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.GET_USER_ACTIVE_SESSIONS;
+const GET_USER_ACCOUNT_DETAILS = URIS.USER_ROUTES.FETCH_MY_PROFILE;
+const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.FETCH_USER_DETAILS;
+const UPDATE_USER_PROFILE = URIS.USER_ROUTES.UPDATE_PROFILE;
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -251,4 +256,64 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified,
         adminMiddleware.verifyAdminCheckUserSessionsBody
     ],authController.getActiveDevices);
+
+        // 📄 Public User: Get Own Account Details
+    // 🔒 Middleware:
+    // - Check whether Device provided or not
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Confirms user is not blocked
+    // - Confirms user is active
+    // - Confirms user is verified
+    // 📌 Controller:
+    // - Returns full account details of the logged-in user
+    app.get(GET_USER_ACCOUNT_DETAILS, [
+        commonUsedMiddleware.verifyDeviceField,
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive,
+        commonUsedMiddleware.checkUserIsVerified
+    ], userController.provideUserDetails);
+
+    // 🛡️ Admin Only: Get Any User's Account Details
+    // 🔒 Middleware:
+    // - Check whether Device provided or not
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Confirms the requester is an admin (role check)
+    // - Confirms the admin is a verified user (e.g. admin is logout or not)
+    // - Validates that the admin is requesting valid user data (input format & presence)
+    // 📌 Controller:
+    // - Returns full account details of the target user (based on userId provided in query/body)
+    app.get(FETCH_USER_DETAILS_BY_ADMIN, [
+        commonUsedMiddleware.verifyDeviceField,
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.isAdmin,
+        commonUsedMiddleware.checkUserIsVerified,
+        adminMiddleware.verifyAdminUserViewRequest
+    ],userController.provideUserDetails);
+
+    // 👤 Authenticated User: Update Own Profile Details
+    // 🔒 Middleware:
+    // - Check whether Device provided or not
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Confirms user is not blocked (e.g. by admin)
+    // - Confirms user's account is active (not deactivated/suspended)
+    // - Confirms user is Logged in on that device
+    // - Prevents updates to restricted/immutable fields (like userID, userType, etc.)
+    // 🛠️ Controller:
+    // - Updates only the allowed and changed fields (name, email, address, etc.)
+    // - Responds with either a success message + updated fields OR no changes made
+    app.patch(UPDATE_USER_PROFILE,[
+        commonUsedMiddleware.verifyDeviceField,
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive,
+        commonUsedMiddleware.checkUserIsVerified,
+        userMiddleware.checkUpdateMyProfileRequest
+    ],userController.updateUserProfile);
 };
