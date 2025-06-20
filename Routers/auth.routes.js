@@ -179,4 +179,6 @@ module.exports = (app) => {
         commonUsedMiddleware.checkUserIsVerified,
         authMiddleware.verifyChangePasswordBody
     ],authController.changePassword);
+
+    
 };

@@ -589,3 +589,51 @@ exports.changePassword = async(req,res) => {
         return throwInternalServerError(res);
     }
 }
+
+// Controller to Fetch All Active Devices of a User
+exports.getActiveDevices = async (req, res) => {
+  try {
+    const user = req.user || req.foundUser; // depending on middleware flow
+    if (!user) {
+      return throwInvalidResourceError(res, "UserID");
+    }
+
+    if (!Array.isArray(user.devices) || user.devices.length === 0) {
+      logWithTime(`📭 No active devices found for User (${user.userID})`);
+      return res.status(200).json({
+        success: true,
+        message: "No active devices found for the user.",
+        total: 0,
+        devices: []
+      });
+    }
+
+    // Sort devices by lastUsedAt descending
+    const sortedDevices = user.devices.sort(
+      (a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt)
+    );
+
+    logWithTime(`📲 Fetched ${sortedDevices.length} active devices for User (${user.userID})`);
+
+    // Update data into auth.logs
+    const getActiveDevicesLog = await AuthLogModel.create({
+        userID: req.user.userID,
+        eventType: "GET_ACTIVE_DEVICES_LOG",
+        deviceID: req.deviceID,
+        performedBy: req.user.userType,
+    });
+    if(req.deviceName)getActiveDevicesLog["deviceName"] = req.deviceName;
+    await getActiveDevicesLog.save();  
+
+    return res.status(200).json({
+      success: true,
+      message: "Active devices fetched successfully.",
+      total: sortedDevices.length,
+      devices: sortedDevices
+    });
+  } catch (err) {
+    const userID = req?.user?.userID || "UNKNOWN_USER";
+    logWithTime(`❌ Internal Error occurred while fetching active devices for userID: (${userID})`);
+    return throwInternalServerError(res);
+  }
+};

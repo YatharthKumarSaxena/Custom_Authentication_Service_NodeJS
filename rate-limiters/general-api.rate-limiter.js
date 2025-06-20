@@ -18,10 +18,18 @@ const unblockAccountRateLimiter = createRateLimiter(perUserAndDevice.unblockUser
 // ✅ middlewares/rateLimit_changePassword.js
 const changePasswordRateLimiter = createRateLimiter(perUserAndDevice.changePassword.maxRequests, perUserAndDevice.changePassword.windowMs);
 
+// ✅ middlewares/rateLimit_getActiveDevices.js
+const getActiveDevicesRateLimiter = createRateLimiter(perUserAndDevice.getActiveDevices.maxRequests,perUserAndDevice.getActiveDevices.windowMs);
+
+// ✅ middlewares/rateLimit_getUserAuthLogs.js
+const getUserAuthLogsRateLimiter = createRateLimiter(perUserAndDevice.getUserAuthLogs.maxRequests,perUserAndDevice.getUserAuthLogs.windowMs);
+
 module.exports = {
     signOutRateLimiter: signOutRateLimiter,
     blockAccountRateLimiter: blockAccountRateLimiter,
     unblockAccountRateLimiter: unblockAccountRateLimiter,
     deactivateAccountRateLimiter: deactivateAccountRateLimiter,
-    changePasswordRateLimiter: changePasswordRateLimiter
+    changePasswordRateLimiter: changePasswordRateLimiter,
+    getActiveDevicesRateLimiter: getActiveDevicesRateLimiter,
+    getUserAuthLogsRateLimiter: getUserAuthLogsRateLimiter
 }

@@ -1,42 +1,49 @@
 // 📦 configs/rate-limit.config.js
 
-// You can adjust these limits as per your security policy
-
 module.exports = {
   perDevice: {
     activateAccount: {
-      maxRequests: 5,
-      windowMs: 20 * 60 * 1000,
+      maxRequests: 5,               // 5 attempts
+      windowMs: 20 * 60 * 1000,     // every 20 minutes
     },
     signin: {
-      maxRequests: 5,
-      windowMs: 15 * 60 * 1000,
+      maxRequests: 5,               // 5 attempts
+      windowMs: 15 * 60 * 1000,     // every 15 minutes
     },
     signup: {
-      maxAttempts: 5,
-      windowMs: 15 * 60 * 1000, // 15 minutes
+      maxAttempts: 5,              // limit to 5 registration attempts
+      windowMs: 15 * 60 * 1000     // every 15 minutes
     }
   },
+
   perUserAndDevice: {
     signout: {
-      maxRequests: 10,
-      windowMs: 15 * 60 * 1000,
+      maxRequests: 10,             // Frequent logout is okay
+      windowMs: 15 * 60 * 1000     // every 15 minutes
     },
     deactivateAccount: {
-      maxRequests: 3,
-      windowMs: 30 * 60 * 1000,
+      maxRequests: 2,              // Rare action, must protect
+      windowMs: 60 * 60 * 1000     // every 1 hour
     },
     blockUserAccount: {
-      maxRequests: 5,
-      windowMs: 20 * 60 * 1000,
+      maxRequests: 3,              // Prevent misuse
+      windowMs: 30 * 60 * 1000     // every 30 minutes
     },
     unblockUserAccount: {
-      maxRequests: 5,
-      windowMs: 20 * 60 * 1000,
+      maxRequests: 3,              // Match with block policy
+      windowMs: 30 * 60 * 1000     // every 30 minutes
     },
     changePassword: {
-      maxRequests: 3,
-      windowMs: 60 * 60 * 1000,
+      maxRequests: 2,              // Highly sensitive
+      windowMs: 60 * 60 * 1000     // every 1 hour
+    },
+    getUserAuthLogs: {
+      maxRequests: 5,              // Not a frequent query
+      windowMs: 30 * 60 * 1000     // every 30 minutes
+    },
+    getActiveDevices: {
+      maxRequests: 10,             // Moderate frequency allowed
+      windowMs: 20 * 60 * 1000     // every 20 minutes
     }
   }
 };

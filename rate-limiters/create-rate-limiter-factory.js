@@ -3,6 +3,8 @@ const { errorMessage, throwInternalServerError } = require("../configs/error-han
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 
+/* Factory Design Pattern is used here to create rate limiters based on Different APIs*/
+
 const createRateLimiter = (maxRequests, timeWindowInMs) => {
   return async (req, res, next) => {
     try {
