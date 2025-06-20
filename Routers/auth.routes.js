@@ -20,6 +20,8 @@ const UNBLOCK_USER = URIS.ADMIN_ROUTES.USERS.UNBLOCK_USER;
 const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
 const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 const CHANGE_PASSWORD = URIS.AUTH_ROUTES.CHANGE_PASSWORD;
+const GET_USER_AUTH_LOGS =URIS.ADMIN_ROUTES.USERS.GET_USER_AUTH_LOGS;
+const CHECK_ACTIVE_SESSIONS = URIS.AUTH_ROUTES.CHECK_ACTIVE_SESSIONS;
 
 // 🚦 Connecting Express app with middleware chains and route handlers
 module.exports = (app) => {
@@ -27,6 +29,7 @@ module.exports = (app) => {
     // 👤 Public User Signup Route
     // 🔒 Middleware:
     // - Check whether Device provided or not
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Validates required fields for creating a new user
     // 📌 Controller:
     // - Creates and stores user in DB
@@ -39,6 +42,7 @@ module.exports = (app) => {
     // 🔐 Public User Signin Route
     // 🔒 Middleware:
     // - Check whether Device provided or not
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Verifies login credentials
     // - Checks if user is blocked or deactivated
     // - Checks User Account is acive
@@ -57,6 +61,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Validates signout body
     // 📌 Controller:
     // - Logs user out by invalidating session/token
@@ -71,6 +76,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Check User is already logged out
     // 📌 Controller:
     // - Logs user out by invalidating session/token from Specific Device
@@ -87,6 +93,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Verifies admin identity from request body
     // - Confirms requester is an admin
     // - Ensures admin is verified
@@ -107,6 +114,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Check whether provided request body is valid
     // - Ensures only authorized verified admins can unblock users
     // - Checks Admin is verified
@@ -125,6 +133,7 @@ module.exports = (app) => {
     // ✅ Public User: Activate Own Account
     // 🔒 Middleware:
     // - Check whether Device provided or not
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Ensures user is not blocked
     // - Verifies required credentials in body
     // 📌 Controller:
@@ -141,6 +150,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Confirms user is not blocked
     // - Confirms user is active
     // - Validates input body with password + identification
@@ -162,6 +172,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Confirms user is not blocked (e.g. by admin)
     // - Confirms user's account is active (not deactivated/suspended)
     // - Confirms user is Logged in on that device
@@ -180,5 +191,43 @@ module.exports = (app) => {
         authMiddleware.verifyChangePasswordBody
     ],authController.changePassword);
 
-    
+    // 👤 Authenticated User: Provide details of devices to user where he/she is logged in
+    // 🔒 Middleware:
+    // - Check whether Device provided or not
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
+    // - Confirms user is not blocked (e.g. by admin)
+    // - Confirms user's account is active (not deactivated/suspended)
+    // - Confirms user is Logged in on that device
+    // 🛠️ Controller:
+    // - Provide the user list of active sessions
+    app.get(CHECK_ACTIVE_SESSIONS,[
+        commonUsedMiddleware.verifyDeviceField,
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        generalRateLimiter.getActiveDevicesRateLimiter,
+        commonUsedMiddleware.isUserBlocked,
+        commonUsedMiddleware.isUserAccountActive,
+        commonUsedMiddleware.checkUserIsVerified,
+    ],authController.getActiveDevices);
+
+    // ✅ Admin Only: Check any user auth logs based on filter 
+    // 🔒 Middleware:
+    // - Check whether Device provided or not
+    // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+    // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
+    // - Confirms that provided user is Admin or not
+    // - Confirms user is Logged in on that device
+    // 🛠️ Controller:
+    // - Fetches the User Auth Logs based on filter provided by the admin
+    app.post(GET_USER_AUTH_LOGS,[
+        commonUsedMiddleware.verifyDeviceField,
+        commonUsedMiddleware.verifyTokenOwnership,
+        commonUsedMiddleware.verifyToken,
+        generalRateLimiter.getUserAuthLogsRateLimiter,
+        commonUsedMiddleware.isAdmin,
+        commonUsedMiddleware.checkUserIsVerified
+    ],adminController.getUserAuthLogs);
 };
