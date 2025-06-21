@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA } = require("../configs/user-enums.config");
+const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES } = require("../configs/user-enums.config");
 const { BLOCK_REASONS,UNBLOCK_REASONS } = require("../configs/user-id.config")
 /* User Schema */
 
@@ -136,6 +136,7 @@ const userSchema = mongoose.Schema({
              _id: false,
             deviceID: { type: String, required: true, index: true}, // e.g. generated UUID
             deviceName: { type: String }, // e.g. Redmi Note 8, Chrome on Mac
+            deviceType: {type: String, enum: DEVICE_TYPES, default: null},
             requestCount: {type: Number, default: 1},
             addedAt: { type: Date, default: Date.now },
             lastUsedAt: { type: Date, default: Date.now }

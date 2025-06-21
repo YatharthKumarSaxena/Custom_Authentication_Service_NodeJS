@@ -6,12 +6,13 @@ const UserModel = require("../models/user.model");
 
 const { logWithTime } = require("../utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError} = require("../configs/error-handler.configs");
-const {secretCode,adminID,  expiryTimeOfAccessToken} = require("../configs/user-id.config");
+const { secretCode, expiryTimeOfAccessToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helper.middleware");
 const { extractAccessToken } = require("../utils/extractToken.utils");
 const { resetRefreshToken } = require("../utils/freshSession.utils");
 const { getDeviceByID } = require("../utils/validateRequestBody.utils");
+const { DEVICE_TYPES } = require("../configs/user-enums.config");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -55,7 +56,7 @@ const isUserAccountActive = async(req,res,next) => {
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
     try{
-        let user = req.user;
+        let user = req.user || req.foundUser;
         let verifyWith;
         if(!user){
             verifyWith = await fetchUser(req,res);
@@ -71,7 +72,7 @@ const isUserBlocked = async(req,res,next) => {
                 return throwBlockedAccountError(req,res);
             };
             // Attached complete user details with request, save time for controller
-            req.user = foundUser;
+            req.user = req.foundUser;
             // Very next line should be:
             if (!res.headersSent) return next();
         }
@@ -182,8 +183,12 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    let userID = req?.user?.userID || req?.body?.userID;
-    if(userID === adminID){
+    const user = req.user;
+    if (!user) {
+        logWithTime(`❌ Access Denied: No user information found while checking admin access on device id: (${req.deviceID})`);
+        return throwAccessDeniedError(res, "User not authenticated");
+    }
+    if(user.userType === "ADMIN"){
         // Very next line should be:
         if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID
     }
@@ -250,17 +255,24 @@ const verifyTokenOwnership = async(req, res, next) => {
 
 const verifyDeviceField = async (req,res,next) => {
     try{
-        const user = req.user;
         const deviceID = req.headers["x-device-uuid"];
-        const deviceName = req.headers["x-device-type"]; // Optional
+        const deviceName = req.headers["x-device-name"]; // Optional
+        const deviceType = req.headers["x-device-type"]; // Optional
         // Device ID is mandatory
         if (!deviceID || deviceID.trim() === "") {
             return throwResourceNotFoundError(res, "Device UUID (x-device-uuid) is required in request headers");
         }
         // Attach to request object for later use in controller
-        req.deviceID = deviceID;
+        req.deviceID = deviceID.trim();
         if (deviceName && deviceName.trim() !== "") {
-            req.deviceName = deviceName;
+            req.deviceName = deviceName.trim();
+        }
+        if (deviceType && deviceType.trim() !=="" ) {
+            const type = deviceType.toUpperCase().trim();
+            if (!DEVICE_TYPES.includes(type)) {
+                return throwInvalidResourceError(res, `Invalid Device Type: ${deviceType}`);
+            }
+            req.deviceType = type;
         }
         if(!res.headersSent)next(); // Pass control to the next middleware/controller
     }catch(err){
