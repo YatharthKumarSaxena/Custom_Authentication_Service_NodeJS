@@ -47,18 +47,7 @@ exports.blockUserAccount = async(req,res) => {
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID}) with (${blockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
-        const blockLog = new AuthLogModel({
-            userID: req.user.userID,
-            eventType: "BLOCKED",
-            deviceID: req.deviceID,
-            performedBy: req.user.userType,
-            adminActions:{
-                targetUserID: user.userID
-            }
-        });
-        if(req.deviceName)blockLog["deviceName"] = req.deviceName;
-        if(req.deviceType)blockLog["deviceType"] = req.deviceType;
-        await blockLog.save();
+        await logAuthEvent(req, "BLOCKED", { performedOn: user });
         return res.status(200).json({
             success: true,
             message: `User (${user.userID}) has been successfully blocked.`,
@@ -110,18 +99,7 @@ exports.unblockUserAccount = async(req,res) => {
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID}) with (${unblockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
-        const unblockLog = await AuthLogModel.create({
-            userID: req.user.userID,
-            eventType: "UNBLOCKED",
-            deviceID: req.deviceID,
-            performedBy: req.user.userType,
-            adminActions:{
-                targetUserID: user.userID
-            }
-        });
-        if(req.deviceName)unblockLog["deviceName"] = req.deviceName;
-        if(req.deviceType)unblockLog["deviceType"] = req.deviceType;
-        await unblockLog.save();  
+        await logAuthEvent(req, "UNBLOCKED", { performedOn: user });  
         return res.status(200).json({
             success: true,
             message: `User (${user.userID}) has been successfully unblocked.`,
@@ -166,19 +144,10 @@ exports.getUserAuthLogs = async (req, res) => {
     const logs = await AuthLogModel.find(query).sort({ timestamp: -1 });
 
     // Update data into auth.logs
-    const getUserAuthLog = await AuthLogModel.create({
-        userID: req.user.userID,
-        eventType: "CHECK_AUTH_LOGS",
-        deviceID: req.deviceID,
-        performedBy: req.user.userType,
-        adminActions: {
-            targetUserID: userID,
-            filter: eventType
-        }
+    await logAuthEvent(req, "CHECK_AUTH_LOGS", {
+        performedOn: { userID: userID },
+        filter: eventType
     });
-    if(req.deviceName)getUserAuthLog["deviceName"] = req.deviceName;
-    if(req.deviceType)getUserAuthLog["deviceType"] = req.deviceType;
-    await getUserAuthLog.save();  
 
     return res.status(200).json({
       message: "User authentication logs fetched successfully.",
@@ -243,18 +212,9 @@ exports.checkUserAccountStatus = async(req,res) => {
             User_Account_Details["Unblocked Via"] = user.unblockedVia;
         }
         // Update data into auth.logs
-        const provideAccountDetailsLog = await AuthLogModel.create({
-            userID: req.user.userID,
-            eventType: "PROVIDE_ACCOUNT_DETAILS",
-            deviceID: req.deviceID,
-            performedBy: req.user.userType,
-            adminActions: {
-                targetUserID: req.foundUser.userID
-            }
-        });        
-        if (req.deviceName) provideAccountDetailsLog["deviceName"] = req.deviceName;
-        if (req.deviceType) provideAccountDetailsLog["deviceType"] = req.deviceType;
-        await provideAccountDetailsLog.save();
+        await logAuthEvent(req, "PROVIDE_ACCOUNT_DETAILS", {
+            performedOn: req.foundUser
+        });
 
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID}) via (${verifyWith})`);
         return res.status(200).json({

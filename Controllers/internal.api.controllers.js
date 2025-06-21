@@ -42,7 +42,9 @@ exports.updateUserProfile = async(req,res) => {
             eventType: "UPDATE_ACCOUNT_DETAILS",
             deviceID: req.deviceID,
             performedBy: req.user.userType,
-        });        
+        });       
+        if(req.deviceName)updateAccountLog["deviceName"] = req.deviceName; 
+        if (req.deviceType) updateAccountLog["deviceType"] = req.deviceType; 
         await updateAccountLog.save();
         logWithTime(`✅ User (${user.userID}) updated fields: [${updatedFields.join(", ")}] from device: (${req.deviceID})`);
         return res.status(200).json({
