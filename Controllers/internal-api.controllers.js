@@ -1,8 +1,7 @@
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { throwInternalServerError, errorMessage } =  require("../configs/error-handler.configs");
-const AuthLogModel = require("../models/auth-logs.model");
 
-exports.updateUserProfile = async(req,res) => {
+const updateUserProfile = async(req,res) => {
     try{
         let updatedFields = [];
         const user = req.user;
@@ -37,15 +36,7 @@ exports.updateUserProfile = async(req,res) => {
         }
         await user.save();
         // Update data into auth.logs
-        const updateAccountLog = await AuthLogModel.create({
-            userID: req.user.userID,
-            eventType: "UPDATE_ACCOUNT_DETAILS",
-            deviceID: req.deviceID,
-            performedBy: req.user.userType,
-        });       
-        if(req.deviceName)updateAccountLog["deviceName"] = req.deviceName; 
-        if (req.deviceType) updateAccountLog["deviceType"] = req.deviceType; 
-        await updateAccountLog.save();
+        await logAuthEvent(req, "UPDATE_ACCOUNT_DETAILS", { performedOn: user });
         logWithTime(`✅ User (${user.userID}) updated fields: [${updatedFields.join(", ")}] from device: (${req.deviceID})`);
         return res.status(200).json({
             message: "Profile updated successfully.",
@@ -59,3 +50,6 @@ exports.updateUserProfile = async(req,res) => {
     }
 }
 
+module.exports = {
+    updateUserProfile: updateUserProfile
+}

@@ -4,12 +4,11 @@ const URIS = require("../configs/uri.config");
 // 📥 Importing Controllers (logic handlers) and Middleware (security, validations)
 const authController = require("../controllers/auth.controllers");
 const authMiddleware = require("../middlewares/auth.middleware");
-const commonUsedMiddleware = require("../middlewares/commonUsed.middleware");
+const commonUsedMiddleware = require("../middlewares/common-used.middleware");
 const adminMiddleware = require("../middlewares/admin.middleware");
 const internalApiMiddleware = require("../middlewares/internal.api.middleware");
 const adminController = require("../controllers/admin.controllers");
-const userController = require("../controllers/user.controllers");
-const internalApiController = require("../controllers/internal.api.controllers");
+const internalApiController = require("../controllers/internal-api.controllers")
 const specialRateLimiter = require("../rate-limiters/special-api-rate-limiter");
 const generalRateLimiter = require("../rate-limiters/general-api.rate-limiter");
 
@@ -298,7 +297,7 @@ module.exports = (app) => {
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified,
         internalApiMiddleware.verifyAdminUserViewRequest
-    ],userController.provideUserDetails);
+    ],adminController.checkUserAccountStatus);
 
     // 👤 Authenticated User: Update Own Profile Details
     // 🔒 Middleware:
