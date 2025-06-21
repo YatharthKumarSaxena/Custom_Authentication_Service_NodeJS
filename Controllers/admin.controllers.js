@@ -198,22 +198,26 @@ exports.checkUserAccountStatus = async(req,res) => {
             "Verified": user.isVerified,
             "Login Count": user.loginCount,
             "Account Status": user.isActive ? "Activated" : "Deactivated",
-            "Blocked Account": user.isBlocked ? "Yes" : "No"
+            "Blocked Account": user.isBlocked ? "Yes" : "No",
+            "Block Count": user.blockCount,
+            "Unblock Count": user.unblockCount
         }
         if(user.passwordChangedAt)User_Account_Details["Password Changed At"] = user.passwordChangedAt;
         if(user.lastLogin)User_Account_Details["Last Login Time"] = user.lastLogin;
-        if(user.activatedAt)User_Account_Details["Activated Account At"] = user.activatedAt;
-        if(user.deactivatedAt)User_Account_Details["Deactivated Account At"] = user.deactivatedAt;
+        if(user.lastActivatedAt)User_Account_Details["Activated Account At"] = user.activatedAt;
+        if(user.lastDeactivatedAt)User_Account_Details["Deactivated Account At"] = user.deactivatedAt;
         if(user.lastLogout)User_Account_Details["Last Logout At"] = user.lastLogout;
         if(user.blockedAt){
             User_Account_Details["Blocked At"] = user.blockedAt;
             User_Account_Details["Blocked By"] = user.blockedBy;
             User_Account_Details["Block Reason"] = user.blockReason;
+            User_Account_Details["Blocked Via"] = user.blockedVia;
         }
         if(user.unblockedAt){
             User_Account_Details["Unblocked At"] = user.unblockedAt;
             User_Account_Details["Unblocked By"] = user.unblockedBy;
             User_Account_Details["Unblock Reason"] = user.unblockReason;
+            User_Account_Details["Unblocked Via"] = user.unblockedVia;
         }
         // Update data into auth.logs
         const provideAccountDetailsLog = await AuthLogModel.create({
@@ -226,10 +230,11 @@ exports.checkUserAccountStatus = async(req,res) => {
             }
         });        
         await provideAccountDetailsLog.save();
-        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
+        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID}) via (${verifyWith})`);
         return res.status(200).json({
             message: "Here is User Account Details",
-            User_Account_Details
+            User_Account_Details,
+            resolvedBy: verifyWith
         });
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";

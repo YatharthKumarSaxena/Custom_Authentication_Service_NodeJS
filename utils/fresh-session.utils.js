@@ -1,7 +1,6 @@
 const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
 const { errorMessage,throwInternalServerError} = require("../configs/error-handler.configs");
 const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../configs/user-id.config");
-const AuthLogsModel = require("../models/auth-logs.model");
 const { makeTokenWithMongoID } = require("./issue-token.utils"); 
 const { logWithTime } = require("./time-stamps.utils");
 
@@ -12,7 +11,7 @@ const resetRefreshToken = async(req,res) => {
         const timeSinceLastIssued = now - user.jwtTokenIssuedAt;
         const refreshThreshold = refreshThresholdInMs;
         if (timeSinceLastIssued > refreshThreshold) {
-            const refreshToken = makeTokenWithMongoID(user._id,user, expiryTimeOfRefreshToken);
+            const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
             user.refreshToken = refreshToken;
             user.jwtTokenIssuedAt = now;
             res.cookie("id", refreshToken, {

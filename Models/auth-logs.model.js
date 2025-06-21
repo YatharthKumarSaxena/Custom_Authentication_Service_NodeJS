@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const AUTH_LOG_EVENTS = require("../configs/auth-log-events.config");
 
 const authLogSchema = new mongoose.Schema({
   userID: {
@@ -8,7 +9,7 @@ const authLogSchema = new mongoose.Schema({
   },
   eventType: {
     type: String,
-    enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE", "CHECK_AUTH_LOGS"],
+    enum: AUTH_LOG_EVENTS,
     required: true
   },
   deviceID: {
@@ -33,7 +34,7 @@ const authLogSchema = new mongoose.Schema({
     },
     filter:{
       type: [String],
-      enum: ["LOGIN", "LOGOUT_ALL_DEVICE", "ACTIVATE", "DEACTIVATE", "BLOCKED", "UNBLOCKED", "CHANGED_PASSWORD", "REGISTER", "LOGOUT_SPECIFIC_DEVICE", "CHECK_AUTH_LOGS", "GET_ACTIVE_DEVICES_LOG", "ACCESS_TOKEN", "REFRESH_TOKEN", "UPDATE_ACCOUNT_DETAILS", "PROVIDE_ACCOUNT_DETAILS"]
+      enum: AUTH_LOG_EVENTS
     },
   }
 }, { timestamps: true, versionKey: false });

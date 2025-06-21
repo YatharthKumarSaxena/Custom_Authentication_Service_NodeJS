@@ -1,6 +1,6 @@
 // Extract the required Module
 const jwt = require("jsonwebtoken");
-const {secretCode,expiryTimeOfAccessToken,expiryTimeOfRefreshToken} = require("../configs/user-id.config");
+const {secretCode,expiryTimeOfRefreshToken} = require("../configs/user-id.config");
 const { logWithTime } = require("./time-stamps.utils");
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const AuthLogsModel = require("../models/auth-logs.model");
@@ -17,7 +17,7 @@ exports.makeTokenWithMongoID = async(req,res,expiryTimeOfToken) => {
             { expiresIn: expiryTimeOfToken }
         );
         const tokenCategory = (expiryTimeOfToken === expiryTimeOfRefreshToken)? "REFRESH_TOKEN": "ACCESS_TOKEN";
-        const tokenAuthLog = await AuthLogsModel.create({
+        const tokenAuthLog = new AuthLogsModel({
             userID: req.user.userID,
             eventType: tokenCategory,
             deviceID: req.deviceID,

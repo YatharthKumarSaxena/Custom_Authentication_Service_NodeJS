@@ -154,7 +154,7 @@ const userSchema = mongoose.Schema({
         type: Date,
         default: null
     },
-    activatedAt: {
+    lastActivatedAt: {
         type: Date,
         default: null
     },

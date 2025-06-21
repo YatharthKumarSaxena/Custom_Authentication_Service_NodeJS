@@ -1,5 +1,5 @@
 const bcryptjs = require("bcryptjs");
-const adminPrefixes = require("./id-prefixes.config").admin;
+const adminPrefixes = require("./id-prefixes.config").adminIDPrefix;
 const IP_Address_Code = require("./ip-address.config").IP_Address_Code;
 const adminUserID = Number(process.env.ADMIN_USER_ID);
 const adminID = adminPrefixes + IP_Address_Code + String(adminUserID);
@@ -24,7 +24,7 @@ module.exports = {
         // SALT is bascially a Random Text (Can be String or Number) is added to password
         password: process.env.ADMIN_PASSWORD,
         emailID: process.env.ADMIN_EMAIL_ID,
-        userType: "Admin",
+        userType: "ADMIN",
         userID: adminID
     },
     // 🎯 Admin Action Reasons - Enum Based Design
