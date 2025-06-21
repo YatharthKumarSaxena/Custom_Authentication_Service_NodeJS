@@ -16,19 +16,19 @@ const { getDeviceByID } = require("../utils/validateRequestBody.utils");
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
     try{
-        const user = req.user;
-        if(user.userType === "ADMIN"){ // Admin Account can never be deactivated
-            // Very next line should be:
-            if (!res.headersSent) return next();
-        }
-        const userID = req.user.userID;
+        let user = req.user || req.foundUser;
         if(!user){
-            user = await UserModel.findOne({userID: userID});
-            if(!user){
+            const verifyWith = await fetchUser(req,res);
+            if(verifyWith === ""){
                 logWithTime(`❌ User not found while checking account active status on device id: (${req.deviceID})`);
                 return throwResourceNotFoundError(res, "User");
             }
-            req.user = user; // 🧷 Attach for future use
+            req.user = req.foundUser; // 🧷 Attach for future use
+            user = req.user;
+        }
+        if(user.userType === "ADMIN"){ // Admin Account can never be deactivated
+            // Very next line should be:
+            if (!res.headersSent) return next();
         }
         if(user.isActive === false){
             logWithTime(`🚫 Access Denied: User Account (${user.userID}) is Deactivated on device id: (${req.deviceID})`);
@@ -55,33 +55,23 @@ const isUserAccountActive = async(req,res,next) => {
 // Checking User is Blocked
 const isUserBlocked = async(req,res,next) => {
     try{
-        let userID;
-        userID = req?.user?.userID;
-        if(!userID) userID = req.body.userID;
-        if(!userID && req.foundUser) userID = req.foundUser.userID;
-        if(!userID){ // Get request has no body 
-            userID = req.query.userID;
+        let user = req.user;
+        let verifyWith;
+        if(!user){
+            verifyWith = await fetchUser(req,res);
         }
-        if(!userID){ // If User ID not Present
-            logWithTime(`⚠️ Access Denied as no User ID provided on device id: (${req.deviceID})`);
-            return throwResourceNotFoundError(res,"User ID");
-        }
-        if(userID === adminID){
-            return next(); // Admin can never be blocked
+        if(verifyWith === "")return;
+        user = req.foundUser;
+        if(user.userType === "ADMIN"){
+            if(!res.headersSent)return next();
         }
         else{
-            let user = req.foundUser || req.user;
-            if(!user)user = await UserModel.findOne({userID: userID});
-            if(!user){
-                logWithTime(`⚠️ Invalid User ID entered by you on device id: (${req.deviceID})`);
-                return throwInvalidResourceError(res,"UserID");
-            }
             if(user.isBlocked){
                 logWithTime(`⚠️ Blocked User Account is denied access whose user id is (${user.userID}) on device id: (${req.deviceID})`);
                 return throwBlockedAccountError(req,res);
             };
             // Attached complete user details with request, save time for controller
-            req.user = user;
+            req.user = foundUser;
             // Very next line should be:
             if (!res.headersSent) return next();
         }
