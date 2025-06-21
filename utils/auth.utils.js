@@ -1,4 +1,7 @@
-const { deviceThreshold } = require("../configs/user-id.config");
+const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const { logWithTime } = require("../utils/time-stamps.utils");
+const UserModel = require("../models/user.model");
+const bcryptjs = require("bcryptjs");
 
 const validateSingleIdentifier = (req,res) => {
     const identifiers = [req.body.phoneNumber, req.body.emailID, req.body.userID].filter(Boolean);
@@ -18,15 +21,15 @@ const validateSingleIdentifier = (req,res) => {
 const checkUserExists = async(emailID,phoneNumber,res) => {
     try{
         let count = 0;
-        let user1 = await UserModel.findOne({phoneNumber: phoneNumber})
+        let user = await UserModel.findOne({phoneNumber: phoneNumber})
         let reason = "";
-        if(user1){
+        if(user){
             logWithTime("⚠️ User Already Exists with Phone Number: "+phoneNumber);
             reason = "Phone Number: "+phoneNumber;
             count++;
         }
-        user1 = await UserModel.findOne({emailID: emailID});
-        if(user1){
+        user = await UserModel.findOne({emailID: emailID});
+        if(user){
             logWithTime("⚠️ User Already Exists with Email ID: "+emailID);
             if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
             else reason = "Email ID: "+emailID;
@@ -35,31 +38,18 @@ const checkUserExists = async(emailID,phoneNumber,res) => {
         if(count!==0)logWithTime("⚠️ Invalid Registration");
         return reason;
     }catch(err){
-        logWithTime(`❌ An Internal Error occurred reseting refresh token for phone number: (${phoneNumber}) and emailID: (${emailID}).`);
+        logWithTime(`❌ An Internal Error occurred while checking existing user with phone number: (${phoneNumber}) and emailID: (${emailID}).`);
         errorMessage(err);
         throwInternalServerError(res);
         return "";
     }
 }
 
-// 📦 Utility to get a device from user's devices array by deviceID
-const getDeviceByID = (user, deviceID) => {
-    if (!user?.devices?.length) return null;
-    return user.devices.find(d => d.deviceID === deviceID) || null;
-};
-
-const checkThresholdExceeded = (req,res) => {
-    const user = req.user;
-    const thresholdLimit = (user.userType === "ADMIN")?deviceThreshold.ADMIN:deviceThreshold.CUSTOMERS;
-    if (user.devices.length >= thresholdLimit) {
-        logWithTime(`Login Request Denied as User (${user.userID}) has crossed threshold limit of device sessions. Request is made from deviceID: (${req.deviceID})`);
-        res.status(403).json({ 
-            success: false,
-            message: "❌ Device threshold exceeded. Please logout from another device." 
-        });
-        return true;
-    }
-    return false;
+const checkPasswordIsValid = async(req,user) => {
+    const providedPassword = req.body.password;
+    const actualPassword = user.password;
+    const isPasswordValid = await bcryptjs.compare(providedPassword, actualPassword);
+    return isPasswordValid;
 }
 
 const isAdminID = (userID) => {
@@ -68,8 +58,7 @@ const isAdminID = (userID) => {
 
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
+  checkPasswordIsValid: checkPasswordIsValid,
   checkUserExists: checkUserExists,
-  getDeviceByID: getDeviceByID,
-  checkThresholdExceeded: checkThresholdExceeded,
   isAdminID: isAdminID
 }
