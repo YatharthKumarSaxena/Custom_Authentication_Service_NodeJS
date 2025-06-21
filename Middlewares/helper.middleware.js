@@ -35,35 +35,35 @@ const fetchUser = async(req,res) =>{
         if(req?.query?.userID){
             user = await UserModel.findOne({userID: req.query.userID});
             if(user){
-                verifyWith = verifyWith+"UserID";
+                verifyWith = verifyWith+"USER_ID";
             }
         }
         else if (req?.query?.emailID){
             user = await UserModel.findOne({emailID: req.query.emailID});
             if(user){
-                verifyWith = verifyWith+"EmailID";
+                verifyWith = verifyWith+"EMAIL";
             }
         }
         else if (req?.query?.phoneNumber){
             user = await UserModel.findOne({phoneNumber: req.query.phoneNumber});
             if(user){
-                verifyWith = verifyWith+"Phone Number";
+                verifyWith = verifyWith+"PHONE";
             }
         }
         else if(req.body.userID){
             user = await UserModel.findOne({userID: req.body.userID});
             if(user){
-                verifyWith = verifyWith+"UserID";
+                verifyWith = verifyWith+"USER_ID";
             }
         }else if(req.body.emailID){
             user = await UserModel.findOne({emailID: req.body.emailID});
             if(user){
-                verifyWith = verifyWith+"EmailID";
+                verifyWith = verifyWith+"EMAIL";
             }
         }else if(req.body.phoneNumber){
             user = await UserModel.findOne({phoneNumber: req.body.phoneNumber});
             if(user){
-                verifyWith = verifyWith+"PhoneNumber";
+                verifyWith = verifyWith+"PHONE";
             }
         }else{
             anyResourcePresent = false;
@@ -81,6 +81,7 @@ const fetchUser = async(req,res) =>{
         // This prevents redundant DB lookups in the controller and makes downstream logic cleaner and faster
         req.verifyWith = verifyWith;
         req.foundUser = user;
+        logWithTime(`🆔 User identified using: ${verifyWith}`);
         return verifyWith;
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";

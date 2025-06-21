@@ -1,11 +1,11 @@
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
-const { adminID } = require("../configs/user-id.config");
+const { adminID,AdminActionReasons } = require("../configs/user-id.config");
 
 const checkUpdateMyProfileRequest = (req,res,next) => {
     try{
         const user = req.user;
-        if(user.userID === adminID){
+        if(user.userType === "ADMIN"){
             logWithTime(`⚠️ Access Denied: Admin (${user.userID}) cannot update their profile details via API Request. Request made from device id: (${req.deviceID})`);
             return res.status(403).json({
                 message: "Access Denied: Admin cannot update their profile details via API Request"
@@ -26,10 +26,14 @@ const checkUpdateMyProfileRequest = (req,res,next) => {
             "createdAt", "updatedAt",         // System timestamps
             "isActive", "lastLogin",          // Lifecycle flags
             "verificationToken",              // Token used for verifying email/phone
-            "passwordChangedAt",
-            "lastDeactivatedAt",
-            "devices","loginCount",
-            "otp","blockReason",
+            "blockReason","unblockReason",
+            "blockedAt","unblockedAt",
+            "lastActivatedAt","lastDeactivatedAt",
+            "blockedBy","unblockedBy",
+            "lastLogout","loginCount",
+            "blockVia","unblockVia",
+            "blockCount","devices","unblockCount",
+            "passwordChangedAt","otp",
             "refreshToken","password",
             "timestamps","versionKey"
         ];

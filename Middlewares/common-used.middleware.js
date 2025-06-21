@@ -6,7 +6,7 @@ const UserModel = require("../models/user.model");
 
 const { logWithTime } = require("../utils/timeStamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError} = require("../configs/error-handler.configs");
-const {secretCode,adminID, expiryTimeOfRefreshToken, expiryTimeOfAccessToken} = require("../configs/user-id.config");
+const {secretCode,adminID,  expiryTimeOfAccessToken} = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issueToken.utils");
 const {checkUserIsNotVerified, fetchUser} = require("./helper.middleware");
 const { extractAccessToken } = require("../utils/extractToken.utils");
@@ -16,12 +16,12 @@ const { getDeviceByID } = require("../utils/validateRequestBody.utils");
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
     try{
-        let userID = req?.user?.userID  || req?.foundUser?.userID || req?.body?.userID || req?.query?.userID;
-        if(userID === adminID){ // Admin Account can never be deactivated
+        const user = req.user;
+        if(user.userType === "ADMIN"){ // Admin Account can never be deactivated
             // Very next line should be:
             if (!res.headersSent) return next();
         }
-        let user = req.user;
+        const userID = req.user.userID;
         if(!user){
             user = await UserModel.findOne({userID: userID});
             if(!user){
