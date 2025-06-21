@@ -24,6 +24,15 @@ const getActiveDevicesRateLimiter = createRateLimiter(perUserAndDevice.getActive
 // ✅ middlewares/rateLimit_getUserAuthLogs.js
 const getUserAuthLogsRateLimiter = createRateLimiter(perUserAndDevice.getUserAuthLogs.maxRequests,perUserAndDevice.getUserAuthLogs.windowMs);
 
+// ✅ middlewares/rateLimit_updateUserAccount.js
+const updateUserAccountRateLimiter = createRateLimiter(perUserAndDevice.updateUserProfile.maxRequests, perUserAndDevice.updateUserProfile.windowMs);
+
+// ✅ middlewares/rateLimit_checkMyAccountDetails.js
+const checkMyAccountDetailsRateLimiter = createRateLimiter(perUserAndDevice.fetchMyAccountDetails.maxRequests, perUserAndDevice.fetchMyAccountDetails.windowMs);
+
+// ✅ middlewares/rateLimit_checkUserAccountDetails.js
+const checkUserAccountDetailsRateLimiter = createRateLimiter(perUserAndDevice.fetchUserDetailsByAdmin.maxRequests, perUserAndDevice.fetchUserDetailsByAdmin.windowMs);
+
 module.exports = {
     signOutRateLimiter: signOutRateLimiter,
     blockAccountRateLimiter: blockAccountRateLimiter,
@@ -31,5 +40,8 @@ module.exports = {
     deactivateAccountRateLimiter: deactivateAccountRateLimiter,
     changePasswordRateLimiter: changePasswordRateLimiter,
     getActiveDevicesRateLimiter: getActiveDevicesRateLimiter,
-    getUserAuthLogsRateLimiter: getUserAuthLogsRateLimiter
+    getUserAuthLogsRateLimiter: getUserAuthLogsRateLimiter,
+    updateUserAccountRateLimiter: updateUserAccountRateLimiter,
+    checkMyAccountDetailsRateLimiter: checkMyAccountDetailsRateLimiter,
+    checkUserAccountDetailsRateLimiter: checkUserAccountDetailsRateLimiter
 }
