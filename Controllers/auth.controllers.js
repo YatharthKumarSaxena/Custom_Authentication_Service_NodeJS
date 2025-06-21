@@ -488,7 +488,7 @@ exports.activateUserAccount = async(req,res) => {
             return throwInvalidResourceError(res,"Password");
         }
         user.isActive = true;
-        user.activatedAt = Date.now();
+        user.lastActivatedAt = Date.now();
         await user.save();
         // Activation success log
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
@@ -599,8 +599,19 @@ exports.getActiveDevices = async (req, res) => {
         if (res.headersSent) return; // If response is returned by fetchUser
     }
     let user;
-    if(req.foundUser)user = req.foundUser;
+    if(req.foundUser){
+        const isUserCheckedAdmin = isAdminID(req.foundUser.userID);
+        if(isUserCheckedAdmin && req.foundUser.userID !== adminID){
+            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${userID})`);
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You cannot access another admin's authentication logs.",
+            });
+        }
+        user = req.foundUser;
+    }
     else user = req.user;
+    
     if (!Array.isArray(user.devices) || user.devices.length === 0) {
       logWithTime(`📭 No active devices found for User (${user.userID})`);
       return res.status(200).json({
