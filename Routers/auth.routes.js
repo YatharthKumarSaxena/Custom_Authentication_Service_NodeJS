@@ -271,6 +271,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        generalRateLimiter.checkMyAccountDetailsRateLimiter,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified  
@@ -290,6 +291,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        generalRateLimiter.checkUserAccountDetailsRateLimiter,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified,
         internalApiMiddleware.verifyAdminUserViewRequest
@@ -311,6 +313,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
+        generalRateLimiter.updateUserAccountRateLimiter,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
