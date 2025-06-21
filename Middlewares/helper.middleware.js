@@ -4,29 +4,6 @@ const {throwInvalidResourceError,throwResourceNotFoundError,throwInternalServerE
 const UserModel = require("../models/user.model");
 const { logWithTime } = require("../utils/time-stamps.utils");
 
-// DRY Principle followed by this Code
-const checkUserIsNotVerified = async(user,res) => {
-    try{
-        if(user.isVerified === false)return true; // SignOut Introduces this Feature
-        const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
-        const currentTime = Date.now(); // In milli second current time is return
-        if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
-            user.isVerified = false;
-            user.refreshToken = null;
-            user.devices.length = 0;
-            res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
-            await user.save(); // 👈 Add this line
-            return true; // 🧠 session expired, response already sent
-        }
-        return false; // ✅ token valid, continue execution
-    }catch(err){
-        logWithTime(`❌ An Internal Error Occurred while verifying the User Request`);
-        errorMessage(err);
-        throwInternalServerError(res);
-        return true;
-    }
-}
-
 const fetchUser = async(req,res) =>{
     try{
         let user;
@@ -93,6 +70,5 @@ const fetchUser = async(req,res) =>{
 }
 
 module.exports = {
-    checkUserIsNotVerified: checkUserIsNotVerified,
     fetchUser: fetchUser
 }
