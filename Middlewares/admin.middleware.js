@@ -8,7 +8,7 @@ const { validateSingleIdentifier } = require("../utils/auth.utils");
 const verifyAdminBlockUnblockBody = async(req,res,next) => {
     try{
         if(!req.body.reason){
-            return throwResourceNotFoundError(res,"AdminID");
+            return throwResourceNotFoundError(res,"Reason");
         }
         if(!req.body.userID && !req.body.phoneNumber && !req.body.emailID){
             return throwResourceNotFoundError(res,"EmailID, UserID or Phone Number(Any one of these fields)");
