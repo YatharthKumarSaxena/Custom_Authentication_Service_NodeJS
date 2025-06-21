@@ -8,6 +8,7 @@ const commonUsedMiddleware = require("../middlewares/commonUsed.middleware");
 const adminMiddleware = require("../middlewares/admin.middleware");
 const internalApiMiddleware = require("../middlewares/internal.api.middleware");
 const adminController = require("../controllers/admin.controllers");
+const userController = require("../controllers/user.controllers");
 const internalApiController = require("../controllers/internal.api.controllers");
 const specialRateLimiter = require("../rate-limiters/special-api-rate-limiter");
 const generalRateLimiter = require("../rate-limiters/general-api.rate-limiter");
