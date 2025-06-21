@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-
+const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA } = require("../configs/user-enums.config");
+const { BLOCK_REASONS,UNBLOCK_REASONS } = require("../configs/user-id.config")
 /* User Schema */
 
 /*
@@ -8,16 +9,27 @@ const mongoose = require("mongoose");
  * Password
  * Email_ID
  * User Type
- * Address [localAddress,city,pincode,state,country]
  * Phone Number
  * isVerified
  * isActive
  * isBlocked
- * UserType
+ * blockedBy
+ * unblockedBy
+ * blockedAt
+ * unblockedAt
+ * blockVia
+ * unblockVia
+ * blockReason
+ * unblockReason
+ * blockCount
+ * unblockCount
  * lastLogin
- * dateOfBirth
- * gender
- * profilePicUrl
+ * lastLogout
+ * lastActivatedAt
+ * lastDeactivatedAt
+ * devices [deviceID,deviceName,requestCount,addedAt,lastUsedAt]
+ * otp [code,expiresAt,verified,resendCount]
+ * passwordChangedAt
  * jwtTokenIssuedAt
  * refreshToken
 */
@@ -26,13 +38,15 @@ const mongoose = require("mongoose");
 const userSchema = mongoose.Schema({
     name:{
         type: String,
-        required: true
+        required: true,
+        trim: true,
     },
     phoneNumber:{
         type: String,
         match: /^[0-9]{10}$/,
         required: true,
-        unique: true
+        unique: true,
+        trim: true,
     },
     password:{
         type: String,
@@ -49,6 +63,7 @@ const userSchema = mongoose.Schema({
         unique: true,
         required: true,
         lowercase: true,
+        trim: true,
         // At least one character before @
         // Exactly one @ symbol
         // At least one character before and after the . in domain
@@ -69,7 +84,7 @@ const userSchema = mongoose.Schema({
     },
     userType:{
         type: String,
-        enum: ["CUSTOMER","ADMIN"],
+        enum: USER_TYPE,
         default: "CUSTOMER"
     },
     refreshToken: {
@@ -82,6 +97,7 @@ const userSchema = mongoose.Schema({
     },
     blockReason: {
         type: String,
+        enum: BLOCK_REASONS,
         default: null
     },
     blockedBy : {
@@ -90,7 +106,7 @@ const userSchema = mongoose.Schema({
     },
     blockedVia: {
         type: String,
-        enum: ["USER_ID", "EMAIL", "PHONE"],
+        enum: BLOCK_VIA,
         default: null
     },
     blockCount: { 
@@ -99,6 +115,7 @@ const userSchema = mongoose.Schema({
     },
     unblockReason: {
         type: String,
+        enum: UNBLOCK_REASONS,
         default: null
     },
     unblockedBy: {
@@ -107,7 +124,7 @@ const userSchema = mongoose.Schema({
     },
     unblockedVia: {
         type: String,
-        enum: ["USER_ID", "EMAIL", "PHONE"],
+        enum: UNBLOCK_VIA,
         default: null
     },
     unblockCount: { 
@@ -117,7 +134,7 @@ const userSchema = mongoose.Schema({
     devices: [
         {
              _id: false,
-            deviceID: { type: String, required: true }, // e.g. generated UUID
+            deviceID: { type: String, required: true, index: true}, // e.g. generated UUID
             deviceName: { type: String }, // e.g. Redmi Note 8, Chrome on Mac
             requestCount: {type: Number, default: 1},
             addedAt: { type: Date, default: Date.now },

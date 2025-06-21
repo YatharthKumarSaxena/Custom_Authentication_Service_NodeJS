@@ -2,6 +2,7 @@
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
+const DeviceRateLimit = require("../models/device-rate-limit.model");
 
 /* Factory Design Pattern is used here to create rate limiters based on Different APIs*/
 
