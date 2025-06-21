@@ -41,12 +41,12 @@ exports.blockUserAccount = async(req,res) => {
         user.isBlocked = true;
         user.blockedBy = req.user.userID;
         user.blockedVia = verifyWith;
-        user.blockCount = user.blockCount+1;
+        user.blockCount += 1;
         user.blockReason = blockReason;
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID}) with (${blockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
-        const blockLog = await AuthLogModel.create({
+        const blockLog = new AuthLogModel({
             userID: req.user.userID,
             eventType: "BLOCKED",
             deviceID: req.deviceID,
@@ -56,6 +56,7 @@ exports.blockUserAccount = async(req,res) => {
             }
         });
         if(req.deviceName)blockLog["deviceName"] = req.deviceName;
+        if(req.deviceType)blockLog["deviceType"] = req.deviceType;
         await blockLog.save();
         return res.status(200).json({
             success: true,
@@ -103,7 +104,7 @@ exports.unblockUserAccount = async(req,res) => {
         user.isBlocked = false;
         user.unblockedBy = req.user.userID;
         user.unblockedVia = verifyWith;
-        user.unblockCount = user.unblockCount+1;
+        user.unblockCount += 1;
         user.unblockReason = unblockReason;
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID}) with (${unblockReason}) reason via (${verifyWith})`);
@@ -118,6 +119,7 @@ exports.unblockUserAccount = async(req,res) => {
             }
         });
         if(req.deviceName)unblockLog["deviceName"] = req.deviceName;
+        if(req.deviceType)unblockLog["deviceType"] = req.deviceType;
         await unblockLog.save();  
         return res.status(200).json({
             success: true,
@@ -163,6 +165,7 @@ exports.getUserAuthLogs = async (req, res) => {
         }
     });
     if(req.deviceName)getUserAuthLog["deviceName"] = req.deviceName;
+    if(req.deviceType)getUserAuthLog["deviceType"] = req.deviceType;
     await getUserAuthLog.save();  
 
     return res.status(200).json({
@@ -204,8 +207,8 @@ exports.checkUserAccountStatus = async(req,res) => {
         }
         if(user.passwordChangedAt)User_Account_Details["Password Changed At"] = user.passwordChangedAt;
         if(user.lastLogin)User_Account_Details["Last Login Time"] = user.lastLogin;
-        if(user.lastActivatedAt)User_Account_Details["Activated Account At"] = user.activatedAt;
-        if(user.lastDeactivatedAt)User_Account_Details["Deactivated Account At"] = user.deactivatedAt;
+        if(user.lastActivatedAt)User_Account_Details["Activated Account At"] = user.lastActivatedAt;
+        if(user.lastDeactivatedAt)User_Account_Details["Deactivated Account At"] = user.lastDeactivatedAt;
         if(user.lastLogout)User_Account_Details["Last Logout At"] = user.lastLogout;
         if(user.blockedAt){
             User_Account_Details["Blocked At"] = user.blockedAt;
@@ -229,7 +232,10 @@ exports.checkUserAccountStatus = async(req,res) => {
                 targetUserID: req.foundUser.userID
             }
         });        
+        if (req.deviceName) provideAccountDetailsLog["deviceName"] = req.deviceName;
+        if (req.deviceType) provideAccountDetailsLog["deviceType"] = req.deviceType;
         await provideAccountDetailsLog.save();
+
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID}) via (${verifyWith})`);
         return res.status(200).json({
             message: "Here is User Account Details",

@@ -1,6 +1,6 @@
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
-const { adminID,AdminActionReasons } = require("../configs/user-id.config");
+const { AdminActionReasons } = require("../configs/user-id.config");
 
 const checkUpdateMyProfileRequest = (req,res,next) => {
     try{
@@ -68,7 +68,7 @@ const verifyAdminUserViewRequest = async(req,res,next) => {
             return throwResourceNotFoundError(res,"User ID in Query");
         }
         if(!req.query.reason){ // Checking that Reason is Provided by Admin or not
-            return throwResourceNotFoundError(res,"Valid Reason to check User Account Details");
+            return throwResourceNotFoundError(res,"Reason to fetch user account details");
         }
         // Check that Provided Reason is Valid or not
         const reason = req.query.reason;

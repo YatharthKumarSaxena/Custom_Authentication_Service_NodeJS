@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const AUTH_LOG_EVENTS = require("../configs/auth-log-events.config");
+const { DEVICE_TYPES } = require("../configs/user-enums.config");
 
 const authLogSchema = new mongoose.Schema({
   userID: {
@@ -18,6 +19,11 @@ const authLogSchema = new mongoose.Schema({
   },
   deviceName: {
     type: String
+  },
+  deviceType: {
+    type: String,
+    enum: DEVICE_TYPES,
+    default: null
   },
   timestamp: {
     type: Date,
