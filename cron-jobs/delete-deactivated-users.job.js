@@ -5,11 +5,12 @@ const { userCleanup } = require("../configs/cron.config");
 
 const deleteDeactivatedUsers = async () => {
   try {
+    if(!userCleanup.enable)return;
     const cutoffDate = new Date(Date.now() - userCleanup.deactivatedRetentionDays * 24 * 60 * 60 * 1000);
     const result = await UserModel.deleteMany({
       isActive: false,
       lastDeactivatedAt: { $lt: cutoffDate },
-      userType: "Customer"
+      userType: "CUSTOMER"
     });
 
     logWithTime(`🗑️ Account Deletion Job: ${result.deletedCount} users hard deleted (inactive > ${userCleanup.deactivatedRetentionDays} days).`);

@@ -5,6 +5,11 @@ const { authLogCleanup } = require("../configs/cron.config");
 
 const cleanAuthLogs = async () => {
   try {
+    if(!authLogCleanup.enable)return;
+    if (!authLogCleanup.deactivatedRetentionDays || authLogCleanup.deactivatedRetentionDays < 1) {
+      logWithTime("⚠️ Invalid retention days configuration. Skipping auth log cleanup.");
+      return;
+    }
     const cutoffDate = new Date(Date.now() - authLogCleanup.deactivatedRetentionDays * 24 * 60 * 60 * 1000);
     const result = await AuthLogModel.deleteMany({
       createdAt: { $lt: cutoffDate }
