@@ -3,9 +3,10 @@
 // Extract the Required Modules
 const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
-const {BLOCK_REASONS,UNBLOCK_REASONS} = require("../configs/user-id.config");
+const {BLOCK_REASONS,UNBLOCK_REASONS,adminID} = require("../configs/user-id.config");
 const AuthLogModel = require("../models/auth-logs.model");
 const { fetchUser } = require("../middlewares/helper.middleware");
+const { isAdminID } = require("../utils/auth.utils");
 
 exports.blockUserAccount = async(req,res) => {
     try{
@@ -139,7 +140,18 @@ exports.getUserAuthLogs = async (req, res) => {
 
     const query = {};
 
-    if (userID) query.userID = userID;
+    if (userID){
+        const isUserCheckedAdmin = isAdminID(userID);
+        if(isUserCheckedAdmin && userID !== adminID){
+            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${userID})`);
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You cannot access another admin's authentication logs.",
+            });
+        }
+        query.userID = userID;
+    } 
+    
     if (eventType && Array.isArray(eventType) && eventType.length > 0) {
       query.eventType = { $in: eventType };
     }
@@ -192,6 +204,14 @@ exports.checkUserAccountStatus = async(req,res) => {
         if(!user)user = req.user; 
         if(!user){
             return throwResourceNotFoundError(res,"User");
+        }
+        const isUserCheckedAdmin = isAdminID(user.userID);
+        if(isUserCheckedAdmin && user.userID !== adminID){
+            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${userID})`);
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You cannot access another admin's authentication logs.",
+            });
         }
         const User_Account_Details = {
             "Name": user.name,

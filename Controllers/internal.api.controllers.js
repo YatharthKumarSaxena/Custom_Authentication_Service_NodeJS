@@ -1,6 +1,5 @@
 const { logWithTime } = require("../utils/time-stamps.utils");
-const { throwInternalServerError,errorMessage,throwResourceNotFoundError } =  require("../configs/error-handler.configs");
-const { fetchUser } = require("../middlewares/helper.middleware");
+const { throwInternalServerError,errorMessage } =  require("../configs/error-handler.configs");
 const AuthLogModel = require("../models/auth-logs.model");
 
 exports.updateUserProfile = async(req,res) => {
@@ -8,14 +7,25 @@ exports.updateUserProfile = async(req,res) => {
         let updatedFields = [];
         const user = req.user;
         if(req.body.name && req.body.name !== user.name){
+            const name = req.body.name.trim();
             updatedFields.push("Name");
-            user.name = req.body.name;
+            user.name = name;
         }
         if(req.body.emailID && req.body.emailID.trim().toLowerCase() !== user.emailID.trim().toLowerCase()){
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(req.body.emailID)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "❌ Invalid email format. Please provide a valid email address."
+                });
+            }
             updatedFields.push("Email ID");
             user.emailID = req.body.emailID
         }
         if(req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber){
+            if(typeof req.body.phoneNumber !== "string" || !/^\d{10}$/.test(req.body.phoneNumber)) {
+                return res.status(400).json({ message: "Invalid phone number format." });
+            }
             updatedFields.push("Phone Number");
             user.phoneNumber = req.body.phoneNumber;
         }

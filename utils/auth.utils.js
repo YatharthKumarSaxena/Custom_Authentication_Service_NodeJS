@@ -62,9 +62,14 @@ const checkThresholdExceeded = (req,res) => {
     return false;
 }
 
+const isAdminID = (userID) => {
+    return typeof userID === "string" && userID.startsWith("ADM");
+};
+
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
   checkUserExists: checkUserExists,
   getDeviceByID: getDeviceByID,
-  checkThresholdExceeded: checkThresholdExceeded
+  checkThresholdExceeded: checkThresholdExceeded,
+  isAdminID: isAdminID
 }
