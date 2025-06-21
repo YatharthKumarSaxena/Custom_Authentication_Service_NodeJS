@@ -23,9 +23,9 @@ const DEACTIVATE_USER = URIS.AUTH_ROUTES.DEACTIVATE_USER;
 const ACTIVATE_USER = URIS.AUTH_ROUTES.ACTIVATE_USER;
 const CHANGE_PASSWORD = URIS.AUTH_ROUTES.CHANGE_PASSWORD;
 const GET_USER_AUTH_LOGS =URIS.ADMIN_ROUTES.USERS.GET_USER_AUTH_LOGS;
-const CHECK_ACTIVE_SESSIONS = URIS.AUTH_ROUTES.CHECK_ACTIVE_SESSIONS;
+const CHECK_MY_ACTIVE_SESSIONS = URIS.AUTH_ROUTES.CHECK_ACTIVE_SESSIONS;
 const CHECK_USER_SESSIONS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.GET_USER_ACTIVE_SESSIONS;
-const GET_USER_ACCOUNT_DETAILS = URIS.USER_ROUTES.FETCH_MY_PROFILE;
+const FETCH_MY_ACCOUNT_DETAILS = URIS.USER_ROUTES.FETCH_MY_PROFILE;
 const FETCH_USER_DETAILS_BY_ADMIN = URIS.ADMIN_ROUTES.USERS.FETCH_USER_DETAILS;
 const UPDATE_USER_PROFILE = URIS.USER_ROUTES.UPDATE_PROFILE;
 
@@ -208,7 +208,7 @@ module.exports = (app) => {
     // - Confirms user is Logged in on that device
     // 🛠️ Controller:
     // - Provide the user list of active sessions
-    app.get(CHECK_ACTIVE_SESSIONS,[
+    app.get(CHECK_MY_ACTIVE_SESSIONS,[
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
@@ -257,7 +257,7 @@ module.exports = (app) => {
         adminMiddleware.verifyAdminCheckUserSessionsBody
     ],authController.getActiveDevices);
 
-        // 📄 Public User: Get Own Account Details
+    // 📄 Public User: Get Own Account Details
     // 🔒 Middleware:
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
@@ -267,14 +267,14 @@ module.exports = (app) => {
     // - Confirms user is verified
     // 📌 Controller:
     // - Returns full account details of the logged-in user
-    app.get(GET_USER_ACCOUNT_DETAILS, [
+    app.get(FETCH_MY_ACCOUNT_DETAILS, [
         commonUsedMiddleware.verifyDeviceField,
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
-        commonUsedMiddleware.checkUserIsVerified
-    ], userController.provideUserDetails);
+        commonUsedMiddleware.checkUserIsVerified  
+    ], authController.provideUserAccountDetails);
 
     // 🛡️ Admin Only: Get Any User's Account Details
     // 🔒 Middleware:
@@ -292,7 +292,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyToken,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified,
-        adminMiddleware.verifyAdminUserViewRequest
+        internalApiMiddleware.verifyAdminUserViewRequest
     ],userController.provideUserDetails);
 
     // 👤 Authenticated User: Update Own Profile Details
@@ -314,6 +314,6 @@ module.exports = (app) => {
         commonUsedMiddleware.isUserBlocked,
         commonUsedMiddleware.isUserAccountActive,
         commonUsedMiddleware.checkUserIsVerified,
-        userMiddleware.checkUpdateMyProfileRequest
-    ],userController.updateUserProfile);
+        internalApiMiddleware.checkUpdateMyProfileRequest
+    ],internalApiController.updateUserProfile);
 };

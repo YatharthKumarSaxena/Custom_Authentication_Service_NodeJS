@@ -11,7 +11,7 @@ module.exports = {
       windowMs: 15 * 60 * 1000,     // every 15 minutes
     },
     signup: {
-      maxAttempts: 5,              // limit to 5 registration attempts
+      maxRequests: 5,              // limit to 5 registration attempts
       windowMs: 15 * 60 * 1000     // every 15 minutes
     }
   },
@@ -44,6 +44,18 @@ module.exports = {
     getActiveDevices: {
       maxRequests: 10,             // Moderate frequency allowed
       windowMs: 20 * 60 * 1000     // every 20 minutes
+    },
+    fetchMyAccountDetails: {
+      maxRequests: 10,
+      windowMs: 60 * 1000          // every 1 minute
+    },
+    fetchUserDetailsByAdmin: {
+      maxRequests: 5,
+      windowMs: 5 * 60 * 1000      // every 5 minutes
+    },
+    updateUserProfile: {
+      maxRequests: 3,
+      windowMs: 10 * 60 * 1000     // every 10 minutes
     }
   }
 };
