@@ -86,7 +86,7 @@ async function init(){ // To use await we need to make function Asynchronous
 }
 
 // 🔹 Connect Server to the Router
-require("./Routers/auth.routes")(app)
+require("./routers/auth.routes")(app)
 
 // 🔹 Initializing Server by Express
 app.listen(PORT_NUMBER,()=>{
