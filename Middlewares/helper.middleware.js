@@ -32,11 +32,22 @@ const fetchUser = async(req,res) =>{
         let user;
         let verifyWith = "";
         let anyResourcePresent = true;
-        const getID = req?.query?.userID || req?.user?.userID; // For the Get Request
-        if(getID){
-            user = await UserModel.findOne({userID: getID});
+        if(req?.query?.userID){
+            user = await UserModel.findOne({userID: req.query.userID});
             if(user){
                 verifyWith = verifyWith+"UserID";
+            }
+        }
+        else if (req?.query?.emailID){
+            user = await UserModel.findOne({emailID: req.query.emailID});
+            if(user){
+                verifyWith = verifyWith+"EmailID";
+            }
+        }
+        else if (req?.query?.phoneNumber){
+            user = await UserModel.findOne({phoneNumber: req.query.phoneNumber});
+            if(user){
+                verifyWith = verifyWith+"Phone Number";
             }
         }
         else if(req.body.userID){

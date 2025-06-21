@@ -39,3 +39,8 @@ const verifyAdminCheckUserSessionsBody = async(req,res,next) => {
         return throwInternalServerError(res); 
     }
 }
+
+module.exports = {
+    verifyAdminBlockUnblockBody: verifyAdminBlockUnblockBody,
+    verifyAdminCheckUserSessionsBody: verifyAdminCheckUserSessionsBody
+}

@@ -262,6 +262,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Confirms user is not blocked
     // - Confirms user is active
     // - Confirms user is verified
@@ -282,6 +283,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Confirms the requester is an admin (role check)
     // - Confirms the admin is a verified user (e.g. admin is logout or not)
     // - Validates that the admin is requesting valid user data (input format & presence)
@@ -302,6 +304,7 @@ module.exports = (app) => {
     // - Check whether Device provided or not
     // - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
     // - Validates Access token or generate it if Expired
+    // - Rate Limiter to prevent Server Crash from Heavy API Attacks
     // - Confirms user is not blocked (e.g. by admin)
     // - Confirms user's account is active (not deactivated/suspended)
     // - Confirms user is Logged in on that device

@@ -593,11 +593,14 @@ exports.changePassword = async(req,res) => {
 // Controller to Fetch All Active Devices of a User
 exports.getActiveDevices = async (req, res) => {
   try {
-    const user = req.user || req.foundUser; // depending on middleware flow
-    if (!user) {
-      return throwInvalidResourceError(res, "UserID");
+    // If Get Request has a User then We have to Extract its Details and give to the Admin
+    if(req?.query?.userID || req?.query?.emailID || req?.query?.phoneNumber){
+        await fetchUser(req,res);
+        if (res.headersSent) return; // If response is returned by fetchUser
     }
-
+    let user;
+    if(req.foundUser)user = req.foundUser;
+    else user = req.user;
     if (!Array.isArray(user.devices) || user.devices.length === 0) {
       logWithTime(`📭 No active devices found for User (${user.userID})`);
       return res.status(200).json({
@@ -613,28 +616,6 @@ exports.getActiveDevices = async (req, res) => {
       (a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt)
     );
 
-    logWithTime(`📲 Fetched ${sortedDevices.length} active devices for User (${user.userID})`);
-    if(req?.query?.userID || req?.query?.emailID || req?.query?.phoneNumber){
-        // Update data into auth.logs
-        const getActiveDevicesLog = await AuthLogModel.create({
-            userID: req.user.userID,
-            eventType: "GET_ACTIVE_DEVICES_LOG",
-            deviceID: req.deviceID,
-            performedBy: req.user.userType,
-            adminActions: {
-                targetUserID: req.foundUser.userID
-            }
-        });
-        if(req.deviceName)getActiveDevicesLog["deviceName"] = req.deviceName;
-        await getActiveDevicesLog.save();  
-        logWithTime(`Admin (${req.user.userID}) fetched User (${req.foundUser.userID}) active device sessions from device id: (${req.deviceID})`);
-        return res.status(200).json({
-            success: true,
-            message: "Active devices fetched successfully.",
-            total: sortedDevices.length,
-            devices: sortedDevices
-        }); 
-    }
     // Update data into auth.logs
     const getActiveDevicesLog = await AuthLogModel.create({
         userID: req.user.userID,
@@ -642,10 +623,17 @@ exports.getActiveDevices = async (req, res) => {
         deviceID: req.deviceID,
         performedBy: req.user.userType,
     });
-    if(req.deviceName)getActiveDevicesLog["deviceName"] = req.deviceName;
-    await getActiveDevicesLog.save();  
-    logWithTime(`User (${req.user.userID}) fetched its active device sessions from device id: (${req.deviceID})`);
-    if(!res.headerSent)return res.status(200).json({
+    if(req.deviceName)getActiveDevicesLog["deviceName"] = req.deviceName; 
+    logWithTime(`📲 Fetched ${sortedDevices.length} active devices for User (${user.userID})`);
+    if(req.foundUser){
+        // Update data into auth.logs
+        getActiveDevicesLog["adminActions"] = {
+            targetUserID: user.userID
+        }
+        logWithTime(`Admin (${req.user.userID}) fetched User (${req.foundUser.userID}) active device sessions from device id: (${req.deviceID})`);
+    }
+    else logWithTime(`User (${req.user.userID}) fetched its active device sessions from device id: (${req.deviceID})`);
+    if(!res.headersSent)return res.status(200).json({
       success: true,
       message: "Active devices fetched successfully.",
       total: sortedDevices.length,
@@ -654,7 +642,7 @@ exports.getActiveDevices = async (req, res) => {
   } catch (err) {
     const userID = req?.user?.userID || "UNKNOWN_USER";
     logWithTime(`❌ Internal Error occurred while fetching active devices for userID: (${userID})`);
-    return throwInternalServerError(res);
+    if(!res.headersSent)return throwInternalServerError(res);
   }
 };
 
