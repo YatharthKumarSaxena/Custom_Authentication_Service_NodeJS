@@ -1,6 +1,5 @@
 // Extracting required Modules, their functions and values
-const {expiryTimeOfRefreshToken} = require("../configs/user-id.config");
-const {throwInvalidResourceError,throwResourceNotFoundError,throwInternalServerError,errorMessage} = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, throwResourceNotFoundError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
 const UserModel = require("../models/user.model");
 const { logWithTime } = require("../utils/time-stamps.utils");
 

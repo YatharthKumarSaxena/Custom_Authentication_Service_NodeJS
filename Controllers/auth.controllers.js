@@ -7,19 +7,18 @@
 */
 
 // Extracting the required modules
-const {SALT,expiryTimeOfAccessToken,expiryTimeOfRefreshToken } = require("../configs/user-id.config");
+const { SALT, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const UserModel = require("../models/user.model");
-const AuthLogModel = require("../models/auth-logs.model");
 const bcryptjs = require("bcryptjs")
-const { throwInvalidResourceError,errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
-const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
-const { checkUserExists, getDeviceByID, checkThresholdExceeded, checkPasswordIsValid } = require("../utils/auth.utils");
-const { checkUserIsNotVerified } = require("../middlewares/helper.middleware");
+const { httpOnly, secure, sameSite } = require("../configs/cookies.config");
+const { checkUserExists, checkPasswordIsValid } = require("../utils/auth.utils");
 const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
-const { createDeviceField } = require("../utils/device.utils");
+const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("../utils/device.utils");
+const { checkUserIsNotVerified } = require("../utils/auth.utils");
 
 /*
   ✅ Template Method Pattern:

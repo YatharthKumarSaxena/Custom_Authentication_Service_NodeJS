@@ -1,5 +1,5 @@
 const { logWithTime } = require("../utils/time-stamps.utils");
-const { throwInternalServerError,errorMessage } =  require("../configs/error-handler.configs");
+const { throwInternalServerError, errorMessage } =  require("../configs/error-handler.configs");
 const AuthLogModel = require("../models/auth-logs.model");
 
 exports.updateUserProfile = async(req,res) => {

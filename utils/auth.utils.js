@@ -1,4 +1,6 @@
 const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
+const { httpOnly,sameSite,secure } = require("../configs/cookies.config");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
@@ -55,7 +57,7 @@ const checkUserIsNotVerified = async(user,res) => {
             user.isVerified = false;
             user.refreshToken = null;
             user.devices.length = 0;
-            res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+            res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
             await user.save(); // 👈 Add this line
             return true; // 🧠 session expired, response already sent
         }

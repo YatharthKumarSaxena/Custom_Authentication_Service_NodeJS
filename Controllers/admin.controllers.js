@@ -3,7 +3,7 @@
 // Extract the Required Modules
 const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
-const {BLOCK_REASONS,UNBLOCK_REASONS,adminID} = require("../configs/user-id.config");
+const { BLOCK_REASONS, UNBLOCK_REASONS, adminID } = require("../configs/user-id.config");
 const AuthLogModel = require("../models/auth-logs.model");
 const { fetchUser } = require("../middlewares/helper.middleware");
 const { isAdminID } = require("../utils/auth.utils");

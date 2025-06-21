@@ -5,14 +5,15 @@ const UserModel = require("../models/user.model");
 // Extracting Required Functions and Values
 
 const { logWithTime } = require("../utils/timeStamps.utils");
-const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError} = require("../configs/error-handler.configs");
+const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError } = require("../configs/error-handler.configs");
 const { secretCode, expiryTimeOfAccessToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issueToken.utils");
-const {checkUserIsNotVerified, fetchUser} = require("./helper.middleware");
+const { fetchUser } = require("./helper.middleware");
 const { extractAccessToken } = require("../utils/extractToken.utils");
 const { resetRefreshToken } = require("../utils/freshSession.utils");
-const { getDeviceByID } = require("../utils/validateRequestBody.utils");
+const { getDeviceByID } = require("../utils/device.utils");
 const { DEVICE_TYPES } = require("../configs/user-enums.config");
+const { checkUserIsNotVerified } = require("../utils/auth.utils");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
