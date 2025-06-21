@@ -3,19 +3,25 @@
 // Extract the Required Modules
 const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
-const UserModel = require("../models/user.model");
-const {adminID,BLOCK_REASONS,UNBLOCK_REASONS} = require("../configs/user-id.config");
+const {BLOCK_REASONS,UNBLOCK_REASONS} = require("../configs/user-id.config");
 const AuthLogModel = require("../models/auth-logs.model");
+const { fetchUser } = require("../middlewares/helper.middleware");
 
 exports.blockUserAccount = async(req,res) => {
     try{
+        const blockReason = req.body.reason;
+        const verifyWith = await fetchUser(req,res);
+        if(verifyWith === ""){
+            logWithTime(`⚠️ Invalid block request. Admin (${req.user.userID}) tried blocking non-existent user: ${req.body?.userID || req.body?.phoneNumber || req.body?.emailID} from device ID: (${req.deviceID}) with (${blockReason}) reason`);
+            return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
+        }
+        const user = req.foundUser;
         // Check Requested User to be Blocked is Admin 
-        if(req.user.userID === adminID){
-            logWithTime(`🛡️👨‍💼 Admin (${req.user.userID}) cannot be blocked, admin tried to itself block from device id: (${req.deviceID})`);
+        if(user.userType === "ADMIN"){
+            logWithTime(`🛡️👨‍💼 Admin (${req.user.userID}) cannot be blocked, admin tried to itself block from device id: (${req.deviceID}) . Provided Reason to block: (${blockReason}) `);
             return res.status(403).json({ success: false, message: "Admin cannot be blocked." });
         }
         // Checking Provided Reasons for Blocking are Invalid
-        const blockReason = req.body.reason;
         if (!Object.values(BLOCK_REASONS).includes(blockReason)) {
             logWithTime(`✅ Admin (${req.user.userID}) tried to block user (${req.body.userID }) with invalid reason (${blockReason}) from device id: (${req.deviceID})`);
             return res.status(400).json({
@@ -23,19 +29,8 @@ exports.blockUserAccount = async(req,res) => {
                 message: `❌ Invalid block reason. Accepted reasons: ${Object.values(BLOCK_REASONS).join(", ")}`
             });
         }
-        const user = await UserModel.findOne({
-            $or:[
-                {userID: req.body.userID},
-                {phoneNumber: req.body.phoneNumber},
-                {emailID: req.body.emailID}
-            ]
-        });
-        if(!user){
-            logWithTime(`⚠️ Invalid block request. Admin (${req.user.userID}) tried blocking non-existent user: ${req.body?.requestedUserID || req.body?.phoneNumber || req.body?.emailID} from device ID: (${req.deviceID})`);
-            return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
-        }
         if(user.isBlocked){
-            logWithTime(`⚠️ User (${user.userID}) is already blocked, admin (${req.user.userID}) tried to block it from device ID: (${req.deviceID})`);
+            logWithTime(`⚠️ User (${user.userID}) is already blocked, admin (${req.user.userID}) tried to block it from device ID: (${req.deviceID}) with (${user.blockReason}) reason. Reason provided by admin to block this user at current: (${blockReason})`);
             return res.status(400).json({
                 success: false,
                 message: `User (${user.userID}) is already blocked.`
@@ -44,9 +39,12 @@ exports.blockUserAccount = async(req,res) => {
         // Block the user by setting isBlocked = true
         user.blockedAt = Date.now();
         user.isBlocked = true;
+        user.blockedBy = req.user.userID;
+        user.blockedVia = verifyWith;
+        user.blockCount = user.blockCount+1;
         user.blockReason = blockReason;
         await user.save();
-        logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID})`);
+        logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID}) with (${blockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
         const blockLog = await AuthLogModel.create({
             userID: req.user.userID,
@@ -61,10 +59,11 @@ exports.blockUserAccount = async(req,res) => {
         await blockLog.save();
         return res.status(200).json({
             success: true,
-            message: `User (${user.userID}) has been successfully blocked.`
+            message: `User (${user.userID}) has been successfully blocked.`,
+            resolvedBy: verifyWith
         });
     }catch(err){
-        logWithTime(`❌ Internal Error: Admin (${req.user.userID}) tried to block User (${req.body.userID || req.body.emailID || req.body.phoneNumber}) from device ID: (${req.deviceID})`);
+        logWithTime(`❌ Internal Error: Admin (${req.user.userID}) tried to block User (${req.body.userID || req.body.emailID || req.body.phoneNumber}) from device ID: (${req.deviceID}).Provided Reason to block: (${req.body.reason}) reason`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -72,13 +71,19 @@ exports.blockUserAccount = async(req,res) => {
 
 exports.unblockUserAccount = async(req,res) => {
     try{
+        const unblockReason = req.body.reason;
+        const verifyWith = await fetchUser(req,res);
+        if(verifyWith === ""){
+            logWithTime(`⚠️ Invalid unblock request. Admin (${req.user.userID}) tried blocking non-existent user: ${req.body?.userID || req.body?.phoneNumber || req.body?.emailID} from device ID: (${req.deviceID}) with (${unblockReason}) reason`);
+            return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
+        }
+        const user = req.foundUser;
         // Check Requested User to be Unblocked is Admin 
-        if(req.body.userID === adminID){
-            logWithTime(`🛡️👨‍💼 Admin (${req.user.userID}) cannot be unblocked, tried to unblock from device ID: (${req.deviceID})`);
+        if(user.userType === "ADMIN"){
+            logWithTime(`🛡️👨‍💼 Admin (${req.user.userID}) cannot be unblocked, tried to unblock from device ID: (${req.deviceID}). Provided Reason to unblock: (${unblockReason}) reason`);
             return res.status(403).json({ success: false, message: "Admin cannot be unblocked." });
         }
         // Checking Provided Reasons for Unblocking are Invalid
-        const unblockReason = req.body.reason;
         if (!Object.values(UNBLOCK_REASONS).includes(unblockReason)) {
             logWithTime(`✅ Admin (${req.user.userID}) tried to unblock user (${req.body.userID }) with invalid reason (${unblockReason}) from device ID: (${req.deviceID})`);
             return res.status(400).json({
@@ -86,19 +91,8 @@ exports.unblockUserAccount = async(req,res) => {
                 message: `❌ Invalid unblock reason. Accepted reasons: ${Object.values(UNBLOCK_REASONS).join(", ")}`
             });
         }
-        const user = await UserModel.findOne({
-            $or:[
-                {userID: req.body.userID},
-                {phoneNumber: req.body.phoneNumber},
-                {emailID: req.body.emailID}
-            ]
-        })
-        if(!user){
-            logWithTime(`⚠️ Invalid unblock request. Admin (${req.user.userID}) tried unblocking non-existent user: ${req.body?.userID || req.body?.phoneNumber || req.body?.emailID} from device ID: (${req.deviceID})`);
-            return throwInvalidResourceError(res,"UserID,Phone Number or EmailID (Any one of it)");
-        }
         if(!user.isBlocked){
-            logWithTime(`⚠️ User (${user.userID}) is already unblocked, admin (${req.user.userID}) tried to unblock it from device ID: (${req.deviceID})`);
+            logWithTime(`⚠️ User (${user.userID}) is already unblocked, admin (${req.user.userID}) tried to unblock it from device ID: (${req.deviceID}) with (${unblockReason}) reason`);
             return res.status(400).json({
                 success: false,
                 message: `User (${user.userID}) is already unblocked.`
@@ -107,9 +101,12 @@ exports.unblockUserAccount = async(req,res) => {
         // Unblock the user by setting isBlocked = false
         user.unblockedAt = Date.now();
         user.isBlocked = false;
-        user.blockReason = null;
+        user.unblockedBy = req.user.userID;
+        user.unblockedVia = verifyWith;
+        user.unblockCount = user.unblockCount+1;
+        user.unblockReason = unblockReason;
         await user.save();
-        logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID})`);
+        logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID}) with (${unblockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
         const unblockLog = await AuthLogModel.create({
             userID: req.user.userID,
@@ -124,10 +121,11 @@ exports.unblockUserAccount = async(req,res) => {
         await unblockLog.save();  
         return res.status(200).json({
             success: true,
-            message: `User (${user.userID}) has been successfully unblocked.`
+            message: `User (${user.userID}) has been successfully unblocked.`,
+            resolvedBy: verifyWith
         });
     }catch(err){
-        logWithTime(`❌ Internal Error: Admin (${req.user.userID}) tried to unblock User (${req.body.userID || req.body.emailID || req.body.phoneNumber}) from device ID: (${req.deviceID})`);
+        logWithTime(`❌ Internal Error: Admin (${req.user.userID}) tried to unblock User (${req.body.userID || req.body.emailID || req.body.phoneNumber}) from device ID: (${req.deviceID}). Provided Reason to unblock: (${req.body.reason}) reason`);
         errorMessage(err);
         return throwInternalServerError(res);
     }

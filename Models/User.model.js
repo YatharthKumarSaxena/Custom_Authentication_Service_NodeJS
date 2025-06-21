@@ -88,6 +88,15 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    blockedVia: {
+        type: String,
+        enum: ["USER_ID", "EMAIL", "PHONE"],
+        default: null
+    },
+    blockCount: { 
+        type: Number, 
+        default: 0 
+    },
     unblockReason: {
         type: String,
         default: null
@@ -95,6 +104,15 @@ const userSchema = mongoose.Schema({
     unblockedBy: {
         type: String,
         default: null
+    },
+    unblockedVia: {
+        type: String,
+        enum: ["USER_ID", "EMAIL", "PHONE"],
+        default: null
+    },
+    unblockCount: { 
+        type: Number, 
+        default: 0 
     },
     devices: [
         {
