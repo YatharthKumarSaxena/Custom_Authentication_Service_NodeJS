@@ -26,7 +26,7 @@ module.exports = {
         emailID: process.env.ADMIN_EMAIL_ID,
         userType: "ADMIN",
         userID: adminID,
-        device: [
+        devices: [
             {
                 deviceID: process.env.DEVICE_UUID,
                 deviceName: process.env.DEVICE_NAME,

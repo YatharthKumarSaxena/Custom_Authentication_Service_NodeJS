@@ -18,7 +18,7 @@ const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./
 const {errorMessage,} = require("./configs/error-handler.configs");
 const { logWithTime } = require("./utils/time-stamps.utils");
 const {makeTokenWithMongoIDForAdmin} = require("./utils/issue-token.utils");
-const { logAuthEvent } = require("./utils/auth-log-utils");
+const { adminAuthLogForSetUp } = require("./utils/auth-log-utils");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
@@ -48,7 +48,7 @@ db.once("open",()=>{
 // 🔹 We are keeping One Admin User for each Local Machine
 async function init(){ // To use await we need to make function Asynchronous
     try{
-        let user = await UserModel.findOne({userType: "Admin"}); // Finding the User who is Admin
+        let user = await UserModel.findOne({userType: "ADMIN"}); // Finding the User who is Admin
         if(user){ // Means the Admin User Exists
             logWithTime("🟢 Admin User already exists");
         }
@@ -56,24 +56,28 @@ async function init(){ // To use await we need to make function Asynchronous
             try{
                 const user = await UserModel.create(adminUser);
                 logWithTime("👑 Admin User Created Successfully");
-                const refreshToken = makeTokenWithMongoIDForAdmin(user,expiryTimeOfRefreshToken);
+                const refreshToken = await makeTokenWithMongoIDForAdmin(user,expiryTimeOfRefreshToken);
                 if(refreshToken){
                     logWithTime("👑 Welcome Admin, you are successfully logged in!");
                     logWithTime("🔐 Here is your refresh token");
                     user.isVerified = true;
                     user.jwtTokenIssuedAt = Date.now();
+                    user.refreshToken = refreshToken;
+                    user.lastLogin = Date.now();
+                    user.loginCount = 1;
+                    user.lastActivatedAt = Date.now();
                     await user.save();
                     console.log("📦 JWT Refresh Token: ", refreshToken);
                     // Update data into auth.logs
-                    await logAuthEvent(req, "REGISTER", { performedOn: user });
+                    await adminAuthLogForSetUp(user, "REGISTER");
                 }
-                const accessToken = makeTokenWithMongoIDForAdmin(user,expiryTimeOfAccessToken);
+                const accessToken = await makeTokenWithMongoIDForAdmin(user,expiryTimeOfAccessToken);
                 if(accessToken){
                     logWithTime("Use this Access Token for further Actions!");
                     logWithTime("🔐 Here is your access token");
                     console.log("📦 JWT Access Token: ", accessToken);
                     // Update data into auth.logs
-                    await logAuthEvent(req, "LOGIN", { performedOn: user });
+                    await adminAuthLogForSetUp(user, "LOGIN");
                 }
                 logWithTime("Admin User details are given below:- ");
                 console.log(user);
