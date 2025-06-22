@@ -17,7 +17,8 @@ const UserModel = require("./models/user.model");
 const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./configs/user-id.config");
 const {errorMessage,} = require("./configs/error-handler.configs");
 const { logWithTime } = require("./utils/time-stamps.utils");
-const {makeTokenWithMongoID} = require("./utils/issue-token.utils");
+const {makeTokenWithMongoIDForAdmin} = require("./utils/issue-token.utils");
+const { logAuthEvent } = require("./utils/auth-log-utils");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
@@ -55,7 +56,7 @@ async function init(){ // To use await we need to make function Asynchronous
             try{
                 const user = await UserModel.create(adminUser);
                 logWithTime("👑 Admin User Created Successfully");
-                const refreshToken = makeTokenWithMongoID(user._id,expiryTimeOfRefreshToken);
+                const refreshToken = makeTokenWithMongoIDForAdmin(user,expiryTimeOfRefreshToken);
                 if(refreshToken){
                     logWithTime("👑 Welcome Admin, you are successfully logged in!");
                     logWithTime("🔐 Here is your refresh token");
@@ -63,12 +64,16 @@ async function init(){ // To use await we need to make function Asynchronous
                     user.jwtTokenIssuedAt = Date.now();
                     await user.save();
                     console.log("📦 JWT Refresh Token: ", refreshToken);
+                    // Update data into auth.logs
+                    await logAuthEvent(req, "REGISTER", { performedOn: user });
                 }
-                const accessToken = makeTokenWithMongoID(user._id,expiryTimeOfAccessToken);
+                const accessToken = makeTokenWithMongoIDForAdmin(user,expiryTimeOfAccessToken);
                 if(accessToken){
                     logWithTime("Use this Access Token for further Actions!");
                     logWithTime("🔐 Here is your access token");
                     console.log("📦 JWT Access Token: ", accessToken);
+                    // Update data into auth.logs
+                    await logAuthEvent(req, "LOGIN", { performedOn: user });
                 }
                 logWithTime("Admin User details are given below:- ");
                 console.log(user);

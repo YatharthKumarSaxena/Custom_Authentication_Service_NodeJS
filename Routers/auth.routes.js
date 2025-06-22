@@ -110,7 +110,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         generalRateLimiter.blockAccountRateLimiter,
-        adminMiddleware.verifyAdminBody,
+        adminMiddleware.verifyAdminBlockUnblockBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
     ], adminController.blockUserAccount);
@@ -131,7 +131,7 @@ module.exports = (app) => {
         commonUsedMiddleware.verifyTokenOwnership,
         commonUsedMiddleware.verifyToken,
         generalRateLimiter.unblockAccountRateLimiter,
-        adminMiddleware.verifyAdminBody,
+        adminMiddleware.verifyAdminBlockUnblockBody,
         commonUsedMiddleware.isAdmin,
         commonUsedMiddleware.checkUserIsVerified
     ], adminController.unblockUserAccount);

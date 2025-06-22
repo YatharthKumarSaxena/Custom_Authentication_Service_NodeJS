@@ -25,7 +25,14 @@ module.exports = {
         password: bcryptjs.hashSync(process.env.ADMIN_PASSWORD, SALT),
         emailID: process.env.ADMIN_EMAIL_ID,
         userType: "ADMIN",
-        userID: adminID
+        userID: adminID,
+        device: [
+            {
+                deviceID: process.env.DEVICE_UUID,
+                deviceName: process.env.DEVICE_NAME,
+                deviceType: process.env.DEVICE_TYPE
+            }
+        ]
     },
     // 🎯 Admin Action Reasons - Enum Based Design
     AdminActionReasons: Object.freeze({
