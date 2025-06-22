@@ -1,4 +1,8 @@
+// controllers/internal-api.controllers.js
+
 const { logWithTime } = require("../utils/time-stamps.utils");
+const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
+const { httpOnly, secure, sameSite } = require("../configs/cookies.config");
 const { throwInternalServerError, errorMessage } =  require("../configs/error-handler.configs");
 
 const updateUserProfile = async(req,res) => {
@@ -50,6 +54,35 @@ const updateUserProfile = async(req,res) => {
     }
 }
 
+const setRefreshCookieForAdmin = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        message: "🔑 Refresh token missing in request body."
+      });
+    }
+
+    // Set refresh token as HttpOnly cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: httpOnly,
+      secure: secure, // true only in prod
+      sameSite: sameSite, // or "Lax", depending on your frontend/backend setup
+      maxAge: expiryTimeOfRefreshToken
+    });
+
+    return res.status(200).json({
+      message: "✅ Admin refresh token set in cookie successfully."
+    });
+  } catch (err) {
+    logWithTime("💥 Error while setting admin refresh cookie");
+    errorMessage(err);
+    return throwInternalServerError(res);
+  }
+};
+
 module.exports = {
-    updateUserProfile: updateUserProfile
+    updateUserProfile: updateUserProfile,
+    setRefreshCookieForAdmin: setRefreshCookieForAdmin
 }
