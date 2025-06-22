@@ -202,8 +202,8 @@ const isAdmin = (req,res,next) => {
 
 const verifyTokenOwnership = async(req, res, next) => {
     try {
-        // 1. Extract refresh token from cookies (assuming 'id' key stores the refresh token)
-        const refreshToken = req?.cookies?.id;
+        // 1. Extract refresh token from cookies (assuming 'refreshToken' key stores the refresh token)
+        const refreshToken = req?.cookies?.refreshToken;
         if (!refreshToken) { // if refreshToken Not Found
             logWithTime("⚠️ Refresh Token not provided in Cookies")
             return throwAccessDeniedError(res, "No refresh token provided");

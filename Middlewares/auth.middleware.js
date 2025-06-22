@@ -6,7 +6,7 @@
 /* If an Error Occured in Middleware then Middleware will throw an Error , Request will not be forwarded to Controller */
 
 // Extracting the Required Modules
-const { throwResourceNotFoundError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
+const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier, checkUserIsNotVerified } = require("../utils/auth.utils");
@@ -14,6 +14,10 @@ const { validateSingleIdentifier, checkUserIsNotVerified } = require("../utils/a
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
+        if(!req.body){
+            logWithTime(`An Unknown User has provided an empty body for Sign Up from device ID: (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"SignUp Body");
+        }
         // Check name is present in Request Body or not
         let userIsValid = true; // Assuming that Request Provided is correct
         let reason = ""; // Stores Reason for Invalid Request
@@ -41,7 +45,7 @@ const verifySignUpBody = async (req,res,next) =>{
          // Check Password is present in Request Body or not
         if(!req.body.password){
             if(userIsValid)reason = reason+"Password";
-            else reason = reason+" ,Password";
+            else reason = reason+" and Password";
             userIsValid = false;
         } else {
             // ✅ Move these two checks inside the "else" of password
@@ -58,6 +62,19 @@ const verifySignUpBody = async (req,res,next) =>{
         }
         if(!userIsValid){ // Throw Error as User Details are not properly given
             return throwResourceNotFoundError(res,reason);
+        }
+        // 📧 Phone Number Format Validation
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(req.body.phoneNumber)) {
+            return throwInvalidResourceError(
+                res,
+                "Phone Number must contain exactly 10 Numeric Digits",
+            );
+        }
+        // 📧 Email Format Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(req.body.emailID)) {
+            return throwInvalidResourceError(res, "Email ID format is invalid. It should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
         // Very next line should be:
         if (!res.headersSent) return next();

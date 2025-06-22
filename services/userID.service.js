@@ -72,7 +72,6 @@ const makeUserID = async(res) => {
     let customerCounter; // To remove Scope Resolution Issue
     try{
         customerCounter = await CounterModel.findOne({_id: customerIDPrefix});
-        if(!customerCounter)return "";
     }catch(err){
         logWithTime("⚠️ An Error Occured while accessing the Customer Counter Document");
         errorMessage(err);

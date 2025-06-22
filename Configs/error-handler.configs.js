@@ -95,3 +95,8 @@ exports.throwBlockedAccountError = (req,res) => {
         message: "Please contact support if you believe this is an error."
     });
 }
+
+exports.globalErrorHandler = (err, req, res, next) => {
+    logWithTime("💥 Uncaught Server Error:", err.message);
+    return res.status(500).json({ message: "🔧 Internal Server Error!" });
+};

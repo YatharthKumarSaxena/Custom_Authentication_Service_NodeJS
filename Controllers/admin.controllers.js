@@ -8,7 +8,7 @@ const AuthLogModel = require("../models/auth-logs.model");
 const { fetchUser } = require("../middlewares/helper.middleware");
 const { isAdminID } = require("../utils/auth.utils");
 
-exports.blockUserAccount = async(req,res) => {
+const blockUserAccount = async(req,res) => {
     try{
         const blockReason = req.body.reason;
         const verifyWith = await fetchUser(req,res);
@@ -60,7 +60,7 @@ exports.blockUserAccount = async(req,res) => {
     }
 }
 
-exports.unblockUserAccount = async(req,res) => {
+const unblockUserAccount = async(req,res) => {
     try{
         const unblockReason = req.body.reason;
         const verifyWith = await fetchUser(req,res);
@@ -112,7 +112,7 @@ exports.unblockUserAccount = async(req,res) => {
     }
 }
 
-exports.getUserAuthLogs = async (req, res) => {
+const getUserAuthLogs = async (req, res) => {
   try {
     const { userID, eventType, startDate, endDate } = req.body;
 
@@ -162,7 +162,7 @@ exports.getUserAuthLogs = async (req, res) => {
 };
 
 // For Admin Panel Service (Internal API Controller)
-exports.checkUserAccountStatus = async(req,res) => {
+const checkUserAccountStatus = async(req,res) => {
     try{
         // If Get Request has a User then We have to Extract its Details and give to the Admin
         let user;
@@ -228,4 +228,11 @@ exports.checkUserAccountStatus = async(req,res) => {
         errorMessage(err);
         return throwInternalServerError(res);
     }
+}
+
+module.exports = {
+    getUserAuthLogs: getUserAuthLogs,
+    blockUserAccount: blockUserAccount,
+    unblockUserAccount: unblockUserAccount,
+    checkUserAccountStatus: checkUserAccountStatus
 }

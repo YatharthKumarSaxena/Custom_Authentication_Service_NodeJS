@@ -15,13 +15,16 @@ const app = express(); // App is an Express Function
 const {DB_URL} = require("./configs/db.config");
 const UserModel = require("./models/user.model"); 
 const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./configs/user-id.config");
-const {errorMessage,} = require("./configs/error-handler.configs");
+const {errorMessage,globalErrorHandler} = require("./configs/error-handler.configs");
 const { logWithTime } = require("./utils/time-stamps.utils");
 const {makeTokenWithMongoIDForAdmin} = require("./utils/issue-token.utils");
 const { adminAuthLogForSetUp } = require("./utils/auth-log-utils");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
+
+const cookieParser = require("cookie-parser");
+app.use(cookieParser()); // ✅ Makes req.cookies accessible
 
 /*
  * 🔹 And password + random text are encrypted to make password more complicated to crackCreate an Admin User if not Exits at the Start of the Application
@@ -60,6 +63,7 @@ async function init(){ // To use await we need to make function Asynchronous
                 if(refreshToken){
                     logWithTime("👑 Welcome Admin, you are successfully logged in!");
                     logWithTime("🔐 Here is your refresh token");
+                    
                     user.isVerified = true;
                     user.jwtTokenIssuedAt = Date.now();
                     user.refreshToken = refreshToken;
@@ -94,8 +98,21 @@ async function init(){ // To use await we need to make function Asynchronous
     }
 }
 
-// 🔹 Connect Server to the Router
-require("./routers/auth.routes")(app)
+// 🔹 Mount All Routes via Centralized Router Index
+require("./routers/index.routes")(app);
+
+// 404 Route Handler (for undefined endpoints)
+app.use((req, res) => {
+  res.status(404).json({ message: "❌ API Route Not Found!" });
+});
+
+// Used Only when code is production ready
+/*
+exports.globalErrorHandler = (err, req, res, next) => {
+    logWithTime("💥 Uncaught Server Error:", err.message);
+    return res.status(500).json({ message: "🔧 Internal Server Error!" });
+};
+*/
 
 // 🔹 Initializing Server by Express
 app.listen(PORT_NUMBER,()=>{

@@ -19,6 +19,7 @@ const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("../utils/device.utils");
 const { checkUserIsNotVerified } = require("../utils/auth.utils");
+const { sign } = require("jsonwebtoken");
 
 /*
   ✅ Template Method Pattern:
@@ -38,7 +39,7 @@ const { checkUserIsNotVerified } = require("../utils/auth.utils");
 */
 
 /* Logic to Create User i.e User Registration */
-exports.signUp = async (req,res) => { // Made this function async to use await
+const signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
     // Check that User Exists with Phone Number or Email ID
@@ -146,7 +147,7 @@ exports.signUp = async (req,res) => { // Made this function async to use await
 }
 
 /* Logic to Login the Registered User */
-exports.signIn = async (req,res) => {
+const signIn = async (req,res) => {
     try{
         let user = req.foundUser;
         if(!user){
@@ -229,7 +230,7 @@ exports.signIn = async (req,res) => {
     }  
 }
 
-exports.signOut = async (req,res) => {
+const signOut = async (req,res) => {
     try{
         let user = req.user;
         if(!user){
@@ -260,7 +261,7 @@ exports.signOut = async (req,res) => {
     }
 }
 
-exports.signOutFromSpecificDevice = async(req,res) => {
+const signOutFromSpecificDevice = async(req,res) => {
     try{
         const user = req.user;
         if(!user){
@@ -311,7 +312,7 @@ exports.signOutFromSpecificDevice = async(req,res) => {
 }
 
 // Logic to activate user account
-exports.activateUserAccount = async(req,res) => {
+const activateUserAccount = async(req,res) => {
     try{
         const user = req.foundUser;
         let isPasswordValid = await checkPasswordIsValid(req,user);
@@ -341,7 +342,7 @@ exports.activateUserAccount = async(req,res) => {
 }
 
 // Logic to deactivate user account
-exports.deactivateUserAccount = async(req,res) => {
+const deactivateUserAccount = async(req,res) => {
     try{
         const user = req.user;
         let isPasswordValid = await checkPasswordIsValid(req,user);
@@ -374,7 +375,7 @@ exports.deactivateUserAccount = async(req,res) => {
     }
 }
 
-exports.changePassword = async(req,res) => {
+const changePassword = async(req,res) => {
     try{
         const user = req.user;
         const password = req.body.newPassword;
@@ -402,7 +403,7 @@ exports.changePassword = async(req,res) => {
 }
 
 // Controller to Fetch All Active Devices of a User
-exports.getActiveDevices = async (req, res) => {
+const getActiveDevices = async (req, res) => {
   try {
     // If Get Request has a User then We have to Extract its Details and give to the Admin
     if(req?.query?.userID || req?.query?.emailID || req?.query?.phoneNumber){
@@ -462,7 +463,7 @@ exports.getActiveDevices = async (req, res) => {
   }
 };
 
-exports.provideUserAccountDetails = async(req,res) => {
+const provideUserAccountDetails = async(req,res) => {
     try{
         const user = req.user; 
         if(!user){
@@ -495,4 +496,16 @@ exports.provideUserAccountDetails = async(req,res) => {
         errorMessage(err);
         return throwInternalServerError(res);
     }
+}
+
+module.exports = {
+    signUp: signUp,
+    signIn: signIn,
+    signOut: signOut,
+    changePassword: changePassword,
+    getActiveDevices: getActiveDevices,
+    activateUserAccount: activateUserAccount,
+    deactivateUserAccount: deactivateUserAccount,
+    signOutFromSpecificDevice: signOutFromSpecificDevice,
+    provideUserAccountDetails: provideUserAccountDetails
 }

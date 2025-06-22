@@ -21,30 +21,33 @@ const USER_BASE = `${API_PREFIX}/users`;                        // /ecomm/api/v1
 
 // 🔁 Exporting all route constants, grouped by modules (Auth, User, Admin, Category)
 module.exports = {
+    AUTH_BASE: AUTH_BASE,
+    ADMIN_BASE: ADMIN_BASE,
+    USER_BASE: USER_BASE,
     // 🧾 Routes related to user authentication & account management
     AUTH_ROUTES: {
-        SIGNUP: `${AUTH_BASE}/signup`,                          // POST /ecomm/api/v1/auth/signup
-        SIGNIN: `${AUTH_BASE}/signin`,                          // POST /ecomm/api/v1/auth/signin
-        SIGNOUT: `${AUTH_BASE}/signout`,                        // POST /ecomm/api/v1/auth/signout
-        SIGNOUT_FROM_SPECIFIC_DEVICE: `${AUTH_BASE}/signout-device`, // POST /ecomm/api/v1/auth/signout-device
-        DEACTIVATE_USER: `${AUTH_BASE}/deactivate`,             // PATCH /ecomm/api/v1/auth/deactivate
-        ACTIVATE_USER: `${AUTH_BASE}/activate`,                 // PATCH /ecomm/api/v1/auth/activate
-        CHANGE_PASSWORD: `${AUTH_BASE}/change-password`,        // PATCH /ecomm/api/v1/auth/change-password
-        CHECK_ACTIVE_SESSIONS: `${AUTH_BASE}/active-sessions`   // GET /ecomm/api/v1/auth/active-sessions
+        SIGNUP: `/signup`,                          // POST /ecomm/api/v1/auth/signup
+        SIGNIN: `/signin`,                          // POST /ecomm/api/v1/auth/signin
+        SIGNOUT: `/signout`,                        // POST /ecomm/api/v1/auth/signout
+        SIGNOUT_FROM_SPECIFIC_DEVICE: `/signout-device`, // POST /ecomm/api/v1/auth/signout-device
+        DEACTIVATE_USER: `/deactivate`,             // PATCH /ecomm/api/v1/auth/deactivate
+        ACTIVATE_USER: `/activate`,                 // PATCH /ecomm/api/v1/auth/activate
+        CHANGE_PASSWORD: `/change-password`,        // PATCH /ecomm/api/v1/auth/change-password
+        CHECK_ACTIVE_SESSIONS: `/active-sessions`   // GET /ecomm/api/v1/auth/active-sessions
     },
     // 👤 Routes accessible by the logged-in user (like updating their profile)
     USER_ROUTES: {
-        UPDATE_PROFILE: `${USER_BASE}/update-profile`,                  // PATCH /ecomm/api/v1/users/update-profile
-        FETCH_MY_PROFILE: `${USER_BASE}/fetch`                  // GET   /ecomm/api/v1/users/fetch
+        UPDATE_PROFILE: `/update-profile`,          // PATCH /ecomm/api/v1/users/update-profile
+        FETCH_MY_PROFILE: `/fetch`                  // GET   /ecomm/api/v1/users/fetch
     },
     // 🛠️ Admin-specific routes (e.g. category creation, update, delete)
     ADMIN_ROUTES: {
         USERS: {
-            BLOCK_USER: `${ADMIN_BASE}/block-user`,              // PATCH /ecomm/api/v1/admin/block-user
-            UNBLOCK_USER: `${ADMIN_BASE}/unblock-user`,          // PATCH /ecomm/api/v1/admin/unblock-user
-            GET_USER_AUTH_LOGS: `${ADMIN_BASE}/auth-logs`,       // POST / /ecomm/api/v1/admin/auth-logs
-            GET_USER_ACTIVE_SESSIONS: `${ADMIN_BASE}/active-sessions`,   // GET /ecomm/api/v1/admin/active-sessions
-            FETCH_USER_DETAILS: `${ADMIN_BASE}/fetch-user-details`     // GET /ecomm/api/v1/admin/users/fetch-user-details  
+            BLOCK_USER: `/block-user`,              // PATCH /ecomm/api/v1/admin/block-user
+            UNBLOCK_USER: `/unblock-user`,          // PATCH /ecomm/api/v1/admin/unblock-user
+            GET_USER_AUTH_LOGS: `/auth-logs`,       // POST / /ecomm/api/v1/admin/auth-logs
+            GET_USER_ACTIVE_SESSIONS: `/active-sessions`,   // GET /ecomm/api/v1/admin/active-sessions
+            FETCH_USER_DETAILS: `/fetch-user-details`     // GET /ecomm/api/v1/admin/users/fetch-user-details  
         },
     }
 }
