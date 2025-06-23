@@ -2,7 +2,6 @@
 const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user.model");
 const { UUID_V4_REGEX } = require("../configs/regex.config");
-const jwt = require("jsonwebtoken");
 // Extracting Required Functions and Values
 
 const { logWithTime } = require("../utils/time-stamps.utils");
@@ -227,7 +226,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         // 2. Verify refresh token
         const decodedRefresh = jwt.verify(refreshToken, secretCodeOfRefreshToken);
         // 3. Check Whether Refresh Token Provided is Valid or Not
-        const tokenExists = await Token.findOne({ refreshToken: refreshToken }); // or Redis GET
+        const tokenExists = await UserModel.findOne({ refreshToken: refreshToken }); // or Redis GET
         if (!tokenExists) {
             logWithTime("Access Denied as Invalid Refresh Token is being provided");
             return throwAccessDeniedError(res,"Invalid Refresh Token");

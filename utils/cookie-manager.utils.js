@@ -7,7 +7,7 @@ const { logWithTime } = require("./time-stamps.utils");
 
 const setRefreshTokenCookie = (res, token) => {
     try{
-        res.cookie("token", token, {
+        res.cookie("refreshToken", token, {
             httpOnly: httpOnly,
             sameSite: sameSite,
             secure: secure,
@@ -25,7 +25,7 @@ const setRefreshTokenCookie = (res, token) => {
 
 const clearRefreshTokenCookie = (res) => {
     try{
-        res.clearCookie("token", {
+        res.clearCookie("refreshToken", {
             httpOnly: httpOnly,
             sameSite: sameSite,
             secure: secure,
