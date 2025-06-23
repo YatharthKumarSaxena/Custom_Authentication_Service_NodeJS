@@ -18,6 +18,7 @@ const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("../utils/device.utils");
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
+const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 
 const loginTheUser = async (user, refreshToken, device, res) => {
