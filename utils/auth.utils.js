@@ -1,7 +1,4 @@
 const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
-const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
-const { logoutUserCompletely } = require("../controllers/auth.controllers");
-const { httpOnly,sameSite,secure } = require("../configs/cookies.config");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");

@@ -1,8 +1,8 @@
-const { httpOnly,secure,sameSite } = require("../configs/cookies.config");
 const { errorMessage,throwInternalServerError} = require("../configs/error-handler.configs");
 const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("./issue-token.utils"); 
 const { logWithTime } = require("./time-stamps.utils");
+const { setRefreshTokenCookie } = require("./cookie-manager.utils");
 
 const resetRefreshToken = async(req,res) => {
     try{
@@ -14,12 +14,11 @@ const resetRefreshToken = async(req,res) => {
             const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
             user.refreshToken = refreshToken;
             user.jwtTokenIssuedAt = now;
-            res.cookie("id", refreshToken, {
-                httpOnly: httpOnly,
-                secure: secure,
-                sameSite: sameSite,
-                maxAge: expiryTimeOfRefreshToken * 1000
-            });
+            const isCookieSet = setRefreshTokenCookie(res,expiryTimeOfRefreshToken);
+            if(!isCookieSet){
+                logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the reset refresh token function. Request is made from device ID: (${req.deviceID})`);
+                return;
+            }
             await user.save();
             return true;
         }
