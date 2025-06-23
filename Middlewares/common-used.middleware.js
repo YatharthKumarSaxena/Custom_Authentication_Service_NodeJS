@@ -9,7 +9,7 @@ const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwRes
 const { secretCode, expiryTimeOfAccessToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { fetchUser } = require("./helper.middleware");
-const { extractAccessToken } = require("../utils/extract-token.utils");
+const { extractAccessToken, extractRefreshToken } = require("../utils/extract-token.utils");
 const { resetRefreshToken } = require("../utils/fresh-session.utils");
 const { getDeviceByID } = require("../utils/device.utils");
 const { DEVICE_TYPES } = require("../configs/user-enums.config");
@@ -216,7 +216,7 @@ const isAdmin = (req,res,next) => {
 const verifyTokenOwnership = async(req, res, next) => {
     try {
         // 1. Extract refresh token from cookies (assuming 'token' key stores the refresh token)
-        const refreshToken = req?.cookies?.token;
+        const refreshToken = extractRefreshToken(req);
         if (!refreshToken) { // if refreshToken Not Found
             logWithTime("⚠️ Refresh Token not provided in Cookies")
             return throwAccessDeniedError(res, "No refresh token provided");

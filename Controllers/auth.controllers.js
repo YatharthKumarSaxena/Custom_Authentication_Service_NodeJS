@@ -19,7 +19,9 @@ const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("../utils/device.utils");
 const { checkUserIsNotVerified } = require("../utils/auth.utils");
-const { sign } = require("jsonwebtoken");
+const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
+const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
+
 
 /*
   ✅ Template Method Pattern:
@@ -112,12 +114,11 @@ const signUp = async (req,res) => { // Made this function async to use await
                 userDisplayDetails
             });
         }
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: httpOnly, // 🟡 Temporarily allow Postman/browser JS to read
-            secure: secure,   // 🧪 Optional in localhost, but true in prod
-            sameSite: sameSite, // Postman compatibility
-            maxAge: expiryTimeOfRefreshToken * 1000
-        });
+        const isCookieSet = setRefreshTokenCookie(res,refreshToken);
+        if(!isCookieSet){
+            logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of Registration. Request is made from device ID: (${req.deviceID})`);
+            return;
+        }
         user.refreshToken = refreshToken;
         user.isVerified = true;
         user.loginCount = 1;
@@ -126,11 +127,15 @@ const signUp = async (req,res) => { // Made this function async to use await
         // Update data into auth.logs
         await logAuthEvent(req, "LOGIN", { performedOn: user });
         const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
-        // Generate Access Token for User
-        res.setHeader("x-access-token", accessToken);
-        // Smart signal to frontend that Access token is Refreshed now
-        res.setHeader("x-token-refreshed", "true"); 
-        res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
+        if(!accessToken){
+            logWithTime(`❌ Access token creation failed for User (${user.userID}). Request is made from device id: (${req.deviceID})`);
+            return throwInternalServerError(res);
+        }
+        const isAccessTokenSet = setAccessTokenHeaders(res,accessToken);
+        if(!isAccessTokenSet){
+            logWithTime(`❌ Access token set in header failed for User (${user.userID}) at the time of sign up request. Request is made from device id: (${req.deviceID})`);
+            return throwInternalServerError(res);
+        }
         logWithTime(`🟢 User (${user.userID}) is successfully logged in on registration from device id: (${req.deviceID})!`);
         logWithTime("👤 New User Details:- ");
         console.log(userGeneralDetails);
@@ -192,12 +197,11 @@ const signIn = async (req,res) => {
                 logWithTime(`❌ Refresh token generation failed during login of User with userID: (${user.userID}) from device id: (${req.deviceID})`);
                 return throwInternalServerError(res);
             }
-            res.cookie("refreshToken", refreshToken, {
-                httpOnly: httpOnly, // 🟡 Temporarily allow Postman/browser JS to read
-                secure: secure,   // 🧪 Optional in localhost, but true in prod
-                sameSite: sameSite, // Postman compatibility
-                maxAge: expiryTimeOfRefreshToken * 1000
-            });
+            const isCookieSet = setRefreshTokenCookie(res,refreshToken);
+            if(!isCookieSet){
+                logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of Login. Request is made from device ID: (${req.deviceID})`);
+                return;
+            }
             user.refreshToken = refreshToken;
             user.isVerified = true; // Marked User as Verified
             user.jwtTokenIssuedAt = Date.now(); // Update JWT token issued time
@@ -207,11 +211,11 @@ const signIn = async (req,res) => {
             await user.save();
             await logAuthEvent(req, "LOGIN", { performedOn: user });
             const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
-            // Generate Access Token for User
-            res.setHeader("x-access-token", accessToken);
-            // Smart signal to frontend that Access token is Refreshed now
-            res.setHeader("x-token-refreshed", "true"); 
-            res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
+            const isAccessTokenSet = setAccessTokenHeaders(res,accessToken);
+            if(!isAccessTokenSet){
+                logWithTime(`❌ Access token set in header failed for User (${user.userID}) at the time of sign in request. Request is made from device id: (${req.deviceID})`);
+                return throwInternalServerError(res);
+            }
             logWithTime(`🔐 User with (${user.userID}) is Successfully logged in from device id: (${req.deviceID})`);
             return res.status(200).json({
                 message: "Welcome "+user.name+", You are successfully logged in",
@@ -240,7 +244,11 @@ const signOut = async (req,res) => {
         user.isVerified = false;
         user.lastLogout = Date.now();
         user.devices.length = 0;
-        res.clearCookie("refreshToken", { httpOnly: httpOnly, sameSite: sameSite, secure: secure });
+        const isCookieCleared = clearRefreshTokenCookie(res);
+        if(!isCookieCleared){
+            logWithTime(`❌ An Internal Error Occurred in clearing refresh token for user (${user.userID}) at the time of log out from all device request. Request is made from device ID: (${req.deviceID})`);
+            return;          
+        }
         await user.save();
         // Update data into auth.logs
         await logAuthEvent(req, "LOGOUT_ALL_DEVICE", { performedOn: user });    
@@ -287,7 +295,11 @@ const signOutFromSpecificDevice = async(req,res) => {
             user.lastLogout = Date.now();
             user.refreshToken = null;
             user.isVerified = false;
-            res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
+            const isCookieCleared = clearRefreshTokenCookie(res);
+            if(!isCookieCleared){
+                logWithTime(`❌ An Internal Error Occurred in clearing refresh token for user (${user.userID}) at the time of log out from specific device request. Request is made from device ID: (${req.deviceID})`);
+                return;          
+            }
         }
         user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
         await user.save();
@@ -326,7 +338,6 @@ const activateUserAccount = async(req,res) => {
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
         // Update data into auth.logs
         await logAuthEvent(req, "ACTIVATE", { performedOn: user });
-        await activateAccountLog.save();  
         return res.status(200).json({
             success: true,
             message: "Account activated successfully.",
@@ -335,7 +346,6 @@ const activateUserAccount = async(req,res) => {
     }catch(err){
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
         logWithTime(`❌ Internal Error occurred while activating the User Account with userID: (${userID}) from device ID: (${req.deviceID})`);
-        errorMessage(err)
         errorMessage(err)
         return throwInternalServerError(res);
     }
@@ -356,7 +366,11 @@ const deactivateUserAccount = async(req,res) => {
         user.devices.length = 0;
         user.lastLogout = Date.now();
         user.lastDeactivatedAt = Date.now();
-        res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
+        const isCookieCleared = clearRefreshTokenCookie(res);
+        if(!isCookieCleared){
+            logWithTime(`❌ An Internal Error Occurred in clearing refresh token for user (${user.userID}) at the time of deactivate user account request. Request is made from device ID: (${req.deviceID})`);
+            return;          
+        }
         await user.save();
         // Deactivation success log
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID} from device id: (${req.deviceID})`);
@@ -385,8 +399,12 @@ const changePassword = async(req,res) => {
         user.devices.length = 0;
         user.passwordChangedAt = Date.now();
         user.lastLogout = Date.now();
+        const isCookieCleared = clearRefreshTokenCookie(res);
+        if(!isCookieCleared){
+            logWithTime(`❌ An Internal Error Occurred in clearing refresh token for user (${user.userID}) at the time of change password request. Request is made from device ID: (${req.deviceID})`);
+            return;          
+        }
         await user.save();
-        res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
         logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
         // Update data into auth.logs
         await logAuthEvent(req, "CHANGE_PASSWORD", { performedOn: user });  
