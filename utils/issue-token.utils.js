@@ -1,6 +1,6 @@
 // Extract the required Module
 const jwt = require("jsonwebtoken");
-const {secretCode,expiryTimeOfRefreshToken} = require("../configs/user-id.config");
+const {secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfRefreshToken} = require("../configs/user-id.config");
 const { logWithTime } = require("./time-stamps.utils");
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logAuthEvent, adminAuthLogForSetUp } = require("../utils/auth-log-utils");
@@ -9,6 +9,7 @@ exports.makeTokenWithMongoID = async(req,res,expiryTimeOfToken) => {
     try {
         const user = req.user;
         const mongoID = user._id;
+        const secretCode = (expiryTimeOfToken === expiryTimeOfRefreshToken)? secretCodeOfRefreshToken: secretCodeOfAccessToken;
         const newToken = jwt.sign(
             {
                 id: mongoID,          // ✅ required for `findById`
@@ -32,6 +33,7 @@ exports.makeTokenWithMongoID = async(req,res,expiryTimeOfToken) => {
 exports.makeTokenWithMongoIDForAdmin = async(user,expiryTimeOfToken) => {
     try {
         const mongoID = user._id;
+        const secretCode = (expiryTimeOfToken === expiryTimeOfRefreshToken)? secretCodeOfRefreshToken: secretCodeOfAccessToken;
         const newToken = jwt.sign(
             {
                 id: mongoID,          // ✅ required for `findById`

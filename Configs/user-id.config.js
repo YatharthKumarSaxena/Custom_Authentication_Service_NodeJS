@@ -11,7 +11,8 @@ module.exports = {
     adminID: adminID, // Admin userID
     IP_Address_Code: IP_Address_Code, // Unique per machine
     SALT: SALT,
-    secretCode: process.env.JWT_SECRET,
+    secretCodeOfAccessToken: process.env.ACCESS_TOKEN_SECRET_CODE,
+    secretCodeOfRefreshToken: process.env.REFRESH_TOKEN_SECRET_CODE,
     expiryTimeOfAccessToken: Number(process.env.ACCESS_TOKEN_EXPIRY),
     expiryTimeOfRefreshToken: Number(process.env.REFRESH_TOKEN_EXPIRY),
     adminUser:{

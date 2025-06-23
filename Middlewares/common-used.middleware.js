@@ -2,12 +2,12 @@
 const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user.model");
 const { UUID_V4_REGEX } = require("../configs/regex.config");
-
+const jwt = require("jsonwebtoken");
 // Extracting Required Functions and Values
 
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError } = require("../configs/error-handler.configs");
-const { secretCode, expiryTimeOfAccessToken } = require("../configs/user-id.config");
+const { secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfAccessToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { fetchUser } = require("./helper.middleware");
 const { extractAccessToken, extractRefreshToken } = require("../utils/extract-token.utils");
@@ -149,7 +149,7 @@ const verifyToken = (req,res,next) => {
         })
     }
     // Now Verifying whether the provided JWT Token is valid token or not
-    jwt.verify(accessToken,secretCode,async (err,decoded)=>{
+    jwt.verify(accessToken,secretCodeOfAccessToken,async (err,decoded)=>{
         try{
             let user = req.user;
             if(!user){ // Only For Admin Cookie Set Up
@@ -225,7 +225,7 @@ const verifyTokenOwnership = async(req, res, next) => {
             return throwAccessDeniedError(res, "No refresh token provided");
         }
         // 2. Verify refresh token
-        const decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const decodedRefresh = jwt.verify(refreshToken, secretCodeOfRefreshToken);
         // 3. Check Whether Refresh Token Provided is Valid or Not
         const tokenExists = await Token.findOne({ refreshToken: refreshToken }); // or Redis GET
         if (!tokenExists) {
@@ -242,7 +242,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         }
         let decodedAccess;
         try {
-            decodedAccess = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+            decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
         } catch (err) {
             logWithTime("Access token provided is invalid or expired");
             return res.status(403).json({ message: "Invalid access token" });
