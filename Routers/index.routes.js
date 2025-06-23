@@ -1,4 +1,4 @@
-const { AUTH_BASE, ADMIN_BASE, USER_BASE } = require("../configs/uri.config");
+const { AUTH_BASE, ADMIN_BASE, USER_BASE, INTERNAL_BASE } = require("../configs/uri.config");
 const authRoutes = require("./auth.routes");
 const adminRoutes = require("./admin.routes");
 const userRoutes = require("./user.routes"); 

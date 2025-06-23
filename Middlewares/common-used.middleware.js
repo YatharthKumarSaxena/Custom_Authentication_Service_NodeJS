@@ -150,7 +150,20 @@ const verifyToken = (req,res,next) => {
     jwt.verify(accessToken,secretCode,async (err,decoded)=>{
         try{
             if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid
-                const user = req.user;
+                let user = req.user;
+                if(!user){ // Only For Admin Cookie Set Up
+                    const refreshToken = req.body?.refreshToken;
+                    if(!refreshToken){
+                        logWithTime(`⚠️ Access Denied as Refresh Token not provided by Admin to set up cookie from device id : (${req.deviceID})`);
+                        return throwResourceNotFoundError(res,"Refresh Token");
+                    }
+                    user = await UserModel.findOne({refreshToken: refreshToken});
+                    if(!user){
+                        logWithTime(`⚠️ Access Denied as Invalid Refresh Token provided by Admin to set up cookie from device id : (${req.deviceID})`)
+                        return throwInvalidResourceError(res,"User");
+                    }
+                    req.user = user;
+                }
                 const isRefreshTokenInvalid = await checkUserIsNotVerified(user,res);
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly
@@ -202,8 +215,8 @@ const isAdmin = (req,res,next) => {
 
 const verifyTokenOwnership = async(req, res, next) => {
     try {
-        // 1. Extract refresh token from cookies (assuming 'refreshToken' key stores the refresh token)
-        const refreshToken = req?.cookies?.refreshToken;
+        // 1. Extract refresh token from cookies (assuming 'token' key stores the refresh token)
+        const refreshToken = req?.cookies?.token;
         if (!refreshToken) { // if refreshToken Not Found
             logWithTime("⚠️ Refresh Token not provided in Cookies")
             return throwAccessDeniedError(res, "No refresh token provided");

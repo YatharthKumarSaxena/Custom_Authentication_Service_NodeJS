@@ -65,7 +65,7 @@ const setRefreshCookieForAdmin = async (req, res) => {
     }
 
     // Set refresh token as HttpOnly cookie
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie("refreshtoken", refreshToken, {
       httpOnly: httpOnly,
       secure: secure, // true only in prod
       sameSite: sameSite, // or "Lax", depending on your frontend/backend setup

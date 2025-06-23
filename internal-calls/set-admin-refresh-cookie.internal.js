@@ -2,7 +2,7 @@
 
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { setRefreshCookieForAdmin } = require("../controllers/internal-api.controllers");
-const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
+const { errorMessage } = require("../configs/error-handler.configs");
 
 /**
  * 🔐 Internal Function: Simulate setting refresh token cookie for Admin user
