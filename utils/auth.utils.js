@@ -1,5 +1,6 @@
 const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
 const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
+const { logoutUserCompletely } = require("../controllers/auth.controllers");
 const { httpOnly,sameSite,secure } = require("../configs/cookies.config");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
@@ -47,29 +48,6 @@ const checkUserExists = async(emailID,phoneNumber,res) => {
     }
 }
 
-// DRY Principle followed by this Code
-const checkUserIsNotVerified = async(user,res) => {
-    try{
-        if(user.isVerified === false)return true; // SignOut Introduces this Feature
-        const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
-        const currentTime = Date.now(); // In milli second current time is return
-        if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
-            user.isVerified = false;
-            user.refreshToken = null;
-            user.devices.length = 0;
-            res.clearCookie("refreshToken", { httpOnly: httpOnly, secure: secure, sameSite: sameSite });
-            await user.save(); // 👈 Add this line
-            return true; // 🧠 session expired, response already sent
-        }
-        return false; // ✅ token valid, continue execution
-    }catch(err){
-        logWithTime(`❌ An Internal Error Occurred while verifying the User Request`);
-        errorMessage(err);
-        throwInternalServerError(res);
-        return true;
-    }
-}
-
 const checkPasswordIsValid = async(req,user) => {
     const providedPassword = req.body.password;
     const actualPassword = user.password;
@@ -83,7 +61,6 @@ const isAdminID = (userID) => {
 
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
-  checkUserIsNotVerified: checkUserIsNotVerified,
   checkPasswordIsValid: checkPasswordIsValid,
   checkUserExists: checkUserExists,
   isAdminID: isAdminID

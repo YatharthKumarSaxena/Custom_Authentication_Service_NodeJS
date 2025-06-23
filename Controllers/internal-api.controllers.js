@@ -1,8 +1,7 @@
 // controllers/internal-api.controllers.js
 
 const { logWithTime } = require("../utils/time-stamps.utils");
-const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
-const { httpOnly, secure, sameSite } = require("../configs/cookies.config");
+const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { throwInternalServerError, errorMessage } =  require("../configs/error-handler.configs");
 
 const updateUserProfile = async(req,res) => {
@@ -64,13 +63,11 @@ const setRefreshCookieForAdmin = async (req, res) => {
       });
     }
 
-    // Set refresh token as HttpOnly cookie
-    res.cookie("token", refreshToken, {
-      httpOnly: httpOnly,
-      secure: secure, // true only in prod
-      sameSite: sameSite, // or "Lax", depending on your frontend/backend setup
-      maxAge: expiryTimeOfRefreshToken
-    });
+    const isCookieSet  = setRefreshTokenCookie(req,res);
+    if(!isCookieSet){
+      logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of set up admin cookie internal api. Request is made from device ID: (${req.deviceID})`);
+      return;
+    }
 
     return res.status(200).json({
       message: "✅ Admin refresh token set in cookie successfully."

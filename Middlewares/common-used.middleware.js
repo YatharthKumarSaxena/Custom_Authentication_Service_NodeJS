@@ -1,6 +1,7 @@
 // Extracting the Required Modules
 const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user.model");
+const { UUID_V4_REGEX } = require("../configs/regex.config");
 
 // Extracting Required Functions and Values
 
@@ -13,7 +14,8 @@ const { extractAccessToken, extractRefreshToken } = require("../utils/extract-to
 const { resetRefreshToken } = require("../utils/fresh-session.utils");
 const { getDeviceByID } = require("../utils/device.utils");
 const { DEVICE_TYPES } = require("../configs/user-enums.config");
-const { checkUserIsNotVerified } = require("../utils/auth.utils");
+const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
+const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -177,10 +179,11 @@ const verifyToken = (req,res,next) => {
                 // Logic to generate new access token
                 const newAccessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
                 // Set this token in Response Headers
-                res.setHeader("x-access-token", newAccessToken);
-                // Smart signal to frontend that Access token is Refreshed now
-                res.setHeader("x-token-refreshed", "true"); 
-                res.setHeader("Access-Control-Expose-Headers", "x-access-token, x-token-refreshed");
+                const isAccessTokenSet = setAccessTokenHeaders(res,accessToken);
+                if(!isAccessTokenSet){
+                    logWithTime(`❌ Access token set in header failed for User (${user.userID}) at the time of token verification. Request is made from device id: (${req.deviceID})`);
+                    return throwInternalServerError(res);
+                }
                 if(!res.headersSent)return next();
             }
             logWithTime("✅ Token Validated and User Fetched");
@@ -278,6 +281,9 @@ const verifyDeviceField = async (req,res,next) => {
         }
         // Attach to request object for later use in controller
         req.deviceID = deviceID.trim();
+        if (!UUID_V4_REGEX.test(req.deviceID)) {
+            return throwInvalidResourceError(res, `Provided Device UUID (${req.deviceID}) is not in a valid UUID v4 format`);
+        }
         if (deviceName && deviceName.trim() !== "") {
             req.deviceName = deviceName.trim();
         }

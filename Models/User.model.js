@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES } = require("../configs/user-enums.config");
 const { BLOCK_REASONS,UNBLOCK_REASONS } = require("../configs/user-id.config")
+const { phoneRegex, emailRegex } = require("../configs/regex.config");
+
 /* User Schema */
 
 /*
@@ -43,7 +45,7 @@ const userSchema = mongoose.Schema({
     },
     phoneNumber:{
         type: String,
-        match: /^[0-9]{10}$/,
+        match: phoneRegex,
         required: true,
         unique: true,
         trim: true,
@@ -68,7 +70,7 @@ const userSchema = mongoose.Schema({
         // Exactly one @ symbol
         // At least one character before and after the . in domain
         // No spaces allowed
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // simple regex for basic email format
+        match: emailRegex // simple regex for basic email format
     },
     isActive:{ // This is controlled by Users only (For Soft Delete Account Purposes)
         type: Boolean,

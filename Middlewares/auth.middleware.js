@@ -9,7 +9,9 @@
 const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
-const { validateSingleIdentifier, checkUserIsNotVerified } = require("../utils/auth.utils");
+const { validateSingleIdentifier } = require("../utils/auth.utils");
+const { phoneRegex, emailRegex, strongPasswordRegex } = require("../configs/regex.config");
+const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
@@ -52,7 +54,6 @@ const verifySignUpBody = async (req,res,next) =>{
             if (req.body.password.length < 8) {
                 return throwInvalidResourceError(res, "Password must be at least 8 characters long");
             }
-            const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/;
             if (!strongPasswordRegex.test(req.body.password)) {
                 return throwInvalidResourceError(
                     res,
@@ -64,7 +65,6 @@ const verifySignUpBody = async (req,res,next) =>{
             return throwResourceNotFoundError(res,reason);
         }
         // 📧 Phone Number Format Validation
-        const phoneRegex = /^\d{10}$/;
         if (!phoneRegex.test(req.body.phoneNumber)) {
             return throwInvalidResourceError(
                 res,
@@ -72,7 +72,6 @@ const verifySignUpBody = async (req,res,next) =>{
             );
         }
         // 📧 Email Format Validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(req.body.emailID)) {
             return throwInvalidResourceError(res, "Email ID format is invalid. It should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
