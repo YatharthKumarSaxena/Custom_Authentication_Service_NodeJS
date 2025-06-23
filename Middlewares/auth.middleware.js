@@ -116,7 +116,7 @@ const verifySignOutBody = async (req,res,next) => {
     try{
         const user = req.user;
         // ✅ Now Check if User is Already Logged Out 
-        const isNotVerified = await checkUserIsNotVerified(user,res);
+        const isNotVerified = await checkUserIsNotVerified(req,res);
         if (isNotVerified) {
             logWithTime(`🚫 Logout Request Denied: User (${req.user.userID}) is already logged out from device ID: (${req.deviceID})`);
             return res.status(409).json({
@@ -148,9 +148,9 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         if(req.foundUser.userType === "ADMIN"){
             logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be activated. Admin tried to do it from device ID: (${req.deviceID}).`);
             return res.status(403).json({
-            success: false,
-            message: "Admin account cannot be activated.",
-            reason: "Admin is a system-level user and cannot be modified like a normal user."
+                success: false,
+                message: "Admin account cannot be activated.",
+                reason: "Admin is a system-level user and cannot be modified like a normal user."
             });
         }
         if(!req.body.password){
@@ -160,9 +160,9 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         if(user.isActive === true){
             logWithTime(`🚫 User Account Activation Request Denied: User Account of User (${user.userID}) is already Active from device ID: (${req.deviceID}).`);
             return res.status(400).json({
-            success: false,
-            message: "User Account is already Active.",
-            suggestion: "Please deactivate your account first before trying to activate again."
+                success: false,
+                message: "User Account is already Active.",
+                suggestion: "Please deactivate your account first before trying to activate again."
             });
         }
         // Very next line should be:
@@ -184,9 +184,9 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         if(user.userType === "ADMIN"){
             logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be deactivated. Admin tried to do it from device ID: (${req.deviceID}).`);
             return res.status(403).json({
-            success: false,
-            message: "Admin account cannot be deactivated.",
-            reason: "Admin is a system-level user and cannot be modified like a normal user."
+                success: false,
+                message: "Admin account cannot be deactivated.",
+                reason: "Admin is a system-level user and cannot be modified like a normal user."
             });
         }
         let verifyWith = await fetchUser(req,res);
@@ -209,9 +209,9 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         if(user.isActive === false){
             logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
             return res.status(400).json({
-            success: false,
-            message: "User Account is already Inactive.",
-            suggestion: "Please activate your account first before trying to deactivate again."
+                success: false,
+                message: "User Account is already Inactive.",
+                suggestion: "Please activate your account first before trying to deactivate again."
             });
         }
         // Very next line should be:

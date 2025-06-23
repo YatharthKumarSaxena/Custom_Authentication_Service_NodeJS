@@ -10,16 +10,15 @@ require("./cron-jobs"); // 👈 This will auto-load index.js by default
 // 🔹 Extracting Required Modules to make Our Application
 const express = require("express"); // Extract Express Module
 const mongoose = require("mongoose"); // Extract Mongoose Module
-const {PORT_NUMBER} = require("./configs/server.config");
+const { PORT_NUMBER } = require("./configs/server.config");
 const app = express(); // App is an Express Function
-const {DB_URL} = require("./configs/db.config");
+const { DB_URL } = require("./configs/db.config");
 const UserModel = require("./models/user.model"); 
-const {expiryTimeOfAccessToken,expiryTimeOfRefreshToken,adminUser} = require("./configs/user-id.config");
-const {errorMessage,globalErrorHandler} = require("./configs/error-handler.configs");
+const { expiryTimeOfAccessToken, expiryTimeOfRefreshToken, adminUser } = require("./configs/user-id.config");
+const {errorMessage, globalErrorHandler} = require("./configs/error-handler.configs");
 const { logWithTime } = require("./utils/time-stamps.utils");
-const {makeTokenWithMongoIDForAdmin} = require("./utils/issue-token.utils");
+const { makeTokenWithMongoIDForAdmin } = require("./utils/issue-token.utils");
 const { adminAuthLogForSetUp } = require("./utils/auth-log-utils");
-const { callSetAdminRefreshCookie } = require("./internal-calls/set-admin-refresh-cookie.internal");
 
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
 app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
@@ -64,7 +63,6 @@ async function init(){ // To use await we need to make function Asynchronous
                 if(refreshToken){
                     logWithTime("👑 Welcome Admin, you are successfully logged in!");
                     logWithTime("🔐 Here is your refresh token");
-                    await callSetAdminRefreshCookie(user, refreshToken);
                     user.isVerified = true;
                     user.jwtTokenIssuedAt = Date.now();
                     user.refreshToken = refreshToken;

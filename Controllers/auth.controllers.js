@@ -17,7 +17,6 @@ const { checkUserExists, checkPasswordIsValid } = require("../utils/auth.utils")
 const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("../utils/device.utils");
-const { checkUserIsNotVerified } = require("../utils/auth.utils");
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 
@@ -248,7 +247,7 @@ const signIn = async (req,res) => {
         }
         user = req.foundUser;
         // ✅ Now Check if User is Already Logged In
-        const result = await checkUserIsNotVerified(user,res);
+        const result = await checkUserIsNotVerified(req,res);
         if (!result) {
             logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.User tried this from device id: (${req.deviceID})`);
             return res.status(400).json({
@@ -344,7 +343,7 @@ const signOutFromSpecificDevice = async(req,res) => {
             return throwInvalidResourceError(res,"Device ID");
         }
         // ✅ Now Check if User is Already Logged In
-        const result = await checkUserIsNotVerified(user,res);
+        const result = await checkUserIsNotVerified(req,res);
         if(result){
             logWithTime(`🚫 Request Denied: User (${user.userID}) is already logged out from device ID: (${req.deviceID}). User tried this using device ID: (${req.deviceID})`);
             return res.status(400).json({

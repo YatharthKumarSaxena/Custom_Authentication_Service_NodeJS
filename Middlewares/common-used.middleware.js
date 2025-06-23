@@ -110,7 +110,7 @@ const checkUserIsVerified = async(req,res,next) => {
             logWithTime(`⏰ Session expired for User (${user.userID}) on device id: (${req.deviceID})`);
             return throwInvalidResourceError(res,"Device ID");
         }
-        const isNotVerified = await checkUserIsNotVerified(user,res);
+        const isNotVerified = await checkUserIsNotVerified(req,res);
         if(isNotVerified){
             logWithTime(`⏰ Session expired for User (${user.userID}). Please log in again to continue accessing your account.`);
             return res.status(401).json({
@@ -166,7 +166,7 @@ const verifyToken = (req,res,next) => {
                     }
                     req.user = user;
                 }
-                const isRefreshTokenInvalid = await checkUserIsNotVerified(user,res);
+                const isRefreshTokenInvalid = await checkUserIsNotVerified(req,res);
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly
                     logWithTime(`⚠️ Access Denied, User with userID: (${user.userID}) is logged out`);
@@ -179,7 +179,7 @@ const verifyToken = (req,res,next) => {
                 // Logic to generate new access token
                 const newAccessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
                 // Set this token in Response Headers
-                const isAccessTokenSet = setAccessTokenHeaders(res,accessToken);
+                const isAccessTokenSet = setAccessTokenHeaders(res,newAccessToken);
                 if(!isAccessTokenSet){
                     logWithTime(`❌ Access token set in header failed for User (${user.userID}) at the time of token verification. Request is made from device id: (${req.deviceID})`);
                     return throwInternalServerError(res);
@@ -263,9 +263,9 @@ const verifyTokenOwnership = async(req, res, next) => {
         // ✅ All checks passed
         if(!res.headersSent)next();
         } catch (err) {
-            const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-            logWithTime(`❌ An Internal Error Occurred while checking User with id: ({${userID}) to verify its JWT token ownership `);
-            errorMessage(err)
+        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+        logWithTime(`❌ An Internal Error Occurred while checking User with id: ({${userID}) to verify its JWT token ownership `);
+        errorMessage(err)
         return throwInternalServerError(res);
     }
 };
