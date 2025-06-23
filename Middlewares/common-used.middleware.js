@@ -151,21 +151,21 @@ const verifyToken = (req,res,next) => {
     // Now Verifying whether the provided JWT Token is valid token or not
     jwt.verify(accessToken,secretCode,async (err,decoded)=>{
         try{
-            if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid
-                let user = req.user;
-                if(!user){ // Only For Admin Cookie Set Up
-                    const refreshToken = req.body?.refreshToken;
-                    if(!refreshToken){
-                        logWithTime(`⚠️ Access Denied as Refresh Token not provided by Admin to set up cookie from device id : (${req.deviceID})`);
-                        return throwResourceNotFoundError(res,"Refresh Token");
-                    }
-                    user = await UserModel.findOne({refreshToken: refreshToken});
-                    if(!user){
-                        logWithTime(`⚠️ Access Denied as Invalid Refresh Token provided by Admin to set up cookie from device id : (${req.deviceID})`)
-                        return throwInvalidResourceError(res,"User");
-                    }
-                    req.user = user;
+            let user = req.user;
+            if(!user){ // Only For Admin Cookie Set Up
+                const refreshToken = req.body.refreshToken;
+                if(!refreshToken){
+                    logWithTime(`⚠️ Access Denied as Refresh Token not provided by Admin to set up cookie from device id : (${req.deviceID})`);
+                    return throwResourceNotFoundError(res,"Refresh Token");
                 }
+                user = await UserModel.findOne({refreshToken: refreshToken});
+                if(!user){
+                    logWithTime(`⚠️ Access Denied as Invalid Refresh Token provided by Admin to set up cookie from device id : (${req.deviceID})`)
+                    return throwInvalidResourceError(res,"User");
+                }
+                req.user = user;
+            }
+            if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid           
                 const isRefreshTokenInvalid = await checkUserIsNotVerified(req,res);
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly

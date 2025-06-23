@@ -56,14 +56,14 @@ const updateUserProfile = async(req,res) => {
 const setRefreshCookieForAdmin = async (req, res) => {
   try {
     const { refreshToken } = req.body;
-
+    const user = req.user;
     if (!refreshToken) {
       return res.status(400).json({
         message: "🔑 Refresh token missing in request body."
       });
     }
 
-    const isCookieSet  = setRefreshTokenCookie(req,res);
+    const isCookieSet  = setRefreshTokenCookie(res, refreshToken);
     if(!isCookieSet){
       logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of set up admin cookie internal api. Request is made from device ID: (${req.deviceID})`);
       return;

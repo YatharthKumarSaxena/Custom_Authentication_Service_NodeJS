@@ -53,6 +53,6 @@ module.exports = {
         },
     },
     INTERNAL_ROUTES: {
-        SET_REFRESH_COOKIE: "/internal/admin/set-refresh-cookie"  // POST /custom-auth-service/api/v1/internal/admin/set-refresh-cookie
+        SET_REFRESH_COOKIE: "/admin/set-refresh-cookie"  // POST /custom-auth-service/internal/admin/set-refresh-cookie
     }
 }

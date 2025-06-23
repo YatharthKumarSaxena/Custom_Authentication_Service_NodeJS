@@ -7,7 +7,7 @@ const extractAccessToken = (req) => {
 }
 
 const extractRefreshToken = (req) => {
-    const refreshToken = req?.cookies?.refreshToken;
+    const refreshToken = req?.cookies?.token;
     if(refreshToken)return refreshToken;
     return null;
 }
