@@ -11,7 +11,7 @@ const { SET_REFRESH_COOKIE } = URIS.INTERNAL_ROUTES;
 // 🔐 Admin Internal API: Set Refresh Token in Cookie
 router.post(SET_REFRESH_COOKIE, [
   commonUsedMiddleware.verifyDeviceField,
-  commonUsedMiddleware.verifyToken,
+  commonUsedMiddleware.verifySetAdminCookieBody,
   commonUsedMiddleware.isAdmin,
   commonUsedMiddleware.checkUserIsVerified
 ], setRefreshCookieForAdmin);

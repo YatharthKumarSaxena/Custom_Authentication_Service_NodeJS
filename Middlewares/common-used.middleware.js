@@ -151,19 +151,6 @@ const verifyToken = (req,res,next) => {
     jwt.verify(accessToken,secretCodeOfAccessToken,async (err,decoded)=>{
         try{
             let user = req.user;
-            if(!user){ // Only For Admin Cookie Set Up
-                const refreshToken = req.body.refreshToken;
-                if(!refreshToken){
-                    logWithTime(`⚠️ Access Denied as Refresh Token not provided by Admin to set up cookie from device id : (${req.deviceID})`);
-                    return throwResourceNotFoundError(res,"Refresh Token");
-                }
-                user = await UserModel.findOne({refreshToken: refreshToken});
-                if(!user){
-                    logWithTime(`⚠️ Access Denied as Invalid Refresh Token provided by Admin to set up cookie from device id : (${req.deviceID})`)
-                    return throwInvalidResourceError(res,"User");
-                }
-                req.user = user;
-            }
             if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid           
                 const isRefreshTokenInvalid = await checkUserIsNotVerified(req,res);
                 if(isRefreshTokenInvalid){
@@ -301,6 +288,50 @@ const verifyDeviceField = async (req,res,next) => {
     }
 }
 
+const verifySetAdminCookieBody = async(req,res,next) => {
+    try{
+        if(!req.body){
+            logWithTime(`⚠️ Access Denied as no body prvided for Admin to set up cookie from device id : (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"Body");
+        }
+        const refreshToken = req.body.refreshToken;
+        if(!refreshToken){
+            logWithTime(`⚠️ Access Denied as Refresh Token not provided by Admin to set up cookie from device id : (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"Refresh Token");
+        }
+        const user = await UserModel.findOne({refreshToken: refreshToken});
+        if(!user){
+            logWithTime(`⚠️ Access Denied as Invalid Refresh Token provided by Admin to set up cookie from device id : (${req.deviceID})`)
+            return throwInvalidResourceError(res,"User");
+        }
+        // Check Provided Access Token Or Not
+        const accessToken = extractAccessToken(req);
+        if(!accessToken){
+            logWithTime(`⚠️ Access Denied to Set Cookie for Admin as no access token provided. Request is made from device id: (${req.deviceID})`);
+            return throwResourceNotFoundError(res, "Access Token");
+        }
+        let decodedAccess;
+        try {
+            decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
+        } catch (err) {
+            logWithTime(`⚠️ Access token provided is invalid or expired.So Access Denied for Set up Admin Cookie. Request is made from device id: (${req.deviceID})`);
+            return res.status(403).json({ message: "Invalid access token" });
+        }
+        // Checks Access Token And Refresh Token Belongs to the Same User
+        if(decodedAccess.id !== String(user._id)){
+            logWithTime(`⚠️ Access token and Refresh Token does not belong to same user. So Access Denied for Set up Admin Cookie. Request is made from device id: (${req.deviceID})`)
+            return res.status(403).json({ message: "Tokens belong to different users" }); 
+        }
+        // Check Access Token belongs to Admin Or Not
+        req.user = user;
+        if(!res.headersSent)return next();
+    }catch(err){
+        logWithTime(`⚠️ Error occurred while validating the set admin cookie body , made from device id: (${req.deviceID})`);
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+};
+
 module.exports = {
     verifyToken: verifyToken,
     isAdmin: isAdmin,
@@ -308,5 +339,6 @@ module.exports = {
     isUserBlocked: isUserBlocked,
     isUserAccountActive: isUserAccountActive,
     verifyTokenOwnership: verifyTokenOwnership,
-    verifyDeviceField: verifyDeviceField
+    verifyDeviceField: verifyDeviceField,
+    verifySetAdminCookieBody: verifySetAdminCookieBody
 }
