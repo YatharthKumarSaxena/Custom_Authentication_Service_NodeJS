@@ -20,6 +20,7 @@ const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("..
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
+const { nameMinLength } = require("../configs/user-enums.config");
 
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
@@ -143,34 +144,44 @@ const signUp = async (req,res) => { // Made this function async to use await
         return throwInternalServerError(res, "Device creation failed");
     }
     const User = {
-        name: request_body.name,
         phoneNumber: request_body.phoneNumber,
         emailID: request_body.emailID,
         password: password,
         userID: generatedUserID,
         devices: [device]
     }
+    if(request_body.name){
+        request_body.name = request_body.name.trim();
+        if (request_body.name === "") {
+            return res.status(400).json({ message: "Provided Name is invalid for registration" });
+        }
+        if (request_body.name.length < nameMinLength){
+            return res.status(403).json({message: "Invalid Name Provided, Name must be of minimum 2 letters"})
+        }
+
+        User.name = request_body.name;
+    }
     try{
         const user = await UserModel.create(User);
         req.user = user;
         logWithTime(`🟢 User (${user.userID}) Created Successfully, Registration Successfull from device id: (${req.deviceID})`);
         const userGeneralDetails = {
-            name: user.name,
             emailID: user.emailID,
             userID: user.userID,
             userType: user.userType,
             createdAt: user.createdAt,
             devices: [device]
         }
+        if(User.name)userGeneralDetails.name = request_body.name;
         // Update data into auth.logs
         await logAuthEvent(req, "REGISTER", { performedOn: user });
         const userDisplayDetails = {
             details:"Here is your Basic Profile Details given below:-", 
-            name: user.name,
             userID: user.userID,
             emailId: user.emailID,
             phoneNumber: user.phoneNumber,
         }
+        if(User.name)userDisplayDetails.name = request_body.name;
         // Before Automatic Login Just verify that device threshold has not exceeded
         const isThresholdCrossed = checkThresholdExceeded(req,res);
         if(isThresholdCrossed)return;
@@ -285,9 +296,9 @@ const signIn = async (req,res) => {
                 return throwInternalServerError(res);
             }
             logWithTime(`🔐 User with (${user.userID}) is Successfully logged in from device id: (${req.deviceID})`);
+            const praiseBy = user.name || user.userID;
             return res.status(200).json({
-                message: "Welcome "+user.name+", You are successfully logged in",
-                userID: user.userID,
+                message: "Welcome "+praiseBy+", You are successfully logged in",
             })
         }
         else{
@@ -317,8 +328,9 @@ const signOut = async (req,res) => {
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
         }
         else logWithTime(`🔓 User with (${user.userID}) is Successfully logged out from all devices. User used device having device ID: (${req.deviceID})`);
+        const praiseBy = user.name || user.userID;
         return res.status(200).json({
-            message: user.name+", You are successfully logged out from all devices",
+            message: praiseBy+", You are successfully logged out from all devices",
             userID: user.userID,
         })
     }catch(err){
@@ -349,6 +361,7 @@ const signOutFromSpecificDevice = async(req,res) => {
                 suggestion: "Please login first before trying to logout again."
             });
         }
+        const praiseBy = user.name || user.userID;
         // Check if User is Logged in on this Single Device  
         if(user.devices.length === 1){ 
             // If yes then isVerified is changed to False
@@ -359,10 +372,11 @@ const signOutFromSpecificDevice = async(req,res) => {
             await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
             return res.status(200).json({
                 success: true,
-                message: "Successfully signed out from the specified device. Now, You are not signed from any of the device"
+                message: praiseBy+"successfully signed out from the specified device. Now, You are not signed from any of the device"
             });
         }
         user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
+
         await user.save();
         if (user.isBlocked) {
             logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from device id: ${req.deviceID}.`);
@@ -373,7 +387,7 @@ const signOutFromSpecificDevice = async(req,res) => {
         await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
         return res.status(200).json({
             success: true,
-            message: "Successfully signed out from the specified device."
+            message: praiseBy+" ,successfully signed out from this device."
         });
 
     }catch(err){

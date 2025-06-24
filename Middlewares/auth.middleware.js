@@ -23,10 +23,6 @@ const verifySignUpBody = async (req,res,next) =>{
         // Check name is present in Request Body or not
         let userIsValid = true; // Assuming that Request Provided is correct
         let reason = ""; // Stores Reason for Invalid Request
-        if(!req.body.name){
-            userIsValid = false;
-            reason = reason+"Name";
-        }
         // Check Email ID is present in Request Body or not
         if(!req.body.emailID){
             if(userIsValid)reason = reason+"Email ID";
