@@ -174,7 +174,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         }
         if(User.name)userDisplayDetails.name = request_body.name;
         // Before Automatic Login Just verify that device threshold has not exceeded
-        const isThresholdCrossed = await checkDeviceThreshold(req,res);
+        const isThresholdCrossed = await checkDeviceThreshold(req.deviceID,res);
         if(isThresholdCrossed)return;
         // Refresh Token Generation
         const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken)
@@ -248,7 +248,7 @@ const signIn = async (req,res) => {
                 suggestion: "Please logout first before trying to login again."
             });
         };
-        const isThresholdCrossed = await (checkThresholdExceeded(req,res) && checkUserDeviceLimit(req.res));
+        const isThresholdCrossed = (await checkDeviceThreshold(req.deviceID,res) || checkUserDeviceLimit(req,res));
         if(isThresholdCrossed)return;
         device = createDeviceField(req,res);
         if(!device){

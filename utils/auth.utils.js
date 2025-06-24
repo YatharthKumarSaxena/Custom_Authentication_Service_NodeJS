@@ -60,7 +60,8 @@ const checkUserExists = async(emailID,phoneNumber,res) => {
 
 const checkPasswordIsValid = async(req,user) => {
     const providedPassword = req.body.password;
-    const actualPassword = user.password;
+    const userWithPassword = await UserModel.findOne({ userID: user.userID }).select("+password");
+    const actualPassword = userWithPassword.password;
     const isPasswordValid = await bcryptjs.compare(providedPassword, actualPassword);
     return isPasswordValid;
 }

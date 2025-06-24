@@ -1,6 +1,7 @@
 const { deviceThreshold, usersPerDevice } = require("../configs/user-id.config");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const UserModel = require("../models/user.model");
 
 // 📦 Utility to get a device from user's devices array by deviceID
 const getDeviceByID = (user, deviceID) => {
@@ -9,7 +10,7 @@ const getDeviceByID = (user, deviceID) => {
 };
 
 const checkUserDeviceLimit = (req,res) => {
-    const user = req.user;
+    const user = req.user || req.foundUser;
     const thresholdLimit = (user.userType === "ADMIN")?deviceThreshold.ADMIN:deviceThreshold.CUSTOMERS;
     if (user.devices.length >= thresholdLimit) {
         logWithTime(`Login Request Denied as User (${user.userID}) has crossed threshold limit of device sessions. Request is made from deviceID: (${req.deviceID})`);
