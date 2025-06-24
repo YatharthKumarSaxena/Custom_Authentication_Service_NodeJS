@@ -4,5 +4,6 @@ module.exports = Object.freeze({
   BLOCK_VIA: ["USER_ID", "EMAIL", "PHONE"],
   USER_TYPE: ["CUSTOMER", "ADMIN"],
   DEVICE_TYPES :["MOBILE", "TABLET", "LAPTOP"],
-  nameMinLength: 2
+  nameMinLength: 2,
+  nameMaxLength: 50
 });

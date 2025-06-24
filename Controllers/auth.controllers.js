@@ -20,7 +20,6 @@ const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("..
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
-const { nameMinLength } = require("../configs/user-enums.config");
 
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
@@ -151,14 +150,6 @@ const signUp = async (req,res) => { // Made this function async to use await
         devices: [device]
     }
     if(request_body.name){
-        request_body.name = request_body.name.trim();
-        if (request_body.name === "") {
-            return res.status(400).json({ message: "Provided Name is invalid for registration" });
-        }
-        if (request_body.name.length < nameMinLength){
-            return res.status(403).json({message: "Invalid Name Provided, Name must be of minimum 2 letters"})
-        }
-
         User.name = request_body.name;
     }
     try{

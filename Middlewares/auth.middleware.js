@@ -10,8 +10,9 @@ const { throwResourceNotFoundError, throwInternalServerError, errorMessage, thro
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
-const { phoneRegex, emailRegex, strongPasswordRegex } = require("../configs/regex.config");
+const { nameRegex, phoneRegex, emailRegex, strongPasswordRegex } = require("../configs/regex.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
+const { nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
 
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
@@ -23,10 +24,20 @@ const verifySignUpBody = async (req,res,next) =>{
         // Check name is present in Request Body or not
         let userIsValid = true; // Assuming that Request Provided is correct
         let reason = ""; // Stores Reason for Invalid Request
+        // Check if Name Field Provided Is It Valid Or Not
+        if(typeof req.body.name === 'string' && req.body.name.trim().length){
+            const name = req.body.name.trim();
+            if (name.length < nameMinLength || name.length > nameMaxLength){
+                return throwInvalidResourceError(res,"Invalid Name Provided, Name must be of minimum 2 letters or maximum 50 letters");
+            }
+            if(!nameRegex.test(name)){
+                return throwInvalidResourceError(res,"Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
+            }
+        }
         // Check Email ID is present in Request Body or not
         if(!req.body.emailID){
             if(userIsValid)reason = reason+"Email ID";
-            else reason = reason+" ,Email ID";
+            else reason = reason+", Email ID";
             userIsValid = false;
         }
         // Check Phone Number is present in Request Body or not
@@ -37,7 +48,7 @@ const verifySignUpBody = async (req,res,next) =>{
         }
         if(!req.deviceID){
             if(userIsValid)reason = reason+"Device Information";
-            else reason = reason+" ,Device Information";
+            else reason = reason+" , Device Information";
             userIsValid = false;           
         }
          // Check Password is present in Request Body or not

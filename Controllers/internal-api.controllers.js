@@ -2,7 +2,9 @@
 
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
-const { throwInternalServerError, errorMessage } =  require("../configs/error-handler.configs");
+const { throwInternalServerError, errorMessage, throwInvalidResourceError } =  require("../configs/error-handler.configs");
+const { nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
+const { emailRegex, phoneRegex, nameRegex } = require("../configs/regex.config");
 
 const updateUserProfile = async(req,res) => {
     try{
@@ -10,11 +12,16 @@ const updateUserProfile = async(req,res) => {
         const user = req.user;
         if(req.body.name && req.body.name !== user.name){
             const name = req.body.name.trim();
+            if(name.length < nameMinLength || name.length > nameMaxLength){
+              return throwInvalidResourceError(res,`Name must be between ${nameMinLength} and ${nameMaxLength} characters.`);
+            }
+            if(!nameRegex.test(name)){
+              return throwInvalidResourceError(res,"Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
+            }
             updatedFields.push("Name");
             user.name = name;
         }
         if(req.body.emailID && req.body.emailID.trim().toLowerCase() !== user.emailID.trim().toLowerCase()){
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(req.body.emailID)) {
                 return res.status(400).json({
                     success: false,
@@ -22,14 +29,14 @@ const updateUserProfile = async(req,res) => {
                 });
             }
             updatedFields.push("Email ID");
-            user.emailID = req.body.emailID
+            user.emailID = req.body.emailID.trim().toLowerCase();
         }
         if(req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber){
-            if(typeof req.body.phoneNumber !== "string" || !/^\d{10}$/.test(req.body.phoneNumber)) {
+            if(typeof req.body.phoneNumber !== "string" || !phoneRegex.test(req.body.phoneNumber)) {
                 return res.status(400).json({ message: "Invalid phone number format." });
             }
             updatedFields.push("Phone Number");
-            user.phoneNumber = req.body.phoneNumber;
+            user.phoneNumber = req.body.phoneNumber.trim();
         }
         if(updatedFields.length === 0){
             logWithTime(`❌ User Account Details with User ID: (${user.userID}) is not modified from device ID: (${req.deviceID}) in Updation Request`);
