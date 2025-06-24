@@ -97,9 +97,9 @@ const createDeviceBasedRateLimiter = (maxRequests, timeWindowInMs) => {
       }
 
       if (record.attempts >= maxRequests) {
-        logWithTime(`🚫 Too many sign-up attempts from device: ${deviceID}`);
+        logWithTime(`🚫 Too many attempts from device: ${deviceID}`);
         return res.status(429).json({
-          message: "Too many sign-up attempts. Please try again later.",
+          message: "Too many attempts. Please try again later.",
           retryAfter: `${Math.ceil((timeWindowInMs - timeSinceLastAttempt)/1000)} seconds`
         });
       }

@@ -152,6 +152,7 @@ const signUp = async (req,res) => { // Made this function async to use await
     }
     try{
         const user = await UserModel.create(User);
+        req.user = user;
         logWithTime(`🟢 User (${user.userID}) Created Successfully, Registration Successfull from device id: (${req.deviceID})`);
         const userGeneralDetails = {
             name: user.name,
@@ -170,6 +171,9 @@ const signUp = async (req,res) => { // Made this function async to use await
             emailId: user.emailID,
             phoneNumber: user.phoneNumber,
         }
+        // Before Automatic Login Just verify that device threshold has not exceeded
+        const isThresholdCrossed = checkThresholdExceeded(req,res);
+        if(isThresholdCrossed)return;
         // Refresh Token Generation
         const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken)
         if(!refreshToken){
