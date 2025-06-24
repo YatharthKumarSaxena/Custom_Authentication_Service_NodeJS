@@ -56,7 +56,6 @@ const userSchema = mongoose.Schema({
     password:{
         type: String,
         required: true,
-        match: strongPasswordRegex,
         trim: true,
         minlength: 8, // strong password practice
         select: false

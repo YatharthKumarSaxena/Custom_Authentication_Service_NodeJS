@@ -16,7 +16,7 @@ const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { checkUserExists, checkPasswordIsValid } = require("../utils/auth.utils");
 const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
-const { createDeviceField, getDeviceByID, checkThresholdExceeded } = require("../utils/device.utils");
+const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceLimit } = require("../utils/device.utils");
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
@@ -174,7 +174,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         }
         if(User.name)userDisplayDetails.name = request_body.name;
         // Before Automatic Login Just verify that device threshold has not exceeded
-        const isThresholdCrossed = checkThresholdExceeded(req,res);
+        const isThresholdCrossed = await checkDeviceThreshold(req,res);
         if(isThresholdCrossed)return;
         // Refresh Token Generation
         const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken)
@@ -248,7 +248,7 @@ const signIn = async (req,res) => {
                 suggestion: "Please logout first before trying to login again."
             });
         };
-        const isThresholdCrossed = checkThresholdExceeded(req,res);
+        const isThresholdCrossed = await (checkThresholdExceeded(req,res) && checkUserDeviceLimit(req.res));
         if(isThresholdCrossed)return;
         device = createDeviceField(req,res);
         if(!device){

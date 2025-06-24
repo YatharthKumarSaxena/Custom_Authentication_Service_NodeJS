@@ -62,5 +62,6 @@ module.exports = {
     deviceThreshold: {
         ADMIN: 2,
         CUSTOMERS: 5
-    }
+    },
+    usersPerDevice: 5
 }

@@ -1,4 +1,4 @@
-const { deviceThreshold } = require("../configs/user-id.config");
+const { deviceThreshold, usersPerDevice } = require("../configs/user-id.config");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
 
@@ -8,7 +8,7 @@ const getDeviceByID = (user, deviceID) => {
     return user.devices.find(d => d.deviceID === deviceID) || null;
 };
 
-const checkThresholdExceeded = (req,res) => {
+const checkUserDeviceLimit = (req,res) => {
     const user = req.user;
     const thresholdLimit = (user.userType === "ADMIN")?deviceThreshold.ADMIN:deviceThreshold.CUSTOMERS;
     if (user.devices.length >= thresholdLimit) {
@@ -21,6 +21,33 @@ const checkThresholdExceeded = (req,res) => {
     }
     return false;
 }
+
+const checkDeviceThreshold = async (deviceID, res) => {
+    try {
+        const thresholdLimit = usersPerDevice; // 📌 e.g., 5 users per device
+
+        const usersUsingDevice = await UserModel.find({
+            "devices.deviceID": deviceID
+        }).select("userID"); // Select minimal fields for performance
+
+        if (usersUsingDevice.length >= thresholdLimit) {
+            logWithTime(`🛑 Device Threshold Exceeded: Device (${deviceID}) is already linked with ${usersUsingDevice.length} users.`);
+            res.status(403).json({
+                success: false,
+                message: "❌ Device limit reached. Too many users already signed in on this device."
+            });
+            return true;
+        }
+        return false;
+    } catch (error) {
+        logWithTime(`❌ Internal Error during Device Threshold Check for (${deviceID}):`, error);
+        res.status(500).json({
+            success: false,
+            message: "🚨 Internal Server Error while checking device threshold."
+        });
+        return true;
+    }
+};
 
 const createDeviceField = (req,res) => {
     try{
@@ -43,5 +70,6 @@ const createDeviceField = (req,res) => {
 module.exports = {
     getDeviceByID: getDeviceByID,
     createDeviceField: createDeviceField,
-    checkThresholdExceeded: checkThresholdExceeded
+    checkUserDeviceLimit: checkUserDeviceLimit,
+    checkDeviceThreshold: checkDeviceThreshold
 }
