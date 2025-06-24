@@ -7,6 +7,10 @@ const { validateSingleIdentifier } = require("../utils/auth.utils");
 // Verify Admin Body Request for Blocking / Unblocking a user
 const verifyAdminBlockUnblockBody = async(req,res,next) => {
     try{
+        if(!req.body){
+            logWithTime(`An Unknown User has provided an empty body to block/unblock account from device ID: (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"Body");
+        }
         if(!req.body.reason){
             return throwResourceNotFoundError(res,"Reason");
         }

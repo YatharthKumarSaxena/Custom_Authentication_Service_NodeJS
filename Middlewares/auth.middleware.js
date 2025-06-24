@@ -89,6 +89,7 @@ const verifySignInBody = async (req,res,next) =>{
     // Validating the User SignIn Body
     try{
         if(!req.body){
+            logWithTime(`An Unknown User has provided an empty body for Sign In from device ID: (${req.deviceID})`);
             return throwResourceNotFoundError(res,"Body");
         }
         if(!req.body.password){
@@ -115,7 +116,6 @@ const verifySignInBody = async (req,res,next) =>{
 const verifySignOutBody = async (req,res,next) => {
     // Validating the User SignOut Body
     try{
-        const user = req.user;
         // ✅ Now Check if User is Already Logged Out 
         const isNotVerified = await checkUserIsNotVerified(req,res);
         if (isNotVerified) {
@@ -139,6 +139,10 @@ const verifySignOutBody = async (req,res,next) => {
 const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
+        if(!req.body){
+            logWithTime(`An Unknown User has provided an empty body to Activate Account from device ID: (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"Body");
+        }
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
@@ -179,6 +183,10 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
 const verifyDeactivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
+        if(!req.body){
+            logWithTime(`An Unknown User has provided an empty body to Deactivate Account from device ID: (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"Body");
+        }
         const user = req.user;
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
@@ -234,6 +242,10 @@ const verifyChangePasswordBody = async(req,res,next) => {
                 message: "Admin password cannot be changed via this route.",
                 reason: "Admin accounts are system-level and cannot be modified like regular users."
             });
+        }
+        if(!req.body){
+            logWithTime(`User (${req.user.userID}) has provided an empty body to change password from device ID: (${req.deviceID})`);
+            return throwResourceNotFoundError(res,"Body");
         }
         const { oldPassword,newPassword } = req.body;
         if(!oldPassword){
