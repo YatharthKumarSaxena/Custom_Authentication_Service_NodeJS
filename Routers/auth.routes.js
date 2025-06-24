@@ -41,7 +41,7 @@ router.post(SIGNIN, [
   specialLimiter.signInRateLimiter,
   authMiddleware.verifySignInBody,
   commonUsedMiddleware.isUserBlocked,
-  commonUsedMiddleware.isUserAccountActive
+  commonUsedMiddleware.isUserAccountActive,
 ], authController.signIn);
 
 // 🔓 Public User Forced Signout Route: Sign Out User From All Devices

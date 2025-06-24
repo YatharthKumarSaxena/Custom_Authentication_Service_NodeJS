@@ -4,15 +4,28 @@ const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
 
 const validateSingleIdentifier = (req,res) => {
-    const identifiers = [req.body.phoneNumber, req.body.emailID, req.body.userID].filter(Boolean);
-    if (identifiers.length !== 1) {
+    const identifierKeys = ['userID', 'emailID', 'phoneNumber'];
+    const validIdentifiers = identifierKeys.filter(key => {
+        return req.body.hasOwnProperty(key) && typeof req.body[key] === 'string' && req.body[key].trim() !== '';
+    });
+
+    if (validIdentifiers.length !== 1) {
         logWithTime(`🧷 Invalid input: More than one or no identifier provided from device id: (${req.deviceID}).`);
         res.status(400).send({
             success: false,
             message: "❌ Provide exactly one identifier: userID, phoneNumber, or emailID."
-        }) 
+        });
         return false;
     }
+
+    // 🧼 Strip out unused identifiers
+    const selectedKey = validIdentifiers[0];
+    identifierKeys.forEach(key => {
+        if (key !== selectedKey && key in req.body) {
+            delete req.body[key]; // Remove unwanted identifiers
+        }
+    });
+    
     logWithTime(`🧩 Valid identifier input detected from device id: (${req.deviceID}).`);
     return true;
 };

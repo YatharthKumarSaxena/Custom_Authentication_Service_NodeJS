@@ -88,11 +88,11 @@ const verifySignUpBody = async (req,res,next) =>{
 const verifySignInBody = async (req,res,next) =>{
     // Validating the User SignIn Body
     try{
+        if(!req.body){
+            return throwResourceNotFoundError(res,"Body");
+        }
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
-        }
-        if(!req.deviceID){
-            return throwResourceNotFoundError(res,"Device ID");
         }
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
@@ -101,6 +101,7 @@ const verifySignInBody = async (req,res,next) =>{
             logWithTime(`Login Request Cancelled for User (${req.user.userID}) from device ID: (${req.deviceID})`)
             return;
         }
+        req.user = req.foundUser;
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){

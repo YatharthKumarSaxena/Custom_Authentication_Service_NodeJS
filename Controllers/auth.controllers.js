@@ -73,8 +73,8 @@ const checkUserIsNotVerified = async(req,res) => {
         const currentTime = Date.now(); // In milli second current time is return
         if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
             const isUserLoggedOut = logoutUserCompletely(user,res,req,"in check user is not verfied function")
-            if(!isUserLoggedOut)return false;
-            return true; // 🧠 session expired, response already sent
+            if(isUserLoggedOut)return true;
+            return false; // 🧠 session expired, response already sent
         }
         return false; // ✅ token valid, continue execution
     }catch(err){
@@ -232,6 +232,17 @@ const signIn = async (req,res) => {
             }
             req.foundUser = user;
         }
+        user = req.foundUser;
+        // ✅ Now Check if User is Already Logged In
+        const result = await checkUserIsNotVerified(req,res);
+        if (!result) {
+            logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.User tried this from device id: (${req.deviceID})`);
+            return res.status(400).json({
+                success: false,
+                message: "User is already logged in.",
+                suggestion: "Please logout first before trying to login again."
+            });
+        }
         let device = getDeviceByID(user,req.deviceID)
         if(device){
             device.lastUsedAt = Date.now();
@@ -249,17 +260,6 @@ const signIn = async (req,res) => {
         if(!device){
             logWithTime(`❌ Device creation failed for User (${generatedUserID}) for device id: (${req.deviceID}) at the time of Sign In Request`);
             return throwInternalServerError(res, "Device creation failed");
-        }
-        user = req.foundUser;
-        // ✅ Now Check if User is Already Logged In
-        const result = await checkUserIsNotVerified(req,res);
-        if (!result) {
-            logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.User tried this from device id: (${req.deviceID})`);
-            return res.status(400).json({
-                success: false,
-                message: "User is already logged in.",
-                suggestion: "Please logout first before trying to login again."
-            });
         }
         // Check Password is Correct or Not
         let isPasswordValid = await checkPasswordIsValid(req,user);
