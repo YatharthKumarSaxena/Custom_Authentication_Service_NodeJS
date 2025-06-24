@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
-const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES,nameMinLength } = require("../configs/user-enums.config");
+const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES,nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
 const { BLOCK_REASONS,UNBLOCK_REASONS } = require("../configs/user-id.config")
-const { phoneRegex, emailRegex , strongPasswordRegex} = require("../configs/regex.config");
+const { phoneRegex, emailRegex , strongPasswordRegex, nameRegex} = require("../configs/regex.config");
 
 /* User Schema */
 
@@ -41,6 +41,8 @@ const userSchema = mongoose.Schema({
     name:{
         type: String,
         minlength: nameMinLength,
+        maxlength: nameMaxLength,
+        match: nameRegex,
         trim: true,
         default: null
     },
@@ -56,7 +58,8 @@ const userSchema = mongoose.Schema({
         required: true,
         match: strongPasswordRegex,
         trim: true,
-        minlength: 8 // strong password practice
+        minlength: 8, // strong password practice
+        select: false
     },
     userID:{
         type: String,
