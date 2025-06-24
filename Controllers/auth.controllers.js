@@ -234,15 +234,7 @@ const signIn = async (req,res) => {
         }
         user = req.foundUser;
         // ✅ Now Check if User is Already Logged In
-        const result = await checkUserIsNotVerified(req,res);
-        if (!result) {
-            logWithTime(`🚫 Request Denied: User with userID: (${user.userID}) is already logged in.User tried this from device id: (${req.deviceID})`);
-            return res.status(400).json({
-                success: false,
-                message: "User is already logged in.",
-                suggestion: "Please logout first before trying to login again."
-            });
-        }
+        await checkUserIsNotVerified(req,res);
         let device = getDeviceByID(user,req.deviceID)
         if(device){
             device.lastUsedAt = Date.now();
