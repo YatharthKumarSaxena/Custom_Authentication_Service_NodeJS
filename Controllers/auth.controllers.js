@@ -153,7 +153,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         emailID: request_body.emailID,
         password: password,
         userID: generatedUserID,
-        devices: [device]
+        devices: []
     }
     if(request_body.name){
         User.name = request_body.name;
