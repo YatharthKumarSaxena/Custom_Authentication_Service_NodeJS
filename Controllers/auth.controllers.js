@@ -374,7 +374,7 @@ const signOutFromSpecificDevice = async(req,res) => {
             await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
             return res.status(200).json({
                 success: true,
-                message: praiseBy+"successfully signed out from the specified device. Now, You are not signed from any of the device"
+                message: praiseBy+", successfully signed out from the specified device. Now, You are not signed from any of the device"
             });
         }
         user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
@@ -389,7 +389,7 @@ const signOutFromSpecificDevice = async(req,res) => {
         await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
         return res.status(200).json({
             success: true,
-            message: praiseBy+" ,successfully signed out from this device."
+            message: praiseBy+", successfully signed out from this device."
         });
 
     }catch(err){
