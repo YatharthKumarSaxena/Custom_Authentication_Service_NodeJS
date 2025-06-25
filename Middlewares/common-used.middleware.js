@@ -6,7 +6,7 @@ const { UUID_V4_REGEX } = require("../configs/regex.config");
 
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError } = require("../configs/error-handler.configs");
-const { secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfAccessToken } = require("../configs/user-id.config");
+const { secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { fetchUser } = require("./helper.middleware");
 const { extractAccessToken, extractRefreshToken } = require("../utils/extract-token.utils");
@@ -121,7 +121,7 @@ const checkUserIsVerified = async(req,res,next) => {
         
         const currentTime = Date.now();
         const lastUsedTime = new Date(device.lastUsedAt).getTime();
-        const expiryWindow = expiryTimeOfAccessToken * 1000; // convert to ms
+        const expiryWindow = expiryTimeOfRefreshToken * 1000; // convert to ms
 
         if (currentTime - lastUsedTime > expiryWindow) {
             user.devices = user.devices.filter(d => d.deviceID !== req.deviceID);
@@ -136,6 +136,8 @@ const checkUserIsVerified = async(req,res,next) => {
         const isRefreshTokenReset = await resetRefreshToken(req,res);
         if(isRefreshTokenReset){
             logWithTime(`🔄 Refresh token rotated for userID: ${req.user.userID} from device id: (${req.deviceID})`);
+            user.jwtTokenIssuedAt = Date.now();
+            await user.save();
         }
         // ✅ 3. Update lastUsedAt
         device.lastUsedAt = Date.now();

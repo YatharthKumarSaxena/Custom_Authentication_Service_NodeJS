@@ -25,7 +25,6 @@ const loginTheUser = async (user, refreshToken, device, res) => {
     try {
         user.refreshToken = refreshToken;
         user.isVerified = true;
-        user.jwtTokenIssuedAt = Date.now();
         user.lastLogin = Date.now();
         user.loginCount += 1;
         user.devices.push(device);
@@ -197,6 +196,8 @@ const signUp = async (req,res) => { // Made this function async to use await
             logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of Registration. Request is made from device ID: (${req.deviceID})`);
             return;
         }
+        user.jwtTokenIssuedAt = Date.now();
+        await user.save();
         const isUserLoggedIn = await loginTheUser(user,refreshToken,device,res);
         if(!isUserLoggedIn){
             logWithTime(`❌ An Internal Error Occurred in logging in the user (${user.userID}) at the time of Registration. Request is made from device ID: (${req.deviceID})`);
@@ -277,6 +278,8 @@ const signIn = async (req,res) => {
                 logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of Login. Request is made from device ID: (${req.deviceID})`);
                 return;
             }
+            user.jwtTokenIssuedAt = Date.now();
+            await user.save();
             const isUserLoggedIn = await loginTheUser(user,refreshToken,device,res);
             if(!isUserLoggedIn){
                 logWithTime(`❌ An Internal Error Occurred in logging in the user (${user.userID}) at the time of login request. Request is made from device ID: (${req.deviceID})`);
