@@ -139,6 +139,7 @@ const getUserAuthLogs = async (req, res) => {
     });
 
     return res.status(200).json({
+      success: true,
       message: "User authentication logs fetched successfully.",
       total: logs.length,
       logs: logs
@@ -205,6 +206,7 @@ const checkUserAccountStatus = async(req,res) => {
 
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to Admin (${req.user.userID}) from device ID: (${req.deviceID}) via (${verifyWith})`);
         return res.status(200).json({
+            success: true,
             message: "Here is User Account Details",
             User_Account_Details,
             resolvedBy: verifyWith

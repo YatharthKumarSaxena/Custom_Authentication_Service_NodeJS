@@ -119,6 +119,7 @@ const signUp = async (req,res) => { // Made this function async to use await
     const userExistReason = await checkUserExists(emailID,phoneNumber,res);
     if(userExistReason !== ""){
         return res.status(400).json({
+            success: false,
             message: "User Already Exists with "+userExistReason,
             warning: "Use different Email ID or Phone Number or both based on Message"
         })
@@ -129,6 +130,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         generatedUserID= await makeUserID(res); // Generating Customer ID 
         if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
             return res.status(507).json({
+                success: false,
                 message: "User limit reached. Cannot register more users at this time."
             });
         }
@@ -187,6 +189,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         if(!refreshToken){
             logWithTime(`❌ Refresh Token generation failed after successful registration for User (${user.userID})!. User registered from device id: (${req.deviceID})`);
             return res.status(500).json({
+                success: false,
                 message: "User registered but login (token generation) failed. Please try logging in manually.",
                 userDisplayDetails
             });
@@ -220,6 +223,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         console.log(userGeneralDetails);
     /* 3. Return the response back to the User */
         return res.status(201).json({
+            success: true,
             message: "Congratulations, Your Registration as well as login is Done Successfully :- ",
             userDisplayDetails,
         })
@@ -300,6 +304,7 @@ const signIn = async (req,res) => {
             logWithTime(`🔐 User with (${user.userID}) is Successfully logged in from device id: (${req.deviceID})`);
             const praiseBy = user.name || user.userID;
             return res.status(200).json({
+                success: true,
                 message: "Welcome "+praiseBy+", You are successfully logged in",
             })
         }
@@ -332,6 +337,7 @@ const signOut = async (req,res) => {
         else logWithTime(`🔓 User with (${user.userID}) is Successfully logged out from all devices. User used device having device ID: (${req.deviceID})`);
         const praiseBy = user.name || user.userID;
         return res.status(200).json({
+            success: true,
             message: praiseBy+", You are successfully logged out from all devices",
             userID: user.userID,
         })
@@ -563,6 +569,7 @@ const provideUserAccountDetails = async(req,res) => {
         await logAuthEvent(req, "PROVIDE_ACCOUNT_DETAILS", { performedOn: user });
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
         return res.status(200).json({
+            success: true,
             message: "Here is User Account Details",
             User_Account_Details
         });

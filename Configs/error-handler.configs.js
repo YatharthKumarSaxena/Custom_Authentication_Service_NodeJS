@@ -28,6 +28,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
     console.log(resource);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(400).json({
+        success: false,
         warning: "The following required field(s) are missing:",
         fields: resource,
         message: "Please provide the required fields to proceed."
@@ -43,6 +44,7 @@ exports.throwInternalServerError = (res) => {
     logWithTime("💥 Internal Server Error occurred.");
     if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(500).json({
+        success: false,
         response: "An internal server error occurred while processing your request.",
         message: "We apologize for the inconvenience. Please try again later."
     });
@@ -58,6 +60,7 @@ exports.throwInvalidResourceError = (res,resource) => {
     logWithTime("❌ Invalid Credentials! Please try again.");
     if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(401).json({
+        success: false,
         type: "InvalidResource",
         resource: resource,
         warning: "Invalid "+ resource + "Entered",
@@ -74,6 +77,7 @@ exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
     logWithTime("⛔️ Access Denied: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(403).json({
+        success: false,
         type: "AccessDenied",
         warning: reason,
         message: "You do not have the necessary permissions to perform this action."
@@ -90,6 +94,7 @@ exports.throwBlockedAccountError = (req,res) => {
     logWithTime("⛔️ Blocked Account: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
     return res.status(403).json({
+        success: false,
         type: "BlockedAccount",
         warning: reason,
         message: "Please contact support if you believe this is an error."
@@ -98,5 +103,5 @@ exports.throwBlockedAccountError = (req,res) => {
 
 exports.globalErrorHandler = (err, req, res, next) => {
     logWithTime("💥 Uncaught Server Error:", err.message);
-    return res.status(500).json({ message: "🔧 Internal Server Error!" });
+    return res.status(500).json({ success: false, message: "🔧 Internal Server Error!" });
 };
