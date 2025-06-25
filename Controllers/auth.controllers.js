@@ -167,7 +167,7 @@ const signUp = async (req,res) => { // Made this function async to use await
             userID: user.userID,
             userType: user.userType,
             createdAt: user.createdAt,
-            devices: [device]
+            devices: []
         }
         if(User.name)userGeneralDetails.name = request_body.name;
         // Update data into auth.logs
@@ -183,7 +183,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         const isThresholdCrossed = await checkDeviceThreshold(req.deviceID,res);
         if(isThresholdCrossed)return;
         // Refresh Token Generation
-        const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken)
+        const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
         if(!refreshToken){
             logWithTime(`❌ Refresh Token generation failed after successful registration for User (${user.userID})!. User registered from device id: (${req.deviceID})`);
             return res.status(500).json({

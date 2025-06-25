@@ -12,13 +12,13 @@ const resetRefreshToken = async(req,res) => {
         const refreshThreshold = refreshThresholdInMs;
         if (timeSinceLastIssued > refreshThreshold) {
             const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
-            user.refreshToken = refreshToken;
-            user.jwtTokenIssuedAt = now;
             const isCookieSet = setRefreshTokenCookie(res,expiryTimeOfRefreshToken);
             if(!isCookieSet){
                 logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the reset refresh token function. Request is made from device ID: (${req.deviceID})`);
                 return;
             }
+            user.refreshToken = refreshToken;
+            user.jwtTokenIssuedAt = Date.now();
             await user.save();
             return true;
         }
