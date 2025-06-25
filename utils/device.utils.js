@@ -44,10 +44,7 @@ const checkDeviceThreshold = async (deviceID, res) => {
         return false;
     } catch (error) {
         logWithTime(`❌ Internal Error during Device Threshold Check for (${deviceID}):`, error);
-        res.status(500).json({
-            success: false,
-            message: "🚨 Internal Server Error while checking device threshold."
-        });
+        throwInternalServerError(res);
         return true;
     }
 };
