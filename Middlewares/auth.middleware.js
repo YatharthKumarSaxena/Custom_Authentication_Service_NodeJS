@@ -106,7 +106,7 @@ const verifySignInBody = async (req,res,next) =>{
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Login Request Cancelled for User (${req.user.userID}) from device ID: (${req.deviceID})`)
+            logWithTime(`Login Request Cancelled for Unknown User from device ID: (${req.deviceID})`)
             return;
         }
         req.user = req.foundUser;
