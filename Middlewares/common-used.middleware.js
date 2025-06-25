@@ -159,9 +159,7 @@ const verifyToken = (req,res,next) => {
     const accessToken = extractAccessToken(req);
     if(!accessToken){
         logWithTime("❌ No Access Token provided")
-        return res.status(403).json({
-            message: "No token found: ⚠️ Unauthorized"
-        })
+        return throwResourceNotFoundError(res,"Access Token");
     }
     // Now Verifying whether the provided JWT Token is valid token or not
     jwt.verify(accessToken,secretCodeOfAccessToken,async (err,decoded)=>{
@@ -173,6 +171,7 @@ const verifyToken = (req,res,next) => {
                     //  Validate Token Payload Strictly
                     logWithTime(`⚠️ Access Denied, User with userID: (${user.userID}) is logged out`);
                     return res.status(403).send({
+                        success: false,
                         message: "Access Denied to perform action",
                         reason: "You are not logged in, please login to continue"
                     });
@@ -205,7 +204,7 @@ const isAdmin = (req,res,next) => {
     const user = req.user;
     if (!user) {
         logWithTime(`❌ Access Denied: No user information found while checking admin access on device id: (${req.deviceID})`);
-        return throwAccessDeniedError(res, "User not authenticated");
+        return throwAccessDeniedError(res, "User");
     }
     if(user.userType === "ADMIN"){
         // Very next line should be:
@@ -214,7 +213,7 @@ const isAdmin = (req,res,next) => {
     else{
         // Admin not present, access denied
         logWithTime(`Access Denied: User (${req.user.userID}) is not Admin on device id: (${req.deviceID})`);
-        return throwAccessDeniedError(res,"Admins only");
+        return throwAccessDeniedError(res,"Admin, Admins only");
     }
 }
 
@@ -288,7 +287,7 @@ const verifyDeviceField = async (req,res,next) => {
         // Attach to request object for later use in controller
         req.deviceID = deviceID.trim();
         if (!UUID_V4_REGEX.test(req.deviceID)) {
-            return throwInvalidResourceError(res, `Provided Device UUID (${req.deviceID}) is not in a valid UUID v4 format`);
+            return throwInvalidResourceError(res, `Device UUID, Provided Device UUID (${req.deviceID}) is not in a valid UUID v4 format`);
         }
         if (deviceName && deviceName.trim() !== "") {
             req.deviceName = deviceName.trim();
@@ -296,7 +295,7 @@ const verifyDeviceField = async (req,res,next) => {
         if (deviceType && deviceType.trim() !=="" ) {
             const type = deviceType.toUpperCase().trim();
             if (!DEVICE_TYPES.includes(type)) {
-                return throwInvalidResourceError(res, `Invalid Device Type: ${deviceType}`);
+                return throwInvalidResourceError(res, `Device Type. Use Valid Device Type: ${deviceType}`);
             }
             req.deviceType = type;
         }
