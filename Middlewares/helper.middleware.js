@@ -26,17 +26,17 @@ const fetchUser = async(req,res) =>{
                 verifyWith = verifyWith+"PHONE";
             }
         }
-        else if(req.body.userID){
+        else if(req?.body?.userID){
             user = await UserModel.findOne({userID: req.body.userID});
             if(user){
                 verifyWith = verifyWith+"USER_ID";
             }
-        }else if(req.body.emailID){
+        }else if(req?.body?.emailID){
             user = await UserModel.findOne({emailID: req.body.emailID});
             if(user){
                 verifyWith = verifyWith+"EMAIL";
             }
-        }else if(req.body.phoneNumber){
+        }else if(req?.body?.phoneNumber){
             user = await UserModel.findOne({phoneNumber: req.body.phoneNumber});
             if(user){
                 verifyWith = verifyWith+"PHONE";
