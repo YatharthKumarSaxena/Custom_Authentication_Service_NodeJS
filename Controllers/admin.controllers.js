@@ -1,7 +1,7 @@
 // This file will include the controller logic for all powers of Admin
 
 // Extract the Required Modules
-const { throwInvalidResourceError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, throwInternalServerError, errorMessage, throwAccessDeniedError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { BLOCK_REASONS, UNBLOCK_REASONS, adminID } = require("../configs/user-id.config");
 const AuthLogModel = require("../models/auth-logs.model");
@@ -20,22 +20,16 @@ const blockUserAccount = async(req,res) => {
         // Check Requested User to be Blocked is Admin 
         if(user.userType === "ADMIN"){
             logWithTime(`🛡️👨‍💼 Admin (${req.user.userID}) cannot be blocked, admin tried to itself block from device id: (${req.deviceID}) . Provided Reason to block: (${blockReason}) `);
-            return res.status(403).json({ success: false, message: "Admin cannot be blocked." });
+            return throwAccessDeniedError(res,"Admin cannot be blocked.");
         }
         // Checking Provided Reasons for Blocking are Invalid
         if (!Object.values(BLOCK_REASONS).includes(blockReason)) {
             logWithTime(`✅ Admin (${req.user.userID}) tried to block user (${req.body.userID }) with invalid reason (${blockReason}) from device id: (${req.deviceID})`);
-            return res.status(400).json({
-                success: false,
-                message: `❌ Invalid block reason. Accepted reasons: ${Object.values(BLOCK_REASONS).join(", ")}`
-            });
+            return throwInvalidResourceError(res,`Block reason. Accepted reasons: ${Object.values(BLOCK_REASONS).join(", ")}`);
         }
         if(user.isBlocked){
             logWithTime(`⚠️ User (${user.userID}) is already blocked, admin (${req.user.userID}) tried to block it from device ID: (${req.deviceID}) with (${user.blockReason}) reason. Reason provided by admin to block this user at current: (${blockReason})`);
-            return res.status(400).json({
-                success: false,
-                message: `User (${user.userID}) is already blocked.`
-            });
+            return throwAccessDeniedError(res,`User (${user.userID}) is already blocked with (${user.blockReason}) reason.`)
         }
         // Block the user by setting isBlocked = true
         user.blockedAt = Date.now();
@@ -72,22 +66,16 @@ const unblockUserAccount = async(req,res) => {
         // Check Requested User to be Unblocked is Admin 
         if(user.userType === "ADMIN"){
             logWithTime(`🛡️👨‍💼 Admin (${req.user.userID}) cannot be unblocked, tried to unblock from device ID: (${req.deviceID}). Provided Reason to unblock: (${unblockReason}) reason`);
-            return res.status(403).json({ success: false, message: "Admin cannot be unblocked." });
+            return throwAccessDeniedError(res,"Admin cannot be unblocked.");
         }
         // Checking Provided Reasons for Unblocking are Invalid
         if (!Object.values(UNBLOCK_REASONS).includes(unblockReason)) {
             logWithTime(`✅ Admin (${req.user.userID}) tried to unblock user (${req.body.userID }) with invalid reason (${unblockReason}) from device ID: (${req.deviceID})`);
-            return res.status(400).json({
-                success: false,
-                message: `❌ Invalid unblock reason. Accepted reasons: ${Object.values(UNBLOCK_REASONS).join(", ")}`
-            });
+            return throwInvalidResourceError(res,`Unblock reason. Accepted reasons: ${Object.values(UNBLOCK_REASONS).join(", ")}`);
         }
         if(!user.isBlocked){
             logWithTime(`⚠️ User (${user.userID}) is already unblocked, admin (${req.user.userID}) tried to unblock it from device ID: (${req.deviceID}) with (${unblockReason}) reason`);
-            return res.status(400).json({
-                success: false,
-                message: `User (${user.userID}) is already unblocked.`
-            });
+            return throwAccessDeniedError(res,`User (${user.userID}) is already unblocked with (${user.unblockReason}) reason.`)
         }
         // Unblock the user by setting isBlocked = false
         user.unblockedAt = Date.now();
@@ -114,7 +102,11 @@ const unblockUserAccount = async(req,res) => {
 
 const getUserAuthLogs = async (req, res) => {
   try {
-    const { userID, eventType, startDate, endDate } = req.body;
+    const { eventType, startDate, endDate } = req.body;
+    
+    const user = req.foundUser;
+
+    const userID = user.userID;
 
     const query = {};
 
@@ -122,10 +114,7 @@ const getUserAuthLogs = async (req, res) => {
         const isUserCheckedAdmin = isAdminID(userID);
         if(isUserCheckedAdmin && userID !== adminID){
             logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${userID})`);
-            return res.status(403).json({
-                success: false,
-                message: "Access denied. You cannot access another admin's authentication logs.",
-            });
+            return throwAccessDeniedError(res,"Access denied. You cannot access another admin's authentication logs.")
         }
         query.userID = userID;
     } 
@@ -146,7 +135,7 @@ const getUserAuthLogs = async (req, res) => {
     // Update data into auth.logs
     await logAuthEvent(req, "CHECK_AUTH_LOGS", {
         performedOn: { userID: userID },
-        filter: eventType
+        filter: eventType || "ALL"
     });
 
     return res.status(200).json({
@@ -155,9 +144,10 @@ const getUserAuthLogs = async (req, res) => {
       logs: logs
     });
 
-  } catch (error) {
-    console.error(`[❌ LOG FETCH ERROR]`, error);
-    return res.status(500).json({ message: "Internal Server Error while fetching logs." });
+  } catch (err) {
+    logWithTime(`❌ Internal Error:  Admin (${req.user.userID}) tried to fetch log of (${req.body.userID}) from device ID: (${req.deviceID})`);
+    errorMessage(err);
+    return throwInternalServerError(res);
   }
 };
 
@@ -176,11 +166,8 @@ const checkUserAccountStatus = async(req,res) => {
         }
         const isUserCheckedAdmin = isAdminID(user.userID);
         if(isUserCheckedAdmin && user.userID !== adminID){
-            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${userID})`);
-            return res.status(403).json({
-                success: false,
-                message: "Access denied. You cannot access another admin's authentication logs.",
-            });
+            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${user.userID})`);
+            return throwAccessDeniedError(res, "Access denied. You cannot access another admin's authentication logs.");
         }
         const User_Account_Details = {
             "Name": user.name,
@@ -216,7 +203,7 @@ const checkUserAccountStatus = async(req,res) => {
             performedOn: req.foundUser
         });
 
-        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID}) via (${verifyWith})`);
+        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to Admin (${req.user.userID}) from device ID: (${req.deviceID}) via (${verifyWith})`);
         return res.status(200).json({
             message: "Here is User Account Details",
             User_Account_Details,
