@@ -31,6 +31,8 @@ const verifyAdminBlockUnblockBody = async(req,res,next) => {
 
 const verifyAdminCheckUserSessionsBody = async(req,res,next) => {
     try{
+        const validateRequestBody = validateSingleIdentifier(req,res,"query");
+        if(!validateRequestBody)return;
         if (!(req.query.userID || req.query.emailID || req.query.phoneNumber)) {
             return throwResourceNotFoundError(res, "User Identifier (userID/emailID/phoneNumber)");
         }

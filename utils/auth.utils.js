@@ -3,11 +3,13 @@ const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
 
-const validateSingleIdentifier = (req,res) => {
+const validateSingleIdentifier = (req, res, source = 'body') => {
     const identifierKeys = ['userID', 'emailID', 'phoneNumber'];
-    const validIdentifiers = identifierKeys.filter(key => {
-        return req.body.hasOwnProperty(key) && typeof req.body[key] === 'string' && req.body[key].trim() !== '';
-    });
+    const data = req[source];
+
+    const validIdentifiers = identifierKeys.filter(key =>
+        data.hasOwnProperty(key) && typeof data[key] === 'string' && data[key].trim() !== ''
+    );
 
     if (validIdentifiers.length !== 1) {
         logWithTime(`🧷 Invalid input: More than one or no identifier provided from device id: (${req.deviceID}).`);
@@ -18,17 +20,18 @@ const validateSingleIdentifier = (req,res) => {
         return false;
     }
 
-    // 🧼 Strip out unused identifiers
+    // 🧼 Remove extra identifiers
     const selectedKey = validIdentifiers[0];
     identifierKeys.forEach(key => {
-        if (key !== selectedKey && key in req.body) {
-            delete req.body[key]; // Remove unwanted identifiers
+        if (key !== selectedKey && key in data) {
+            delete data[key];
         }
     });
-    
+
     logWithTime(`🧩 Valid identifier input detected from device id: (${req.deviceID}).`);
     return true;
 };
+
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
 const checkUserExists = async(emailID,phoneNumber,res) => {

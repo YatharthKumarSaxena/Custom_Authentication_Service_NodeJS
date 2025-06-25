@@ -6,7 +6,7 @@
 /* If an Error Occured in Middleware then Middleware will throw an Error , Request will not be forwarded to Controller */
 
 // Extracting the Required Modules
-const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError } = require("../configs/error-handler.configs");
+const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError, throwAccessDeniedError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
@@ -28,7 +28,7 @@ const verifySignUpBody = async (req,res,next) =>{
         if(typeof req.body.name === 'string' && req.body.name.trim().length){
             const name = req.body.name.trim();
             if (name.length < nameMinLength || name.length > nameMaxLength){
-                return throwInvalidResourceError(res,"Invalid Name Provided, Name must be of minimum 2 letters or maximum 50 letters");
+                return throwInvalidResourceError(res,"Name , Name must be of minimum 2 letters or maximum 50 letters");
             }
             if(!nameRegex.test(name)){
                 return throwInvalidResourceError(res,"Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
@@ -46,11 +46,6 @@ const verifySignUpBody = async (req,res,next) =>{
             else reason = reason+" ,Phone Number";
             userIsValid = false;
         }
-        if(!req.deviceID){
-            if(userIsValid)reason = reason+"Device Information";
-            else reason = reason+" , Device Information";
-            userIsValid = false;           
-        }
          // Check Password is present in Request Body or not
         if(!req.body.password){
             if(userIsValid)reason = reason+"Password";
@@ -59,12 +54,12 @@ const verifySignUpBody = async (req,res,next) =>{
         } else {
             // ✅ Move these two checks inside the "else" of password
             if (req.body.password.length < 8) {
-                return throwInvalidResourceError(res, "Password must be at least 8 characters long");
+                return throwInvalidResourceError(res, "Password, Password must be at least 8 characters long");
             }
             if (!strongPasswordRegex.test(req.body.password)) {
                 return throwInvalidResourceError(
                     res,
-                    "Password must contain at least one letter, one number, and one special character",
+                    "Password Format, Password must contain at least one letter, one number, and one special character",
                 );
             }
         }
@@ -75,12 +70,12 @@ const verifySignUpBody = async (req,res,next) =>{
         if (!phoneRegex.test(req.body.phoneNumber)) {
             return throwInvalidResourceError(
                 res,
-                "Phone Number must contain exactly 10 Numeric Digits",
+                "Phone Number Format, Phone Number must contain exactly 10 Numeric Digits",
             );
         }
         // 📧 Email Format Validation
         if (!emailRegex.test(req.body.emailID)) {
-            return throwInvalidResourceError(res, "Email ID format is invalid. It should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
+            return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
         // Very next line should be:
         if (!res.headersSent) return next();
@@ -159,11 +154,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         }
         if(req.foundUser.userType === "ADMIN"){
             logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be activated. Admin tried to do it from device ID: (${req.deviceID}).`);
-            return res.status(403).json({
-                success: false,
-                message: "Admin account cannot be activated.",
-                reason: "Admin is a system-level user and cannot be modified like a normal user."
-            });
+            return throwAccessDeniedError(res, "Admin account cannot be activated. Admin is a system-level user and cannot be modified like a normal user.")
         }
         if(!req.body.password){
             return throwResourceNotFoundError(res,"Password");
@@ -199,11 +190,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         if(!validateRequestBody)return;
         if(user.userType === "ADMIN"){
             logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be deactivated. Admin tried to do it from device ID: (${req.deviceID}).`);
-            return res.status(403).json({
-                success: false,
-                message: "Admin account cannot be deactivated.",
-                reason: "Admin is a system-level user and cannot be modified like a normal user."
-            });
+            return throwAccessDeniedError(res, "Admin account cannot be deactivated. Admin is a system-level user and cannot be modified like a normal user.")
         }
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
@@ -272,11 +259,10 @@ const verifyChangePasswordBody = async(req,res,next) => {
             return throwInvalidResourceError(res, "Password must be at least 8 characters long");
         }
         // Strong Password Format: At least one letter, one digit, and one special character
-        const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/;
         if (!strongPasswordRegex.test(newPassword)) {
             return throwInvalidResourceError(
                 res,
-                "Password must contain at least one letter, one number, and one special character",
+                "Password, Password must contain at least one letter, one number, and one special character",
             );
         }
         if(!res.headersSent)return next();
