@@ -224,44 +224,46 @@ const verifyTokenOwnership = async(req, res, next) => {
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) { // if refreshToken Not Found
             logWithTime("⚠️ Refresh Token not provided in Cookies")
-            return throwAccessDeniedError(res, "No refresh token provided");
+            return throwResourceNotFoundError(res, "No refresh token provided");
         }
         // 2. Verify refresh token
         const decodedRefresh = jwt.verify(refreshToken, secretCodeOfRefreshToken);
+        if (!decodedRefresh?.id) {
+            logWithTime(`⚠️ Decoded Refresh Token lacks user ID. Device: (${req.deviceID})`);
+            return throwInvalidResourceError(res, "Invalid refresh token");
+        }
         // 3. Check Whether Refresh Token Provided is Valid or Not
         const tokenExists = await UserModel.findOne({ refreshToken: refreshToken }); // or Redis GET
         if (!tokenExists) {
-            logWithTime("Access Denied as Invalid Refresh Token is being provided");
-            return throwAccessDeniedError(res,"Invalid Refresh Token");
+            logWithTime(`⚠️ Stale Refresh Token detected. User: (${decodedRefresh.id}) | Device: (${req.deviceID})`);
+            return throwAccessDeniedError(res, "Stale Refresh Token");
         }
         // 4. Extract Access token
         const accessToken = extractAccessToken(req);
         if(!accessToken){
             logWithTime("❌ No Access Token provided")
-            return res.status(403).json({
-                message: "No token found: ⚠️ Unauthorized"
-            })
+            return throwResourceNotFoundError(res, "No Access token found: ⚠️ Unauthorized");
         }
         let decodedAccess;
         try {
             decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
         } catch (err) {
             logWithTime("Access token provided is invalid or expired");
-            return res.status(403).json({ message: "Invalid access token" });
+            return throwInvalidResourceError(res, "Invalid Access Token");
         }
         // 5. Match both token owners
-        if (decodedAccess && decodedAccess.id !== decodedRefresh.id) {
+        if (decodedAccess && String(decodedAccess.id) !== String(decodedRefresh.id)) {
             logWithTime("Token mismatch: Access and Refresh tokens belong to different users");
-            return res.status(403).json({ message: "Token mismatch: user identities do not match" });
+            return throwAccessDeniedError(res,"Token mismatch: user identities do not match");
         }
         // 🔍  Find user from DB
         const user = await UserModel.findById(decodedRefresh.id);
-        // ✅ Tokens are valid and synced – attach user to req
-        req.user = user;
         if (!user) {
             logWithTime("User not found in DB for decoded token ID");
             return throwResourceNotFoundError(res, "User");
         }
+        // ✅ Tokens are valid and synced – attach user to req
+        req.user = user;
         // ✅ All checks passed
         if(!res.headersSent)next();
         } catch (err) {
@@ -331,10 +333,10 @@ const verifySetAdminCookieBody = async(req,res,next) => {
             decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
         } catch (err) {
             logWithTime(`⚠️ Access token provided is invalid or expired.So Access Denied for Set up Admin Cookie. Request is made from device id: (${req.deviceID})`);
-            return res.status(403).json({ message: "Invalid access token" });
+            return throwInvalidResourceError(res,"Invalid access token");
         }
         // Checks Access Token And Refresh Token Belongs to the Same User
-        if(decodedAccess.id !== String(user._id)){
+        if(String(decodedAccess.id) !== String(user._id)){
             logWithTime(`⚠️ Access token and Refresh Token does not belong to same user. So Access Denied for Set up Admin Cookie. Request is made from device id: (${req.deviceID})`)
             return res.status(403).json({ message: "Tokens belong to different users" }); 
         }
