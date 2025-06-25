@@ -7,6 +7,7 @@ const { BLOCK_REASONS, UNBLOCK_REASONS, adminID } = require("../configs/user-id.
 const AuthLogModel = require("../models/auth-logs.model");
 const { fetchUser } = require("../middlewares/helper.middleware");
 const { isAdminID } = require("../utils/auth.utils");
+const { logAuthEvent } = require("../utils/auth-log-utils");
 
 const blockUserAccount = async(req,res) => {
     try{

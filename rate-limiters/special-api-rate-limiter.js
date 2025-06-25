@@ -4,7 +4,7 @@ const {  createDeviceBasedRateLimiter } = require("./create-rate-limiter-factory
 /* Factory Design Pattern is used here to create these same logic Rate Limiters */
 
 // ✅ middlewares/rateLimit_signup.js
-const signUpRateLimiter = createDeviceBasedRateLimiter(perDevice.signup.maxAttempts, perDevice.signup.windowMs)
+const signUpRateLimiter = createDeviceBasedRateLimiter(perDevice.signup.maxRequests, perDevice.signup.windowMs)
 
 // ✅ middlewares/rateLimit_signin.js
 const signInRateLimiter = createDeviceBasedRateLimiter(perDevice.signin.maxRequests, perDevice.signin.windowMs); 
