@@ -1,42 +1,24 @@
-const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
+const { errorMessage, throwInternalServerError, throwAccessDeniedError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { AdminActionReasons } = require("../configs/user-id.config");
+const { immutableFields } = require("../configs/user-enums.config");
+const { validateSingleIdentifier } = require("../utils/auth.utils");
 
 const checkUpdateMyProfileRequest = (req,res,next) => {
     try{
         const user = req.user;
         if(user.userType === "ADMIN"){
             logWithTime(`⚠️ Access Denied: Admin (${user.userID}) cannot update their profile details via API Request. Request made from device id: (${req.deviceID})`);
-            return res.status(403).json({
-                message: "Access Denied: Admin cannot update their profile details via API Request"
-            })
+            return throwAccessDeniedError(res,"Access Denied: Admin cannot update their profile details via API Request");
         }
         if(!req.body){
             logWithTime(` No Changes by (${user.userID}) is requested to update their profile from device id: (${req.deviceID})`);
             return res.status(200).json({
+                success: true,
                 message: "No changes detected. Your profile remains the same."
             })
         }
         // 🚫 Fields Not Allowed to Be Modified
-        const immutableFields = [
-            "_id", "__v",                     // Mongo internal
-            "userID", "userType",             // Identity + Role
-            "isVerified", "isBlocked",        // Security status
-            "jwtTokenIssuedAt",               // Token control
-            "createdAt", "updatedAt",         // System timestamps
-            "isActive", "lastLogin",          // Lifecycle flags
-            "verificationToken",              // Token used for verifying email/phone
-            "blockReason","unblockReason",
-            "blockedAt","unblockedAt",
-            "lastActivatedAt","lastDeactivatedAt",
-            "blockedBy","unblockedBy",
-            "lastLogout","loginCount",
-            "blockVia","unblockVia",
-            "blockCount","devices","unblockCount",
-            "passwordChangedAt","otp",
-            "refreshToken","password",
-            "timestamps","versionKey"
-        ];
         let attemptedFields = [];
         for (let field of immutableFields) {
             if (field in req.body) {
@@ -45,8 +27,9 @@ const checkUpdateMyProfileRequest = (req,res,next) => {
         }
         if (attemptedFields.length > 0) {
             const userID = req.user?.userID || "UNKNOWN_USER";
-            logWithTime(`🚨 SECURITY ALERT: User [${userID}] attempted to modify restricted fields: ${attemptedFields.join(", ")} from device id: (${req.deviceID})`);
+            logWithTime(`[SECURITY] 🚨 Attempt to modify ${attemptedFields.length} restricted fields by ${userID} [${req.deviceID}]`, "warn");
             return res.status(403).json({
+                success: false,
                 message: `⚠️ You are not allowed to update some profile fields.`,
                 restrictedFields: attemptedFields,
                 warning: "This attempt has been logged. Please contact support if you believe this is a mistake."
@@ -64,20 +47,16 @@ const checkUpdateMyProfileRequest = (req,res,next) => {
 const verifyAdminUserViewRequest = async(req,res,next) => {
     try{
         // Means Admin has not provided userID for which he/she want to check User Account Details
-        if(!req.query.userID){ 
-            return throwResourceNotFoundError(res,"User ID in Query");
-        }
-        if(!req.query.reason){ // Checking that Reason is Provided by Admin or not
+        const validateRequestBody = validateSingleIdentifier(req,res,"query");
+        if(!validateRequestBody)return;
+        if(!req.query.reason.trim()){ // Checking that Reason is Provided by Admin or not
             return throwResourceNotFoundError(res,"Reason to fetch user account details");
         }
         // Check that Provided Reason is Valid or not
-        const reason = req.query.reason;
+        const reason = req.query.reason.trim().toLowerCase();
         // 🔒 Validate whether the reason is one of the valid enums
         if (!Object.values(AdminActionReasons).includes(reason)) {
-            return res.status(400).json({
-                success: false,
-                message: "❌ Invalid reason provided. Allowed reasons are: " + Object.values(AdminActionReasons).join(", ")
-            });
+            return throwAccessDeniedError(res,"Reason provided. Allowed reasons are: " + Object.values(AdminActionReasons).join(", "))
         }
         logWithTime(`🔍 Admin with id: (${req.user.userID})tried to check User Account Details of User having UserID: (${req.query.userID}) with reason: (${req.query.reason}) from device having device ID: (${req.deviceID})`);
         if(!res.headersSent)return next();

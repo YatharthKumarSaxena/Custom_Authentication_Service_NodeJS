@@ -30,7 +30,7 @@ const updateUserProfile = async(req,res) => {
             user.emailID = req.body.emailID.trim().toLowerCase();
         }
         if(req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber){
-            if(typeof req.body.phoneNumber !== "string" || !phoneRegex.test(req.body.phoneNumber)) {
+            if(typeof req.body.phoneNumber.trim() !== "string" || !phoneRegex.test(req.body.phoneNumber.trim())) {
                 return throwInvalidResourceError(res,"Phone number format. Provide a 10 digit number whose starting digit must be from 6 to 9")
             }
             updatedFields.push("Phone Number");
