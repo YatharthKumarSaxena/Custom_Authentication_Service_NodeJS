@@ -224,13 +224,15 @@ const verifyTokenOwnership = async(req, res, next) => {
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) { // if refreshToken Not Found
             logWithTime("⚠️ Refresh Token not provided in Cookies")
-            return throwResourceNotFoundError(res, "No refresh token provided");
+            return throwResourceNotFoundError(res, "Refresh token");
         }
         // 2. Verify refresh token
-        const decodedRefresh = jwt.verify(refreshToken, secretCodeOfRefreshToken);
-        if (!decodedRefresh?.id) {
+        let decodedRefresh;
+        try{
+            decodedRefresh = jwt.verify(refreshToken, secretCodeOfRefreshToken);
+        }catch(err){
             logWithTime(`⚠️ Decoded Refresh Token lacks user ID. Device: (${req.deviceID})`);
-            return throwInvalidResourceError(res, "Invalid refresh token");
+            return throwInvalidResourceError(res, "Refresh token");
         }
         // 3. Check Whether Refresh Token Provided is Valid or Not
         const tokenExists = await UserModel.findOne({ refreshToken: refreshToken }); // or Redis GET
@@ -242,19 +244,19 @@ const verifyTokenOwnership = async(req, res, next) => {
         const accessToken = extractAccessToken(req);
         if(!accessToken){
             logWithTime("❌ No Access Token provided")
-            return throwResourceNotFoundError(res, "No Access token found: ⚠️ Unauthorized");
+            return throwResourceNotFoundError(res, "Access token");
         }
         let decodedAccess;
         try {
             decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
         } catch (err) {
             logWithTime("Access token provided is invalid or expired");
-            return throwInvalidResourceError(res, "Invalid Access Token");
+            return throwInvalidResourceError(res, "Access Token");
         }
         // 5. Match both token owners
         if (decodedAccess && String(decodedAccess.id) !== String(decodedRefresh.id)) {
             logWithTime("Token mismatch: Access and Refresh tokens belong to different users");
-            return throwAccessDeniedError(res,"Token mismatch: user identities do not match");
+            return throwAccessDeniedError(res,"Access and Refresh tokens belong to different users");
         }
         // 🔍  Find user from DB
         const user = await UserModel.findById(decodedRefresh.id);
@@ -268,7 +270,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         if(!res.headersSent)next();
         } catch (err) {
         const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while checking User with id: ({${userID}) to verify its JWT token ownership `);
+        logWithTime(`❌ An Internal Error Occurred while checking User with id: (${userID}) to verify its JWT token ownership `);
         errorMessage(err)
         return throwInternalServerError(res);
     }
@@ -333,12 +335,12 @@ const verifySetAdminCookieBody = async(req,res,next) => {
             decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
         } catch (err) {
             logWithTime(`⚠️ Access token provided is invalid or expired.So Access Denied for Set up Admin Cookie. Request is made from device id: (${req.deviceID})`);
-            return throwInvalidResourceError(res,"Invalid access token");
+            return throwInvalidResourceError(res,"Access token");
         }
         // Checks Access Token And Refresh Token Belongs to the Same User
         if(String(decodedAccess.id) !== String(user._id)){
             logWithTime(`⚠️ Access token and Refresh Token does not belong to same user. So Access Denied for Set up Admin Cookie. Request is made from device id: (${req.deviceID})`)
-            return res.status(403).json({ message: "Tokens belong to different users" }); 
+            return throwAccessDeniedError(res,"Access and Refresh tokens belong to different users"); 
         }
         // Check Access Token belongs to Admin Or Not
         req.user = user;
