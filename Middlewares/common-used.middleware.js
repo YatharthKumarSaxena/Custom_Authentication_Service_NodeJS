@@ -104,7 +104,7 @@ const checkUserIsVerified = async(req,res,next) => {
         }
         const deviceID = req.deviceID;
         // Check whether Device ID belongs to User or Not
-        const device = getDeviceByID(user,deviceID);
+        const device = await getDeviceByID(user,deviceID);
         if(!device){
             logWithTime(`⏰ Session expired for User (${user.userID}) on device id: (${req.deviceID})`);
             return throwInvalidResourceError(res,"Device ID");
@@ -117,6 +117,20 @@ const checkUserIsVerified = async(req,res,next) => {
                 message: "⏰ Session expired. Please log in again to continue accessing your account.",
                 code: "TOKEN_EXPIRED"
             })
+        }
+        
+        const currentTime = Date.now();
+        const lastUsedTime = new Date(device.lastUsedAt).getTime();
+        const expiryWindow = expiryTimeOfAccessToken * 1000; // convert to ms
+
+        if (currentTime - lastUsedTime > expiryWindow) {
+            user.devices = user.devices.filter(d => d.deviceID !== req.deviceID);
+            await user.save();
+            logWithTime(`🔒 Session expired for user (${user.userID}) on device (${req.deviceID})`);
+            return res.status(440).json({
+                success: false,
+                message: "Your session on this device has expired. Please login again to continue."
+            });
         }
         // Reset Refresh Token
         const isRefreshTokenReset = await resetRefreshToken(req,res);

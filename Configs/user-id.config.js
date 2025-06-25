@@ -27,13 +27,7 @@ module.exports = {
         emailID: process.env.ADMIN_EMAIL_ID,
         userType: "ADMIN",
         userID: adminID,
-        devices: [
-            {
-                deviceID: process.env.DEVICE_UUID,
-                deviceName: process.env.DEVICE_NAME,
-                deviceType: process.env.DEVICE_TYPE
-            }
-        ]
+        devices: []
     },
     // 🎯 Admin Action Reasons - Enum Based Design
     AdminActionReasons: Object.freeze({

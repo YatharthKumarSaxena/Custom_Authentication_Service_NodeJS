@@ -59,6 +59,7 @@ async function init(){ // To use await we need to make function Asynchronous
             try{
                 const user = await UserModel.create(adminUser);
                 logWithTime("👑 Admin User Created Successfully");
+                /*
                 const refreshToken = await makeTokenWithMongoIDForAdmin(user,expiryTimeOfRefreshToken);
                 if(refreshToken){
                     logWithTime("👑 Welcome Admin, you are successfully logged in!");
@@ -74,6 +75,7 @@ async function init(){ // To use await we need to make function Asynchronous
                     // Update data into auth.logs
                     await adminAuthLogForSetUp(user, "REGISTER");
                 }
+                // Use this code only in Development Phase (Not For Production Phase)
                 const accessToken = await makeTokenWithMongoIDForAdmin(user,expiryTimeOfAccessToken);
                 if(accessToken){
                     logWithTime("Use this Access Token for further Actions!");
@@ -81,7 +83,7 @@ async function init(){ // To use await we need to make function Asynchronous
                     console.log("📦 JWT Access Token: ", accessToken);
                     // Update data into auth.logs
                     await adminAuthLogForSetUp(user, "LOGIN");
-                }
+                }*/
                 logWithTime("Admin User details are given below:- ");
                 console.log(user);
             }catch(err){

@@ -4,7 +4,9 @@ const { errorMessage,throwInternalServerError } = require("../configs/error-hand
 const UserModel = require("../models/user.model");
 
 // 📦 Utility to get a device from user's devices array by deviceID
-const getDeviceByID = (user, deviceID) => {
+const getDeviceByID = async(user, deviceID) => {
+    // 🛠 Re-fetch fresh user from DB to ensure up-to-date device list
+    user = await UserModel.findOne({ userID: user.userID });
     if (!user?.devices?.length) return null;
     return user.devices.find(d => d.deviceID === deviceID) || null;
 };
