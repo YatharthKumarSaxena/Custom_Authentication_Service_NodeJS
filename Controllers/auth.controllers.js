@@ -10,7 +10,7 @@
 const { SALT, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs")
-const { throwInvalidResourceError, errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { checkUserExists, checkPasswordIsValid } = require("../utils/auth.utils");
@@ -146,7 +146,7 @@ const signUp = async (req,res) => { // Made this function async to use await
     const device = createDeviceField(req,res);
     if(!device){
         logWithTime(`❌ Device creation failed for User (${generatedUserID}) for device id: (${req.deviceID}) at the time of Sign Up Request`);
-        return throwInternalServerError(res, "Device creation failed");
+        return throwInternalServerError(res);
     }
     const User = {
         phoneNumber: request_body.phoneNumber,
@@ -262,7 +262,7 @@ const signIn = async (req,res) => {
         device = createDeviceField(req,res);
         if(!device){
             logWithTime(`❌ Device creation failed for User (${generatedUserID}) for device id: (${req.deviceID}) at the time of Sign In Request`);
-            return throwInternalServerError(res, "Device creation failed");
+            return throwInternalServerError(res);
         }
         // Check Password is Correct or Not
         let isPasswordValid = await checkPasswordIsValid(req,user);
@@ -493,11 +493,8 @@ const getActiveDevices = async (req, res) => {
     if(req.foundUser){
         const isUserCheckedAdmin = isAdminID(req.foundUser.userID);
         if(isUserCheckedAdmin && req.foundUser.userID !== adminID){
-            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${userID})`);
-            return res.status(403).json({
-                success: false,
-                message: "Access denied. You cannot access another admin's authentication logs.",
-            });
+            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${req.foundUser.userID})`);
+            return throwAccessDeniedError(res,"Access denied. You cannot access another admin's authentication logs.");
         }
         user = req.foundUser;
     }
