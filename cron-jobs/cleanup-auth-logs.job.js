@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const AuthLogModel = require("../models/auth-logs.model");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { authLogCleanup } = require("../configs/cron.config");
+const { errorMessage} = require("../configs/error-handler.configs");
 
 const cleanAuthLogs = async () => {
   try {
@@ -11,14 +12,19 @@ const cleanAuthLogs = async () => {
       return;
     }
     const cutoffDate = new Date(Date.now() - authLogCleanup.deactivatedRetentionDays * 24 * 60 * 60 * 1000);
+    logWithTime("📅 [CRON-JOB] ➤ Auth Logs Cleanup Started...");
     const result = await AuthLogModel.deleteMany({
       createdAt: { $lt: cutoffDate }
     });
-
-    logWithTime(`🗑️ Auth Logs Deletion Job: ${result.deletedCount} auth logs hard deleted (created > ${authLogCleanup.deactivatedRetentionDays} days).`);
+    if(result.deletedCount === 0){
+      logWithTime(`📭 No auth logs eligible for deletion (older than ${authLogCleanup.deactivatedRetentionDays} days).`);
+    }else {
+      logWithTime(`🗑️ Auth Logs Deletion Job: ${result.deletedCount} auth logs hard deleted (created > ${authLogCleanup.deactivatedRetentionDays} days).`);
+    }
   } catch (err) {
-    logWithTime("❌ Error in deleting old auth logs.");
-    console.error(err);
+    logWithTime("❌ Internal Error in deleting old auth logs by Cron Job.");
+    errorMessage(err);
+    return;
   }
 };
 
