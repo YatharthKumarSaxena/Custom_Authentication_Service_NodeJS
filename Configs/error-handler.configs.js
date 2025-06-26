@@ -63,7 +63,7 @@ exports.throwInvalidResourceError = (res,resource) => {
         success: false,
         type: "InvalidResource",
         resource: resource,
-        warning: "Invalid "+ resource + "Entered",
+        warning: "Invalid "+ resource + " Entered",
         message: "Please enter a Valid "+ resource
     })
 }

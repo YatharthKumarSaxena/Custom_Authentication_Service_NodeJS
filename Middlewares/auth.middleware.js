@@ -56,7 +56,7 @@ const verifySignUpBody = async (req,res,next) =>{
             if (req.body.password.length < 8) {
                 return throwInvalidResourceError(res, "Password, Password must be at least 8 characters long");
             }
-            if (!strongPasswordRegex.test(req.body.password)) {
+            if (!strongPasswordRegex.test(req.body.password.trim())) {
                 return throwInvalidResourceError(
                     res,
                     "Password Format, Password must contain at least one letter, one number, and one special character",
@@ -67,14 +67,14 @@ const verifySignUpBody = async (req,res,next) =>{
             return throwResourceNotFoundError(res,reason);
         }
         // 📧 Phone Number Format Validation
-        if (!phoneRegex.test(req.body.phoneNumber)) {
+        if (!phoneRegex.test(req.body.phoneNumber.trim())) {
             return throwInvalidResourceError(
                 res,
                 "Phone Number Format, Phone Number must contain exactly 10 Numeric Digits",
             );
         }
         // 📧 Email Format Validation
-        if (!emailRegex.test(req.body.emailID)) {
+        if (!emailRegex.test(req.body.emailID.trim())) {
             return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
         // Very next line should be:

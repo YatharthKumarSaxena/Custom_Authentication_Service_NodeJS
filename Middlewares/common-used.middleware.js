@@ -295,7 +295,7 @@ const verifyDeviceField = async (req,res,next) => {
         if (deviceType && deviceType.trim() !=="" ) {
             const type = deviceType.toUpperCase().trim();
             if (!DEVICE_TYPES.includes(type)) {
-                return throwInvalidResourceError(res, `Device Type. Use Valid Device Type: ${deviceType}`);
+                return throwInvalidResourceError(res, `Device Type. Use Valid Device Type: ${DEVICE_TYPES}`);
             }
             req.deviceType = type;
         }

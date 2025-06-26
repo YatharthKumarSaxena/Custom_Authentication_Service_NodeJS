@@ -5,7 +5,7 @@ const adminUserID = Number(process.env.ADMIN_USER_ID);
 const adminID = adminPrefixes + IP_Address_Code + String(adminUserID);
 const SALT = Number(process.env.SALT);
 module.exports = {
-    refreshThresholdInMs: 2 * 24 * 60 * 60 * 1000, // e.g., rotate only if last token was issued 2 days ago
+    refreshThresholdInMs: Number(process.env.REFRESH_THRESHOLD_IN_MS) || 2 * 24 * 60 * 60 * 1000,
     userRegistrationCapacity: Number(process.env.USER_REGISTRATION_CAPACITY),
     adminUserID:adminUserID,
     adminID: adminID, // Admin userID

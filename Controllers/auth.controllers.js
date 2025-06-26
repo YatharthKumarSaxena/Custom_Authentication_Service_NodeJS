@@ -181,6 +181,8 @@ const signUp = async (req,res) => { // Made this function async to use await
             phoneNumber: user.phoneNumber,
         }
         if(User.name)userDisplayDetails.name = request_body.name;
+        logWithTime("👤 New User Details:- ");
+        console.log(userGeneralDetails);
         // Before Automatic Login Just verify that device threshold has not exceeded
         const isThresholdCrossed = await checkDeviceThreshold(req.deviceID,res);
         if(isThresholdCrossed)return;
@@ -218,9 +220,7 @@ const signUp = async (req,res) => { // Made this function async to use await
             logWithTime(`❌ Access token set in header failed for User (${user.userID}) at the time of sign up request. Request is made from device id: (${req.deviceID})`);
             return throwInternalServerError(res);
         }
-        logWithTime(`🟢 User (${user.userID}) is successfully logged in on registration from device id: (${req.deviceID})!`);
-        logWithTime("👤 New User Details:- ");
-        console.log(userGeneralDetails);
+        logWithTime(`🟢 User (${user.userID}) is successfully logged in on registration from device id: (${req.deviceID})`);
     /* 3. Return the response back to the User */
         return res.status(201).json({
             success: true,
