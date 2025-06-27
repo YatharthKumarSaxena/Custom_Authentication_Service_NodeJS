@@ -20,6 +20,7 @@ const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceL
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
+const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE } = require("../configs/http-status.config");
 
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
@@ -118,7 +119,7 @@ const signUp = async (req,res) => { // Made this function async to use await
     // Checking User already exists or not 
     const userExistReason = await checkUserExists(emailID,phoneNumber,res);
     if(userExistReason !== ""){
-        return res.status(400).json({
+        return res.status(BAD_REQUEST).json({
             success: false,
             message: "User Already Exists with "+userExistReason,
             warning: "Use different Email ID or Phone Number or both based on Message"
@@ -129,7 +130,7 @@ const signUp = async (req,res) => { // Made this function async to use await
     try{
         generatedUserID= await makeUserID(res); // Generating Customer ID 
         if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
-            return res.status(507).json({
+            return res.status(INSUFFICIENT_STORAGE).json({
                 success: false,
                 message: "User limit reached. Cannot register more users at this time."
             });
@@ -145,19 +146,21 @@ const signUp = async (req,res) => { // Made this function async to use await
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
 
-    const isPhoneNumberCreated = createFullPhoneNumber(req,res,countryCode,number);
-    if(!isPhoneNumberCreated)return;
+    const newNumber = createFullPhoneNumber(req,res);
+    if(!newNumber)return;
     const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
     const device = createDeviceField(req,res);
     if(!device){
         logWithTime(`❌ Device creation failed for User (${generatedUserID}) for device id: (${req.deviceID}) at the time of Sign Up Request`);
         return throwInternalServerError(res);
     }
+    const { countryCode,number } = request_body.phoneNumber;
     const User = {
         phoneNumber: {
-            countryCode: request_body.phoneNumber.countryCode,
-            number: request_body.phoneNumber.number
+            countryCode: countryCode,
+            number: number
         },
+        fullPhoneNumber: newNumber,
         emailID: request_body.emailID,
         password: password,
         userID: generatedUserID,
@@ -166,7 +169,6 @@ const signUp = async (req,res) => { // Made this function async to use await
     if(request_body.name){
         User.name = request_body.name;
     }
-    const { countryCode,number } = request_body.phoneNumber;
     try{
         const user = await UserModel.create(User);
         req.user = user;
@@ -174,6 +176,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         const userGeneralDetails = {
             emailID: user.emailID,
             userID: user.userID,
+            fullPhoneNumber: newNumber,
             userType: user.userType,
             createdAt: user.createdAt,
             devices: []
@@ -185,7 +188,7 @@ const signUp = async (req,res) => { // Made this function async to use await
             details:"Here is your Basic Profile Details given below:-", 
             userID: user.userID,
             emailId: user.emailID,
-            phoneNumber: user.phoneNumber,
+            phoneNumber: newNumber
         }
         if(User.name)userDisplayDetails.name = request_body.name;
         logWithTime("👤 New User Details:- ");
@@ -229,7 +232,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         }
         logWithTime(`🟢 User (${user.userID}) is successfully logged in on registration from device id: (${req.deviceID})`);
     /* 3. Return the response back to the User */
-        return res.status(201).json({
+        return res.status(CREATED).json({
             success: true,
             message: "Congratulations, Your Registration as well as login is Done Successfully :- ",
             userDisplayDetails,
