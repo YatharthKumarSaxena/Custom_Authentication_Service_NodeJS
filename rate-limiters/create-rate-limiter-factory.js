@@ -1,8 +1,9 @@
 // 🛡️ utils/rateLimiter.factory.js
-const { errorMessage, throwInternalServerError, throwResourceNotFoundError } = require("../configs/error-handler.configs");
+const { errorMessage, throwInternalServerError, throwResourceNotFoundError, getLogIdentifiers } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const DeviceRateLimit = require("../models/device-rate-limit.model");
+const { TOO_MANY_REQUESTS, NOT_FOUND } = require("../configs/http-status.config");
 
 /* Factory Design Pattern is used here to create rate limiters based on Different APIs*/
 
@@ -22,13 +23,13 @@ const createRateLimiter = (maxRequests, timeWindowInMs) => {
 
       if (!user) {
         logWithTime(`Unauthorized User is provided from device with device id: (${req.deviceID})`);
-        return res.status(404).json({ message: "User not found." });
+        return res.status(NOT_FOUND).json({ message: "User not found." });
       }
 
       const device = user.devices.find(d => d.deviceID === deviceID);
       if (!device) {
         logWithTime(`User (${user.userID}) is doing action from invalid device id: (${req.deviceID})`);
-        return res.status(404).json({ message: "Device not registered." });
+        return res.status(NOT_FOUND).json({ message: "Device not registered." });
       }
 
       const now = Date.now();
@@ -45,7 +46,7 @@ const createRateLimiter = (maxRequests, timeWindowInMs) => {
           const resetInSec = Math.ceil((timeWindowInMs - timeDiff) / 1000);
           logWithTime(`🚫 Rate limit exceeded for userID: ${userID} on deviceID: ${deviceID}`);
           res.setHeader("Retry-After", resetInSec); // standard rate-limiting header
-          return res.status(429).json({
+          return res.status(TOO_MANY_REQUESTS).json({
             message: "Too many requests. Please try again later.",
             retryAfter: `(${resetInSec}) seconds`
           });
@@ -63,8 +64,8 @@ const createRateLimiter = (maxRequests, timeWindowInMs) => {
       await user.save();
       if (!res.headersSent)return next();
     } catch (err) {
-      const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-      logWithTime(`❌ An Internal Error Occurred while checking the rate limit of device of the User (${userID}) from device ID: (${req.deviceID})`);
+      const getIdentifiers = getLogIdentifiers(req);
+      logWithTime(`❌ An Internal Error Occurred while checking the rate limit of device ${getIdentifiers}`);
       errorMessage(err);
       if (!res.headersSent)return throwInternalServerError(res);
     }
@@ -109,7 +110,7 @@ const createDeviceBasedRateLimiter = (maxRequests, timeWindowInMs) => {
         const resetInSec = Math.ceil((timeWindowInMs - timeSinceLastAttempt) / 1000);
         logWithTime(`🚫 Too many attempts from device: ${deviceID}`);
         res.setHeader("Retry-After", resetInSec); // standard rate-limiting header
-        return res.status(429).json({
+        return res.status(TOO_MANY_REQUESTS).json({
           message: "Too many attempts. Please try again later.",
           retryAfter: `${Math.ceil((timeWindowInMs - timeSinceLastAttempt)/1000)} seconds`
         });
@@ -126,8 +127,8 @@ const createDeviceBasedRateLimiter = (maxRequests, timeWindowInMs) => {
       if (!res.headersSent)return next();
 
     } catch (err) {
-      const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-      logWithTime(`❌ An Internal Error Occurred while checking the rate limit of device of the User (${userID}) from device ID: (${req.deviceID})`);
+      const getIdentifiers = getLogIdentifiers(req);
+      logWithTime(`❌ An Internal Error Occurred while checking the rate limit of device ${getIdentifiers}`);
       errorMessage(err);
       if (!res.headersSent)return throwInternalServerError(res);
     }
