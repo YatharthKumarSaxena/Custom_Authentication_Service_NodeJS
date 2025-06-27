@@ -4,8 +4,6 @@ module.exports = Object.freeze({
   BLOCK_VIA: ["USER_ID", "EMAIL", "PHONE"],
   USER_TYPE: ["CUSTOMER", "ADMIN"],
   DEVICE_TYPES :["MOBILE", "TABLET", "LAPTOP"],
-  nameMinLength: 2,
-  nameMaxLength: 50,
   immutableFields: [
     "_id", "__v",                     // Mongo internal
     "userID", "userType",             // Identity + Role

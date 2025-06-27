@@ -10,7 +10,7 @@ const { throwResourceNotFoundError, throwInternalServerError, errorMessage, thro
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
-const { nameRegex, phoneRegex, emailRegex, strongPasswordRegex } = require("../configs/regex.config");
+const { nameRegex, phoneRegex, emailRegex, strongPasswordRegex, numberRegex } = require("../configs/regex.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 const { nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
 
@@ -79,11 +79,11 @@ const verifySignUpBody = async (req,res,next) =>{
         if(!userIsValid){ // Throw Error as User Details are not properly given
             return throwResourceNotFoundError(res,reason);
         }
-        // 📧 Phone Number Format Validation
-        if (!phoneRegex.test(req.body.phoneNumber.trim())) {
+        // 📧 Number Format Validation
+        if (!numberRegex.test(number.trim())) {
             return throwInvalidResourceError(
                 res,
-                "Phone Number Format, Please enter a valid international phone number in E.164 format (e.g., +14155552671)",
+                "Phone Number Format, Please enter a valid international number in E.164 format (e.g., +14155552671)",
             );
         }
         // 📧 Email Format Validation
