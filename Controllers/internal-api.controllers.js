@@ -3,12 +3,12 @@
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError, getLogIdentifiers } =  require("../configs/error-handler.configs");
-const { emailRegex, nameRegex, countryCodeRegex, numberRegex } = require("../configs/regex.config");
+const { emailRegex, nameRegex, countryCodeRegex, numberRegex, fullPhoneNumberRegex } = require("../configs/regex.config");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
 const { validateLength, isValidRegex } = require("../utils/field-validators");
 const { createFullPhoneNumber } = require("../utils/auth.utils");
-const { nameLength, emailLength, countryCodeLength, phoneNumberLength } = require("../configs/fields-length.config");
+const { nameLength, emailLength, countryCodeLength, phoneNumberLength, fullPhoneNumberLength } = require("../configs/fields-length.config");
 
 const updateUserProfile = async(req,res) => {
     try{
@@ -79,14 +79,16 @@ const updateUserProfile = async(req,res) => {
           if(!(!number && !countryCode)){
             if(!number)number = user.phoneNumber.number;
             if(!countryCode)countryCode = user.phoneNumber.countryCode;
-            const isPhoneNumberUpdated = await createFullPhoneNumber(user,res,countryCode,number);
-            if(!isPhoneNumberUpdated)return;
+            const newNumber = createFullPhoneNumber(countryCode,number);
+            if(!newNumber)return;
             logWithTime(`Phone Number updated successfully for User ${user.userID}`);
+            user.fullPhoneNumber = newNumber;
+            await user.save();
           }
         }
         if(updatedFields.length === 0){
             logWithTime(`❌ User Account Details with User ID: (${user.userID}) is not modified from device ID: (${req.deviceID}) in Updation Request`);
-            return res.status(200).json({
+            return res.status(OK).json({
                 message: "No changes detected. Your profile remains the same."
             });
         }
@@ -115,7 +117,7 @@ const setRefreshCookieForAdmin = async (req, res) => {
       return throwResourceNotFoundError(res,"Refresh Token");
     }
 
-    const isCookieSet  = setRefreshTokenCookie(res, refreshToken);
+    const isCookieSet = setRefreshTokenCookie(res, refreshToken);
     if(!isCookieSet){
       logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of set up admin cookie internal api. Request is made from device ID: (${req.deviceID})`);
       return;

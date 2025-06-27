@@ -13,7 +13,7 @@ const bcryptjs = require("bcryptjs")
 const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
-const { checkUserExists, checkPasswordIsValid } = require("../utils/auth.utils");
+const { checkUserExists, checkPasswordIsValid, createFullPhoneNumber } = require("../utils/auth.utils");
 const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceLimit } = require("../utils/device.utils");
@@ -144,6 +144,9 @@ const signUp = async (req,res) => { // Made this function async to use await
       ✅ SRP: User object is composed here only once after getting all required parts.
       ✅ DRY: Hash logic is abstracted via bcryptjs.
     */
+
+    const isPhoneNumberCreated = createFullPhoneNumber(req,res,countryCode,number);
+    if(!isPhoneNumberCreated)return;
     const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
     const device = createDeviceField(req,res);
     if(!device){
@@ -151,7 +154,10 @@ const signUp = async (req,res) => { // Made this function async to use await
         return throwInternalServerError(res);
     }
     const User = {
-        phoneNumber: request_body.phoneNumber,
+        phoneNumber: {
+            countryCode: request_body.phoneNumber.countryCode,
+            number: request_body.phoneNumber.number
+        },
         emailID: request_body.emailID,
         password: password,
         userID: generatedUserID,
@@ -160,6 +166,7 @@ const signUp = async (req,res) => { // Made this function async to use await
     if(request_body.name){
         User.name = request_body.name;
     }
+    const { countryCode,number } = request_body.phoneNumber;
     try{
         const user = await UserModel.create(User);
         req.user = user;

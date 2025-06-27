@@ -1,8 +1,11 @@
-const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const { errorMessage,throwInternalServerError,throwInvalidResourceError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
 const { BAD_REQUEST } = require("../configs/http-status.config");
+const { isValidRegex,validateLength } = require("../utils/field-validators");
+const { fullPhoneNumberRegex } = require("../configs/regex.config");
+const { fullPhoneNumberLength } = require("../configs/fields-length.config");
 
 const validateSingleIdentifier = (req, res, source = 'body') => {
     const identifierKeys = ['userID', 'emailID', 'phoneNumber'];
@@ -65,6 +68,7 @@ const checkUserExists = async(emailID,phoneNumber,res) => {
 const checkPasswordIsValid = async(req,user) => {
     const providedPassword = req.body.password;
     const userWithPassword = await UserModel.findOne({ userID: user.userID }).select("+password");
+    if (!userWithPassword) return false;
     const actualPassword = userWithPassword.password;
     const isPasswordValid = await bcryptjs.compare(providedPassword, actualPassword);
     return isPasswordValid;
@@ -74,18 +78,25 @@ const isAdminID = (userID) => {
     return typeof userID === "string" && userID.startsWith("ADM");
 };
 
-const createFullPhoneNumber = async(user,res,countryCode,number) => {
-    try{
-        const fullPhoneNumber = "+" + countryCode + number;
-        user.fullPhoneNumber = fullPhoneNumber;
-        await user.save();
-        return true;
-    }catch(err){
-        logWithTime(`❌ An Internal Error Occurred while creating full phone number of user with User ID: ${user.userID}`)
-        errorMessage(err);
-        throwInternalServerError(res);
-        return false;
+const createFullPhoneNumber = (req,res) => {
+    const { countryCode,number } = req.body.phoneNumber;
+    const newNumber = "+" + countryCode + number;
+    if(!validateLength(newNumber,fullPhoneNumberLength.min,fullPhoneNumberLength.max)){
+        const userID = req.user.userID || "Unauthorized User";
+        logWithTime(`Invalid Full Phone Number Length provided by ${userID} to update full phone number`);
+        throwInvalidResourceError(res, `Full Phone Number, Full Phone Number must be at least ${fullPhoneNumberLength.min} digits long and not more than ${fullPhoneNumberLength.max} digits`);
+        return null;
     }
+    if(!isValidRegex(newNumber,fullPhoneNumberRegex)){
+        const userID = req?.user?.userID || "New User";
+        logWithTime(`Invalid Full Phone Number Format provided by ${userID} to update full phone number`);
+        throwInvalidResourceError(
+            res,
+            "Full phone number Format, Please enter a valid full phone number that consist of only numeric digits .",
+        );
+        return null;
+    }
+    return newNumber;
 }
 
 module.exports = {

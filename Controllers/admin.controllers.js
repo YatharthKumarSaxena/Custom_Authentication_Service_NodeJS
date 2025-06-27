@@ -9,6 +9,7 @@ const { fetchUser } = require("../middlewares/helper.middleware");
 const { isAdminID } = require("../utils/auth.utils");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
+const { getLogIdentifiers } = require("../configs/error-handler.configs")
 
 const blockUserAccount = async(req,res) => {
     try{
@@ -175,7 +176,8 @@ const checkUserAccountStatus = async(req,res) => {
         const User_Account_Details = {
             "Name": user.name,
             "Customer ID": user.userID,
-            "Phone Number": user.phoneNumber,
+            "Country Code": user.phoneNumber.countryCode,
+            "Number": user.phoneNumber.number,
             "Email ID": user.emailID,
             "Verified": user.isVerified,
             "Login Count": user.loginCount,
@@ -214,8 +216,8 @@ const checkUserAccountStatus = async(req,res) => {
             resolvedBy: verifyWith
         });
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
