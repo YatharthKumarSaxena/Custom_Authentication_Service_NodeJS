@@ -1,4 +1,4 @@
-const { errorMessage,throwInternalServerError} = require("../configs/error-handler.configs");
+const { errorMessage,throwInternalServerError, getLogIdentifiers} = require("../configs/error-handler.configs");
 const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("./issue-token.utils"); 
 const { logWithTime } = require("./time-stamps.utils");
@@ -12,7 +12,7 @@ const resetRefreshToken = async(req,res) => {
         const refreshThreshold = refreshThresholdInMs;
         if (timeSinceLastIssued > refreshThreshold) {
             const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
-            const isCookieSet = setRefreshTokenCookie(res,expiryTimeOfRefreshToken);
+            const isCookieSet = setRefreshTokenCookie(res,refreshToken);
             if(!isCookieSet){
                 logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the reset refresh token function. Request is made from device ID: (${req.deviceID})`);
                 return;
@@ -24,8 +24,8 @@ const resetRefreshToken = async(req,res) => {
         }
         return false;
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error occurred reseting refresh token for User (${userID}).Request is made from device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error occurred reseting refresh token ${getIdentifiers}`);
         errorMessage(err);
         if (!res.headersSent)return throwInternalServerError(res);
     }
