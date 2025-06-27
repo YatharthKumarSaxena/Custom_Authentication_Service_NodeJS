@@ -7,7 +7,7 @@ const { validateSingleIdentifier } = require("../utils/auth.utils");
 // Verify Admin Body Request for Blocking / Unblocking a user
 const verifyAdminBlockUnblockBody = async(req,res,next) => {
     try{
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logMiddlewareError("Empty Block/Unblock Body",req);
             return throwResourceNotFoundError(res,"Body");
         }

@@ -15,7 +15,7 @@ const { getDeviceByID } = require("../utils/device.utils");
 const { DEVICE_TYPES } = require("../configs/user-enums.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
-const { UNAUTHORIZED, FORBIDDEN } = require("../configs/http-status.config");
+const {  FORBIDDEN, LOGIN_TIMEOUT } = require("../configs/http-status.config");
 const { validateLength } = require("../utils/field-validators");
 const { deviceNameLength } = require("../configs/fields-length.config");
 
@@ -38,7 +38,7 @@ const isUserAccountActive = async(req,res,next) => {
         }
         if(user.isActive === false){
             logWithTime(`🚫 Access Denied: User Account (${user.userID}) is Deactivated on device id: (${req.deviceID})`);
-            res.status(403).json({
+            res.status(FORBIDDEN).json({
                 success: false,
                 message: "Your account is currently deactivated.",
                 suggestion: "Please activate your account before continuing."
@@ -133,7 +133,7 @@ const checkUserIsVerified = async(req,res,next) => {
             user.devices = user.devices.filter(d => d.deviceID !== req.deviceID);
             await user.save();
             logWithTime(`🔒 Session expired for user (${user.userID}) on device (${req.deviceID})`);
-            return res.status(440).json({
+            return res.status(LOGIN_TIMEOUT).json({
                 success: false,
                 message: "Your session on this device has expired. Please login again to continue."
             });
@@ -333,7 +333,7 @@ const verifyDeviceField = async (req,res,next) => {
 
 const verifySetAdminCookieBody = async(req,res,next) => {
     try{
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logWithTime(`⚠️ Access Denied as no body prvided for Admin to set up cookie from device id : (${req.deviceID})`);
             return throwResourceNotFoundError(res,"Body");
         }

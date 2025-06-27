@@ -18,7 +18,7 @@ const { CONFLICT, BAD_REQUEST, UNAUTHORIZED, FORBIDDEN } = require("../configs/h
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logMiddlewareError("An Empty Sign Up Body", req);
             return throwResourceNotFoundError(res,"SignUp Body");
         }
@@ -117,7 +117,7 @@ const verifySignUpBody = async (req,res,next) =>{
 const verifySignInBody = async (req,res,next) =>{
     // Validating the User SignIn Body
     try{
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logMiddlewareError("Empty Sign In Body",req);
             return throwResourceNotFoundError(res,"Body");
         }
@@ -150,11 +150,7 @@ const verifySignOutBody = async (req,res,next) => {
         const isNotVerified = await checkUserIsNotVerified(req,res);
         if (isNotVerified) {
             logWithTime(`🚫 Logout Request Denied: User ${req.user.userID} is already logged out from device ID: ${req.deviceID}`);
-            return res.status(CONFLICT).json({
-                success: false,
-                message: "User is already logged out.",
-                suggestion: "Please login first before trying to logout again."
-            });
+            return throwConflictError(res,"User is already logged out.","Please login first before trying to logout again.");
         }
         // Very next line should be:
         if (!res.headersSent) return next();
@@ -169,7 +165,7 @@ const verifySignOutBody = async (req,res,next) => {
 const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logMiddlewareError("Empty Activate Account Body", req);
             return throwResourceNotFoundError(res,"Body");
         }
@@ -206,7 +202,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
 const verifyDeactivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logMiddlewareError("Empty Deactivate Account Body", req);
             return throwResourceNotFoundError(res,"Body");
         }
@@ -259,7 +255,7 @@ const verifyChangePasswordBody = async(req,res,next) => {
                 reason: "Admin accounts are system-level and cannot be modified like regular users."
             });
         }
-        if(!req.body){
+        if(!req.body || Object.keys(req.body).length === 0){
             logMiddlewareError("Empty Change Password Body",req);
             return throwResourceNotFoundError(res,"Body");
         }
