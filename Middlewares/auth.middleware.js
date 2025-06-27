@@ -6,7 +6,7 @@
 /* If an Error Occured in Middleware then Middleware will throw an Error , Request will not be forwarded to Controller */
 
 // Extracting the Required Modules
-const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError, throwAccessDeniedError } = require("../configs/error-handler.configs");
+const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError, throwAccessDeniedError, throwConflictError, getLogIdentifiers } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
@@ -19,7 +19,7 @@ const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body for Sign Up from device ID: (${req.deviceID})`);
+            logWithTime(`An Unknown User has provided an empty body for Sign Up from device ID: ${req.deviceID}`);
             return throwResourceNotFoundError(res,"SignUp Body");
         }
         // Check name is present in Request Body or not
@@ -32,7 +32,7 @@ const verifySignUpBody = async (req,res,next) =>{
         // Check if Name Field Provided Is It Valid Or Not
         if(typeof name === 'string' && name.length){
             if (!validateLength(name,nameLength.min,nameLength.max)){
-                return throwInvalidResourceError(res,`Name , Name must be of minimum (${nameLength.min}) letters and maximum (${nameLength.max}) letters`);
+                return throwInvalidResourceError(res,`Name , Name must be of minimum ${nameLength.min} letters and maximum ${nameLength.max} letters`);
             }
             if(!nameRegex.test(name)){
                 return throwInvalidResourceError(res,"Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
@@ -74,7 +74,7 @@ const verifySignUpBody = async (req,res,next) =>{
         } else {
             // ✅ Move these two checks inside the "else" of password
             if (!validateLength(password,passwordLength.min,passwordLength.max)) {
-                return throwInvalidResourceError(res, `Password, Password must be at least (${passwordLength.min}) characters long and not more than (${passwordLength.max}) characters`);
+                return throwInvalidResourceError(res, `Password, Password must be at least ${passwordLength.min} characters long and not more than ${passwordLength.max} characters`);
             }
             if (!isValidRegex(password,strongPasswordRegex)) {
                 return throwInvalidResourceError(
@@ -89,7 +89,7 @@ const verifySignUpBody = async (req,res,next) =>{
         }
         // 📧 Number Format Validation
         if (!validateLength(number,phoneNumberLength.min,phoneNumberLength.max)) {
-            return throwInvalidResourceError(res, `Number, Number must be at least (${phoneNumberLength.min}) digits long and not more than (${phoneNumberLength.max}) digits`);
+            return throwInvalidResourceError(res, `Number, Number must be at least ${phoneNumberLength.min} digits long and not more than ${phoneNumberLength.max} digits`);
         }
         if (!isValidRegex(number,numberRegex)){
             return throwInvalidResourceError(
@@ -100,7 +100,7 @@ const verifySignUpBody = async (req,res,next) =>{
         req.body.phoneNumber.number = number;
         // 📧 Country Code Format Validation
         if (!validateLength(countryCode,countryCodeLength.min,countryCodeLength.max)) {
-            return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least (${countryCodeLength.min}) digits long and not more than (${countryCodeLength.max}) digits`);
+            return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least ${countryCodeLength.min} digits long and not more than ${countryCodeLength.max} digits`);
         }
         if (!isValidRegex(countryCode,countryCodeRegex)){
             return throwInvalidResourceError(
@@ -112,7 +112,7 @@ const verifySignUpBody = async (req,res,next) =>{
         // 📧 Email Format Validation
         // ✅ Move these two checks inside the "else" of password
         if (!validateLength(emailID,emailLength.min,emailLength.max)) {
-            return throwInvalidResourceError(res, `Email ID, Email ID must be at least (${emailLength.min}) characters long and not more than (${emailLength.max}) characters`);
+            return throwInvalidResourceError(res, `Email ID, Email ID must be at least ${emailLength.min} characters long and not more than ${emailLength.max} characters`);
         } 
         if (!isValidRegex(emailID,emailRegex)){
             return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
@@ -121,8 +121,8 @@ const verifySignUpBody = async (req,res,next) =>{
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while verifying the Sign up Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign up Request with User ID: ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -132,7 +132,7 @@ const verifySignInBody = async (req,res,next) =>{
     // Validating the User SignIn Body
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body for Sign In from device ID: (${req.deviceID})`);
+            logWithTime(`An Unknown User has provided an empty body for Sign In from device ID: ${req.deviceID}`);
             return throwResourceNotFoundError(res,"Body");
         }
         if(!req.body.password){
@@ -142,15 +142,15 @@ const verifySignInBody = async (req,res,next) =>{
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Login Request Cancelled for Unknown User from device ID: (${req.deviceID})`)
+            logWithTime(`Login Request Cancelled for Unknown User from device ID: ${req.deviceID}`)
             return;
         }
         req.user = req.foundUser;
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while verifying the Sign in Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign in Request with User ID: ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -162,7 +162,7 @@ const verifySignOutBody = async (req,res,next) => {
         // ✅ Now Check if User is Already Logged Out 
         const isNotVerified = await checkUserIsNotVerified(req,res);
         if (isNotVerified) {
-            logWithTime(`🚫 Logout Request Denied: User (${req.user.userID}) is already logged out from device ID: (${req.deviceID})`);
+            logWithTime(`🚫 Logout Request Denied: User ${req.user.userID} is already logged out from device ID: ${req.deviceID}`);
             return res.status(CONFLICT).json({
                 success: false,
                 message: "User is already logged out.",
@@ -172,8 +172,8 @@ const verifySignOutBody = async (req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while verifying the Sign out Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign out Request with User ID: ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -183,18 +183,18 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body to Activate Account from device ID: (${req.deviceID})`);
+            logWithTime(`An Unknown User has provided an empty body to Activate Account from device ID: ${req.deviceID}`);
             return throwResourceNotFoundError(res,"Body");
         }
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Activate Account with id: (${req.user.userID}) Request Cancelled. Request is done from (${req.deviceID})`);
+            logWithTime(`Activate Account with id: ${req.user.userID} Request Cancelled. Request is done from ${req.deviceID}`);
             return;
         }
         if(req.foundUser.userType === "ADMIN"){
-            logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be activated. Admin tried to do it from device ID: (${req.deviceID}).`);
+            logWithTime(`🚫 Request Denied: Admin account with id: ${req.user.userID} cannot be activated. Admin tried to do it from device ID: ${req.deviceID}.`);
             return throwAccessDeniedError(res, "Admin account cannot be activated. Admin is a system-level user and cannot be modified like a normal user.")
         }
         if(!req.body.password){
@@ -202,18 +202,14 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         }
         const user = req.foundUser;
         if(user.isActive === true){
-            logWithTime(`🚫 User Account Activation Request Denied: User Account of User (${user.userID}) is already Active from device ID: (${req.deviceID}).`);
-            return res.status(CONFLICT).json({
-                success: false,
-                message: "User Account is already Active.",
-                suggestion: "Please deactivate your account first before trying to activate again."
-            });
+            logWithTime(`Request is made from ${req.deviceID}`);
+            return throwConflictError(res,"User Account is already Active.", "Please deactivate your account first before trying to activate again.");
         }
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while verifying the Activate Account Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Activate Account Request with User ID: ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -223,24 +219,24 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body to Deactivate Account from device ID: (${req.deviceID})`);
+            logWithTime(`An Unknown User has provided an empty body to Deactivate Account from device ID: ${req.deviceID}`);
             return throwResourceNotFoundError(res,"Body");
         }
         const user = req.user;
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         if(user.userType === "ADMIN"){
-            logWithTime(`🚫 Request Denied: Admin account with id: (${req.user.userID}) cannot be deactivated. Admin tried to do it from device ID: (${req.deviceID}).`);
+            logWithTime(`🚫 Request Denied: Admin account with id: ${req.user.userID} cannot be deactivated. Admin tried to do it from device ID: ${req.deviceID}.`);
             return throwAccessDeniedError(res, "Admin account cannot be deactivated. Admin is a system-level user and cannot be modified like a normal user.")
         }
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Deactivate Account with id: (${req.user.userID}) Request Cancelled. Request is done from (${req.deviceID})`);
+            logWithTime(`Deactivate Account with id: ${req.user.userID} Request Cancelled. Request is done from ${req.deviceID}`);
             return;
         }
         // Decativate account Require either Phone Number, Email ID or UserID for Verification along with Password
         if(user.userID !== req.foundUser.userID){ 
-            logWithTime(`🚫 Deactivation Request Denied: Authenticated user (${user.userID}) tried to deactivate another account (${req.foundUser.userID})`);
+            logWithTime(`🚫 Deactivation Request Denied: Authenticated user ${user.userID} tried to deactivate another account ${req.foundUser.userID}`);
             return res.status(UNAUTHORIZED).json({
                 success: false,
                 message: "You are not authorized to deactivate this account.",
@@ -251,18 +247,14 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
             return throwResourceNotFoundError(res,"Password");
         }
         if(user.isActive === false){
-            logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
-            return res.status(CONFLICT).json({
-                success: false,
-                message: "User Account is already Inactive.",
-                suggestion: "Please activate your account first before trying to deactivate again."
-            });
+            logWithTime(`Request is made from ${req.deviceID}`);
+            return throwConflictError(res,"User Account is already Inactive.","Please activate your account first before trying to deactivate again.")
         }
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while verifying the Deactivate Account Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Deactivate Account Request with User ID: ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -271,7 +263,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
 const verifyChangePasswordBody = async(req,res,next) => {
     try{
         if(req.user.userType === "ADMIN"){
-            logWithTime(`🚫 Change Password Request Blocked: Admin (${req.user.userID}) attempted to change password from device (${req.deviceID})`);
+            logWithTime(`🚫 Change Password Request Blocked: Admin ${req.user.userID} attempted to change password from device ${req.deviceID}`);
             return res.status(FORBIDDEN).json({
                 success: false,
                 message: "Admin password cannot be changed via this route.",
@@ -279,7 +271,7 @@ const verifyChangePasswordBody = async(req,res,next) => {
             });
         }
         if(!req.body){
-            logWithTime(`User (${req.user.userID}) has provided an empty body to change password from device ID: (${req.deviceID})`);
+            logWithTime(`User ${req.user.userID} has provided an empty body to change password from device ID: ${req.deviceID}`);
             return throwResourceNotFoundError(res,"Body");
         }
         const { oldPassword,newPassword } = req.body;
@@ -297,7 +289,7 @@ const verifyChangePasswordBody = async(req,res,next) => {
         }
         // Check for minimum length
         if (!validateLength(newPassword,passwordLength.min,passwordLength.max)) {
-            return throwInvalidResourceError(res, `Password, Password must be at least (${passwordLength.min}) characters long and not more than (${passwordLength.max}) characters`);
+            return throwInvalidResourceError(res, `Password, Password must be at least ${passwordLength.min} characters long and not more than ${passwordLength.max} characters`);
         }
         // Strong Password Format: At least one letter, one digit, and one special character
         if (!isValidRegex(newPassword,strongPasswordRegex)) {
@@ -308,8 +300,8 @@ const verifyChangePasswordBody = async(req,res,next) => {
         }
         if(!res.headersSent)return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while verifying the Change Password Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Change Password Request with User ID: ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }

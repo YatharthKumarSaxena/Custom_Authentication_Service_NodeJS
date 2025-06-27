@@ -111,3 +111,18 @@ exports.logMiddlewareError = (context, req) => {
     const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
     logWithTime(`❌ Middleware Error: [${context}] | User: (${userID}) | Device: (${req.deviceID})`);
 };
+
+exports.throwConflictError = (res, message, suggestion) => {
+    logWithTime("⚔️ Conflict Detected: " + message);
+    if (res.headersSent) return;
+    return res.status(CONFLICT).json({
+        success: false,
+        message,
+        suggestion
+    });
+};
+
+exports.getLogIdentifiers = (req) => {
+    const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+    return `with User ID: (${userID}). Request is made from device ID: (${req.deviceID})`;
+};
