@@ -12,7 +12,7 @@ const deleteDeactivatedUsers = async () => {
       return;
     }
     const cutoffDate = new Date(Date.now() - userCleanup.deactivatedRetentionDays * 24 * 60 * 60 * 1000);
-    logWithTime("📅 [CRON-JOB] ➤ Deativated Users Cleanup Started...");
+    logWithTime("📅 [CRON-JOB] ➤ Deactivated Users Cleanup Started...");
     const result = await UserModel.deleteMany({
       isActive: false,
       lastDeactivatedAt: { $lt: cutoffDate },
