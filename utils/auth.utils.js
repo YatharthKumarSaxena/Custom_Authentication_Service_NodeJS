@@ -2,6 +2,7 @@ const { errorMessage,throwInternalServerError } = require("../configs/error-hand
 const { logWithTime } = require("../utils/time-stamps.utils");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
+const { BAD_REQUEST } = require("../configs/http-status.config");
 
 const validateSingleIdentifier = (req, res, source = 'body') => {
     const identifierKeys = ['userID', 'emailID', 'phoneNumber'];
@@ -13,7 +14,7 @@ const validateSingleIdentifier = (req, res, source = 'body') => {
 
     if (validIdentifiers.length !== 1) {
         logWithTime(`🧷 Invalid input: More than one or no identifier provided from device id: (${req.deviceID}).`);
-        res.status(400).send({
+        res.status(BAD_REQUEST).send({
             success: false,
             message: "❌ Provide exactly one identifier: userID, phoneNumber, or emailID."
         });
@@ -37,7 +38,7 @@ const validateSingleIdentifier = (req, res, source = 'body') => {
 const checkUserExists = async(emailID,phoneNumber,res) => {
     try{
         let count = 0;
-        let user = await UserModel.findOne({phoneNumber: phoneNumber})
+        let user = await UserModel.findOne({fullPhoneNumber: phoneNumber})
         let reason = "";
         if(user){
             logWithTime("⚠️ User Already Exists with Phone Number: "+phoneNumber);
