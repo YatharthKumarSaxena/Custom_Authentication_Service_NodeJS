@@ -8,6 +8,7 @@ const AuthLogModel = require("../models/auth-logs.model");
 const { fetchUser } = require("../middlewares/helper.middleware");
 const { isAdminID } = require("../utils/auth.utils");
 const { logAuthEvent } = require("../utils/auth-log-utils");
+const { OK } = require("../configs/http-status.config");
 
 const blockUserAccount = async(req,res) => {
     try{
@@ -43,7 +44,7 @@ const blockUserAccount = async(req,res) => {
         logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID}) with (${blockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
         await logAuthEvent(req, "BLOCKED", { performedOn: user });
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: `User (${user.userID}) has been successfully blocked.`,
             resolvedBy: verifyWith
@@ -89,7 +90,7 @@ const unblockUserAccount = async(req,res) => {
         logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID}) with (${unblockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
         await logAuthEvent(req, "UNBLOCKED", { performedOn: user });  
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: `User (${user.userID}) has been successfully unblocked.`,
             resolvedBy: verifyWith
@@ -139,7 +140,7 @@ const getUserAuthLogs = async (req, res) => {
         filter: eventType || "ALL"
     });
 
-    return res.status(200).json({
+    return res.status(OK).json({
       success: true,
       message: "User authentication logs fetched successfully.",
       total: logs.length,
@@ -206,7 +207,7 @@ const checkUserAccountStatus = async(req,res) => {
         });
 
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to Admin (${req.user.userID}) from device ID: (${req.deviceID}) via (${verifyWith})`);
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: "Here is User Account Details",
             User_Account_Details,

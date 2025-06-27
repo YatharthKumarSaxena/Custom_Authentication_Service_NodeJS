@@ -74,6 +74,19 @@ const isAdminID = (userID) => {
     return typeof userID === "string" && userID.startsWith("ADM");
 };
 
+const createFullPhoneNumber = async(user,res,countryCode,number) => {
+    try{
+        const fullPhoneNumber = "+" + countryCode + number;
+        user.fullPhoneNumber = fullPhoneNumber;
+        await user.save();
+        return true;
+    }catch(err){
+        logWithTime(`❌ An Internal Error Occurred while creating full phone number of user with User ID: ${user.userID}`)
+        errorMessage(err);
+        throwInternalServerError(res);
+        return false;
+    }
+}
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
   checkPasswordIsValid: checkPasswordIsValid,

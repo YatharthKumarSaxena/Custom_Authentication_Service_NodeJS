@@ -4,8 +4,11 @@ const { logWithTime } = require("../utils/time-stamps.utils");
 const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError } =  require("../configs/error-handler.configs");
 const { nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
-const { emailRegex, phoneRegex, nameRegex } = require("../configs/regex.config");
+const { emailRegex, phoneRegex, nameRegex, countryCodeRegex, numberRegex } = require("../configs/regex.config");
 const { logAuthEvent } = require("../utils/auth-log-utils");
+const { OK } = require("../configs/http-status.config");
+const { validateLength, isValidRegex } = require("../utils/field-validators");
+const { nameLength, emailLength, countryCodeLength, phoneNumberLength } = require("../configs/fields-length.config");
 
 const updateUserProfile = async(req,res) => {
     try{
@@ -13,28 +16,66 @@ const updateUserProfile = async(req,res) => {
         const user = req.user;
         if(req.body.name && req.body.name !== user.name){
             const name = req.body.name.trim();
-            if(name.length < nameMinLength || name.length > nameMaxLength){
-              return throwInvalidResourceError(res,`Name. Name must be between ${nameMinLength} and ${nameMaxLength} characters.`);
+            if(!validateLength(name,nameLength.min,nameLength.max)){
+              logWithTime(`Invalid Name Length provided by ${req.user.userID} to update name`);
+              return throwInvalidResourceError(res,`Name. Name must be between ${nameLength.min} and ${nameLength.max} characters.`);
             }
-            if(!nameRegex.test(name)){
+            if(!isValidRegex(name,nameRegex)){
+              logWithTime(`Invalid Name Format provided by ${req.user.userID} to update name`);
               return throwInvalidResourceError(res,"Name. Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
             }
             updatedFields.push("Name");
             user.name = name;
         }
         if(req.body.emailID && req.body.emailID.trim().toLowerCase() !== user.emailID.trim().toLowerCase()){
-            if (!emailRegex.test(req.body.emailID)) {
-                return throwInvalidResourceError(res,"Email format. Please provide a valid email address. Provide Email Address that has no spaces ,must have alphabets, must have single @ and include valid . i.e .com , .in etc");
+            const emailID = req.body.emailID.trim().toLowerCase();
+            if (!validateLength(emailID,emailLength.min,emailLength.max)) {
+              logWithTime(`Invalid Email ID Length provided by ${req.user.userID} to update email ID`);
+              return throwInvalidResourceError(res, `Email ID, Email ID must be at least ${emailLength.min} characters long and not more than ${emailLength.max} characters`);
             }
+            if(!isValidRegex(emailID,emailRegex)){
+              logWithTime(`Invalid Email ID Format provided by ${req.user.userID} to update email ID`);
+              return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
+            }            
             updatedFields.push("Email ID");
-            user.emailID = req.body.emailID.trim().toLowerCase();
+            user.emailID = emailID;
         }
-        if(req.body.phoneNumber && req.body.phoneNumber !== user.phoneNumber){
-            if(typeof req.body.phoneNumber.trim() !== "string" || !phoneRegex.test(req.body.phoneNumber.trim())) {
-                return throwInvalidResourceError(res,"Phone number format. Provide a 10 digit number whose starting digit must be from 6 to 9")
+        const phoneNumber = req.body.phonenumber;
+        if(phoneNumber){
+          let { countryCode,number } = phoneNumber;
+          if(countryCode){
+            countryCode = countryCode.trim();
+            logWithTime(`Invalid Country Code Length provided by ${req.user.userID} to update country code in phone number`);
+            if(!validateLength(countryCode,countryCodeLength.min,countryCodeLength.max)){
+              logWithTime(`Invalid Country Code Length provided by ${req.user.userID} to update number in phone number`);
+              return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least ${countryCodeLength.min} digits long and not more than ${countryCodeLength.max} digits`);
             }
-            updatedFields.push("Phone Number");
-            user.phoneNumber = req.body.phoneNumber.trim();
+            if(!isValidRegex(countryCode,countryCodeRegex)){
+              logWithTime(`Invalid Country Code Format provided by ${req.user.userID} to update Country Code in phone number`);
+              return throwInvalidResourceError(
+                res,
+                `Country Code Format, Please enter a valid international country code number not starting from 0 and consist only numeric digits (e.g., 1 || 91 || 78)`,
+              );
+            }
+            updatedFields.push("Country Code in Phone Number");
+            user.phoneNumber.countryCode = countryCode;
+          }
+          if(number){ 
+            number = number.trim();
+            if(!validateLength(number,phoneNumberLength.min,phoneNumberLength.max)){
+              logWithTime(`Invalid Number Length provided by ${req.user.userID} to update number in phone number`);
+              return throwInvalidResourceError(res, `Number, Number must be at least ${phoneNumberLength.min} digits long and not more than ${phoneNumberLength.max} digits`);
+            }
+            if(!isValidRegex(number,numberRegex)){
+              logWithTime(`Invalid Number Format provided by ${req.user.userID} to update number in Phone Number`);
+              return throwInvalidResourceError(
+                res,
+                "Phone Number Format, Please enter a valid phone number that consist of only numeric digits .",
+              );
+            }
+            updatedFields.push("Number in Phone Number");
+            user.phoneNumber.number = number;
+          }
         }
         if(updatedFields.length === 0){
             logWithTime(`❌ User Account Details with User ID: (${user.userID}) is not modified from device ID: (${req.deviceID}) in Updation Request`);
@@ -46,7 +87,7 @@ const updateUserProfile = async(req,res) => {
         // Update data into auth.logs
         await logAuthEvent(req, "UPDATE_ACCOUNT_DETAILS", { performedOn: user });
         logWithTime(`✅ User (${user.userID}) updated fields: [${updatedFields.join(", ")}] from device: (${req.deviceID})`);
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: "Profile updated successfully.",
             updatedFields
@@ -73,7 +114,7 @@ const setRefreshCookieForAdmin = async (req, res) => {
       return;
     }
 
-    return res.status(200).json({
+    return res.status(OK).json({
       success: true,
       message: "✅ Admin refresh token set in cookie successfully."
     });

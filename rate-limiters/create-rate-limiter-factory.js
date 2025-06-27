@@ -26,7 +26,7 @@ const createRateLimiter = (maxRequests, timeWindowInMs) => {
         return res.status(NOT_FOUND).json({ message: "User not found." });
       }
 
-      const device = user.devices.find(d => d.deviceID === deviceID);
+      const device = user.devices.info.find(d => d.deviceID === deviceID);
       if (!device) {
         logWithTime(`User (${user.userID}) is doing action from invalid device id: (${req.deviceID})`);
         return res.status(NOT_FOUND).json({ message: "Device not registered." });
