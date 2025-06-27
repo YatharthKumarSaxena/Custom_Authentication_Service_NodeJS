@@ -5,7 +5,7 @@ const { UUID_V4_REGEX } = require("../configs/regex.config");
 // Extracting Required Functions and Values
 
 const { logWithTime } = require("../utils/time-stamps.utils");
-const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError } = require("../configs/error-handler.configs");
+const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
 const { secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { fetchUser } = require("./helper.middleware");
@@ -15,6 +15,9 @@ const { getDeviceByID } = require("../utils/device.utils");
 const { DEVICE_TYPES } = require("../configs/user-enums.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
+const { UNAUTHORIZED, FORBIDDEN } = require("../configs/http-status.config");
+const { validateLength } = require("../utils/field-validators");
+const { deviceNameLength } = require("../configs/fields-length.config");
 
 // ✅ Checking if User Account is Active
 const isUserAccountActive = async(req,res,next) => {
@@ -46,8 +49,8 @@ const isUserAccountActive = async(req,res,next) => {
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while checking User Account with id: ({${userID}}) is active or not on device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while checking User Account is active or not ${getIdentifiers}`);
         errorMessage(err);
         if (!res.headersSent) {
             return throwInternalServerError(res);
@@ -63,7 +66,10 @@ const isUserBlocked = async(req,res,next) => {
         if(!user){
             verifyWith = await fetchUser(req,res);
         }
-        if(verifyWith === "")return;
+        if(verifyWith === ""){
+            logMiddlewareError("Is User Blocked, Unauthorized or Invalid User Identifier", req);
+            return;
+        }
         user = req.foundUser;
         if(user.userType === "ADMIN"){
             if(!res.headersSent)return next();
@@ -79,8 +85,8 @@ const isUserBlocked = async(req,res,next) => {
             if (!res.headersSent) return next();
         }
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while checking User with id: ({${userID}}) is blocked or not on device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while checking User is blockeed or not ${getIdentifiers}`);
         errorMessage(err);
         if (!res.headersSent) {
             return throwInternalServerError(res);
@@ -97,7 +103,7 @@ const checkUserIsVerified = async(req,res,next) => {
             let userID = req?.user?.userID || req?.body?.userID;
             user = await UserModel.findOne({ userID: userID });
             if (!user) {
-                logWithTime(`❌ User not found while verifying on device id: (${req.deviceID}`);
+                logMiddlewareError("Check Verified User, No user found using provided identifier", req);
                 return throwResourceNotFoundError(res, "User");
             }
             req.user = user; // 🧷 Attach for future use
@@ -106,13 +112,13 @@ const checkUserIsVerified = async(req,res,next) => {
         // Check whether Device ID belongs to User or Not
         const device = await getDeviceByID(user,deviceID);
         if(!device){
-            logWithTime(`⏰ Session expired for User (${user.userID}) on device id: (${req.deviceID})`);
+            logMiddlewareError("Check Verified User, Device ID not found or does not belong to user", req);
             return throwInvalidResourceError(res,"Device ID");
         }
         const isNotVerified = await checkUserIsNotVerified(req,res);
         if(isNotVerified){
             logWithTime(`⏰ Session expired for User (${user.userID}). Please log in again to continue accessing your account.`);
-            return res.status(401).json({
+            return res.status(FORBIDDEN).json({
                 success: false,
                 message: "⏰ Session expired. Please log in again to continue accessing your account.",
                 code: "TOKEN_EXPIRED"
@@ -139,14 +145,17 @@ const checkUserIsVerified = async(req,res,next) => {
             user.jwtTokenIssuedAt = Date.now();
             await user.save();
         }
+        else { 
+            logMiddlewareError("Check Verified User, Refresh Token could not be rotated", req);
+        }
         // ✅ 3. Update lastUsedAt
         device.lastUsedAt = Date.now();
         await user.save(); // Ensure it's persisted
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while checking User with id: ({${userID}}) is verified or not on device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while checking User is verified or not ${getIdentifiers}`);
         errorMessage(err);
         if (!res.headersSent) {
             return throwInternalServerError(res);
@@ -158,7 +167,7 @@ const checkUserIsVerified = async(req,res,next) => {
 const verifyToken = (req,res,next) => {
     const accessToken = extractAccessToken(req);
     if(!accessToken){
-        logWithTime("❌ No Access Token provided")
+        logMiddlewareError("Verify Token , Access Token not found",req);
         return throwResourceNotFoundError(res,"Access Token");
     }
     // Now Verifying whether the provided JWT Token is valid token or not
@@ -170,7 +179,7 @@ const verifyToken = (req,res,next) => {
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly
                     logWithTime(`⚠️ Access Denied, User with userID: (${user.userID}) is logged out`);
-                    return res.status(403).send({
+                    return res.status(FORBIDDEN).send({
                         success: false,
                         message: "Access Denied to perform action",
                         reason: "You are not logged in, please login to continue"
@@ -187,12 +196,12 @@ const verifyToken = (req,res,next) => {
                 }
                 if(!res.headersSent)return next();
             }
-            logWithTime("✅ Token Validated and User Fetched");
+            logWithTime(`✅ Token Validated and User Fetched for device ID: ${req.deviceID}`);
             // Very next line should be:
             if (!res.headersSent) return next();
         }catch(err){
-            const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-            logWithTime(`❌ An Internal Error Occurred while checking User with id: ({${userID}) to verify its JWT token `);
+            const getIdentifiers = getLogIdentifiers(req);
+            logWithTime(`❌ An Internal Error Occurred while verifying access token ${getIdentifiers}`);
             errorMessage(err);
             return throwInternalServerError(res);
         }
@@ -201,19 +210,26 @@ const verifyToken = (req,res,next) => {
 
 // Checking Provided Request is given by admin or not
 const isAdmin = (req,res,next) => {
-    const user = req.user;
-    if (!user) {
-        logWithTime(`❌ Access Denied: No user information found while checking admin access on device id: (${req.deviceID})`);
-        return throwAccessDeniedError(res, "User");
-    }
-    if(user.userType === "ADMIN"){
-        // Very next line should be:
-        if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID
-    }
-    else{
-        // Admin not present, access denied
-        logWithTime(`Access Denied: User (${req.user.userID}) is not Admin on device id: (${req.deviceID})`);
-        return throwAccessDeniedError(res,"Admin, Admins only");
+    try{
+        const user = req.user;
+        if (!user) {
+            logMiddlewareError("Is Admin, No user info present in request", req);
+            return throwAccessDeniedError(res, "User");
+        }
+        if(user.userType === "ADMIN"){
+            // Very next line should be:
+            if (!res.headersSent) return next(); // Checking Provided User ID matches with Admin ID
+        }
+        else{
+            // Admin not present, access denied
+            logMiddlewareError(`Is Admin, Access Denied for non-admin user: (${user.userID})`, req);
+            return throwAccessDeniedError(res,"Admin, Admins only");
+        }
+    }catch(err){
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while checking User is Admin or not ${getIdentifiers}`);
+        errorMessage(err);
+        return throwInternalServerError(res);
     }
 }
 
@@ -222,7 +238,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         // 1. Extract refresh token from cookies (assuming 'token' key stores the refresh token)
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) { // if refreshToken Not Found
-            logWithTime("⚠️ Refresh Token not provided in Cookies")
+            logMiddlewareError(`Verify Token Ownnership,Refresh Token Missing in Cookies`, req);
             return throwResourceNotFoundError(res, "Refresh token");
         }
         // 2. Verify refresh token
@@ -242,7 +258,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         // 4. Extract Access token
         const accessToken = extractAccessToken(req);
         if(!accessToken){
-            logWithTime("❌ No Access Token provided")
+            logMiddlewareError(`Verify Token Ownership, Access Token Field Missing`, req);
             return throwResourceNotFoundError(res, "Access token");
         }
         let decodedAccess;
@@ -260,7 +276,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         // 🔍  Find user from DB
         const user = await UserModel.findById(decodedRefresh.id);
         if (!user) {
-            logWithTime("User not found in DB for decoded token ID");
+            logMiddlewareError(`Verify Access Token, Unauthorized User Provided from Refresh Token`, req);
             return throwResourceNotFoundError(res, "User");
         }
         // ✅ Tokens are valid and synced – attach user to req
@@ -268,8 +284,8 @@ const verifyTokenOwnership = async(req, res, next) => {
         // ✅ All checks passed
         if(!res.headersSent)next();
         } catch (err) {
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while checking User with id: (${userID}) to verify its JWT token ownership `);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while verifying token ownership ${getIdentifiers}`);
         errorMessage(err)
         return throwInternalServerError(res);
     }
@@ -278,30 +294,38 @@ const verifyTokenOwnership = async(req, res, next) => {
 const verifyDeviceField = async (req,res,next) => {
     try{
         const deviceID = req.headers["x-device-uuid"];
-        const deviceName = req.headers["x-device-name"]; // Optional
+        let deviceName = req.headers["x-device-name"]; // Optional
         const deviceType = req.headers["x-device-type"]; // Optional
         // Device ID is mandatory
         if (!deviceID || deviceID.trim() === "") {
+            logMiddlewareError("Verify Device Field, Device ID field Missing");
             return throwResourceNotFoundError(res, "Device UUID (x-device-uuid) is required in request headers");
         }
         // Attach to request object for later use in controller
         req.deviceID = deviceID.trim();
         if (!UUID_V4_REGEX.test(req.deviceID)) {
+            logMiddlewareError("Verify Device Field, Invalid Device ID format");
             return throwInvalidResourceError(res, `Device UUID, Provided Device UUID (${req.deviceID}) is not in a valid UUID v4 format`);
         }
         if (deviceName && deviceName.trim() !== "") {
-            req.deviceName = deviceName.trim();
+            deviceName = deviceName.trim();
+            if(!validateLength(deviceName,deviceNameLength.min,deviceNameLength.max)){
+                logMiddlewareError(`Verify Device Field, Invalid Device Name length.`);
+                return throwAccessDeniedError(res, `Device Name length should be between ${deviceNameLength.min} and ${deviceNameLength.max} characters`);
+            }
         }
         if (deviceType && deviceType.trim() !=="" ) {
             const type = deviceType.toUpperCase().trim();
             if (!DEVICE_TYPES.includes(type)) {
+                logMiddlewareError("Verify Device Field, Invalid Device Type Provided");
                 return throwInvalidResourceError(res, `Device Type. Use Valid Device Type: ${DEVICE_TYPES}`);
             }
             req.deviceType = type;
         }
         if(!res.headersSent)next(); // Pass control to the next middleware/controller
     }catch(err){
-        logWithTime(`⚠️ Error occurred while validating the Device field of User (${req.user.userID})`);
+        const deviceID = req.headers["x-device-uuid"] || "Unauthorized Device ID"
+        logWithTime(`⚠️ Error occurred while validating the Device field having device id: ${deviceID}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
