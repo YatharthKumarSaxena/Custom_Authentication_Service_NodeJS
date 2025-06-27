@@ -14,6 +14,10 @@ const { errorMessage } = require("../configs/error-handler.configs");
 
 const callSetAdminRefreshCookie = async (user, refreshToken) => {
   try {
+    if (user.userType !== "ADMIN") {
+      logWithTime(`⛔ Invalid userType. Refresh cookie not set. userID: (${user.userID})`);
+      return;
+    }
     logWithTime(`🧪 Internally setting cookie for Admin User ID: (${user.userID})`);
 
     // Simulated req and res for internal call
