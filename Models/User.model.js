@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES,nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
+const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES } = require("../configs/user-enums.config");
+const { countryCodeLength, passwordLength, phoneNumberLength, nameLength, fullPhoneNumberLength, emailLength, deviceNameLength, otpLength } = require("../configs/fields-length.config");
 const { BLOCK_REASONS,UNBLOCK_REASONS } = require("../configs/user-id.config")
 const { numberRegex, emailRegex , nameRegex, countryCodeRegex, fullPhoneNumberRegex} = require("../configs/regex.config");
 
@@ -52,8 +53,8 @@ const deviceUniquenessValidator = {
 const userSchema = mongoose.Schema({
     name:{
         type: String,
-        minlength: nameMinLength,
-        maxlength: nameMaxLength,
+        minlength: nameLength.min,
+        maxlength: nameLength.max,
         match: nameRegex,
         trim: true,
         default: null
@@ -63,16 +64,16 @@ const userSchema = mongoose.Schema({
             type: String,
             required: true,
             trim: true,
-            minlength: 2,
-            maxlength: 4,
+            minlength: countryCodeLength.min,
+            maxlength: countryCodeLength.max,
             match: countryCodeRegex
         },
         number: {
             type: String,
             required: true,
             trim: true,
-            minlength: 9,
-            maxlength: 12,
+            minlength: phoneNumberLength.min,
+            maxlength: phoneNumberLength.max,
             match: numberRegex
         },
         _id: false,
@@ -85,14 +86,15 @@ const userSchema = mongoose.Schema({
         index: true,
         required: true,
         match: fullPhoneNumberRegex,
-        minlength: 11,
-        maxlength: 16
+        minlength: fullPhoneNumberLength.min,
+        maxlength: fullPhoneNumberLength.max
     },
     password:{
         type: String,
         required: true,
         trim: true,
-        minlength: 8, // strong password practice
+        minlength: passwordLength.min,
+        maxlength: passwordLength.max, 
         select: false
     },
     userID:{
@@ -107,6 +109,8 @@ const userSchema = mongoose.Schema({
         required: true,
         lowercase: true,
         trim: true,
+        minlength: emailLength.min,
+        maxlength: emailLength.max,
         // At least one character before @
         // Exactly one @ symbol
         // At least one character before and after the . in domain
@@ -179,7 +183,7 @@ const userSchema = mongoose.Schema({
             type: [{
                 _id: false,
                 deviceID: { type: String, required: true, index: true },
-                deviceName: { type: String },
+                deviceName: { type: String , minlength: deviceNameLength.min, maxlength: deviceNameLength.max},
                 deviceType: { type: String, enum: DEVICE_TYPES, default: null },
                 requestCount: { type: Number, default: 1 },
                 addedAt: { type: Date, default: Date.now },
@@ -190,7 +194,7 @@ const userSchema = mongoose.Schema({
         }
     },
     otp: {
-        code: { type: String }, // 6-digit OTP (hashed ideally)
+        code: { type: String, minlength: otpLength.min, maxlength: otpLength.max }, // 6-digit OTP (hashed ideally)
         expiresAt: { type: Date },
         verified: { type: Boolean, default: false },
         resendCount: { type: Number, default: 0 } // Limit OTP abuse
