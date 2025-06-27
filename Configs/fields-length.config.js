@@ -32,5 +32,5 @@ module.exports = {
   otpLength: {
     min: 6,
     max: 6
-    }
+  }
 };

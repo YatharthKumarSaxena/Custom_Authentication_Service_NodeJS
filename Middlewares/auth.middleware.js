@@ -10,9 +10,9 @@ const { throwResourceNotFoundError, throwInternalServerError, errorMessage, thro
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
-const { nameRegex, phoneRegex, emailRegex, strongPasswordRegex, numberRegex } = require("../configs/regex.config");
+const { nameRegex, emailRegex, strongPasswordRegex, numberRegex, countryCodeRegex } = require("../configs/regex.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
-const { nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
+const { nameLength, passwordLength, countryCodeLength, emailLength, phoneNumberLength }  = require("../configs/fields-length.config");
 
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
@@ -27,15 +27,16 @@ const verifySignUpBody = async (req,res,next) =>{
         // Check if Name Field Provided Is It Valid Or Not
         if(typeof req.body.name === 'string' && req.body.name.trim().length){
             const name = req.body.name.trim();
-            if (name.length < nameMinLength || name.length > nameMaxLength){
-                return throwInvalidResourceError(res,"Name , Name must be of minimum 2 letters or maximum 50 letters");
+            if (name.length < nameLength.min || name.length > nameLength.max){
+                return throwInvalidResourceError(res,`Name , Name must be of minimum (${nameLength.min}) letters and maximum (${nameLength.max}) letters`);
             }
             if(!nameRegex.test(name)){
                 return throwInvalidResourceError(res,"Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
             }
+            req.body.name = name;
         }
         // Check Email ID is present in Request Body or not
-        if(!req.body.emailID){
+        if(!req.body.emailID || !req.body.emailID.trim().length){
             if(userIsValid)reason = reason+"Email ID";
             else reason = reason+", Email ID";
             userIsValid = false;
@@ -48,26 +49,27 @@ const verifySignUpBody = async (req,res,next) =>{
         }
         const { countryCode,number } = req.body.phoneNumber;
         // Check Country Code in Phone Number Field is present in Request Body or not
-        if(!countryCode){
+        if(!countryCode|| !countryCode.trim().length){
             if(userIsValid)reason = reason+"Country Code field in Phone Number";
             else reason = reason+" ,Country Code field in Phone Number";
             userIsValid = false;
         }
         // Check Number in Phone Number Field is present in Request Body or not
-        if(!number){
+        if(!number || !number.trim().length){
             if(userIsValid)reason = reason+"Number field in Phone Number";
             else reason = reason+" ,Number field in Phone Number";
             userIsValid = false;
         }
          // Check Password is present in Request Body or not
-        if(!req.body.password){
+        if(!req.body.password || !req.body.password.trim().length){
             if(userIsValid)reason = reason+"Password";
             else reason = reason+" and Password";
             userIsValid = false;
         } else {
+            const password = req.body.password.trim();
             // ✅ Move these two checks inside the "else" of password
-            if (req.body.password.length < 8) {
-                return throwInvalidResourceError(res, "Password, Password must be at least 8 characters long");
+            if (password.length < passwordLength.min || password.length > passwordLength.max) {
+                return throwInvalidResourceError(res, `Password, Password must be at least (${passwordLength.min}) characters long and not more than (${passwordLength.max}) characters`);
             }
             if (!strongPasswordRegex.test(req.body.password)) {
                 return throwInvalidResourceError(
@@ -75,21 +77,43 @@ const verifySignUpBody = async (req,res,next) =>{
                     "Password Format, Password must contain at least one letter, one number, and one special character",
                 );
             }
+            req.body.password = password;
         }
         if(!userIsValid){ // Throw Error as User Details are not properly given
             return throwResourceNotFoundError(res,reason);
         }
         // 📧 Number Format Validation
-        if (!numberRegex.test(number.trim())) {
+        if (number.trim().length < phoneNumberLength.min || number.length > phoneNumberLength.max) {
+            return throwInvalidResourceError(res, `Number, Number must be at least (${phoneNumberLength.min}) digits long and not more than (${phoneNumberLength.max}) digits`);
+        }
+        if (!numberRegex.test(number.trim())){
             return throwInvalidResourceError(
                 res,
-                "Phone Number Format, Please enter a valid international number in E.164 format (e.g., +14155552671)",
+                "Phone Number Format, Please enter a valid phone number that consist of only numeric digits .",
             );
         }
+        req.body.phoneNumber.number = number.trim();
+        // 📧 Country Code Format Validation
+        if (countryCode.trim().length < countryCodeLength.min || countryCode.trim().length > countryCodeLength.max) {
+            return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least (${countryCodeLength.min}) digits long and not more than (${countryCodeLength.max}) digits`);
+        }
+        if (!countryCodeRegex.test(countryCode.trim())){
+            return throwInvalidResourceError(
+                res,
+                `Country Code Format, Please enter a valid international country code number not starting from 0 and consist only numeric digits (e.g., 1 || 91 || 78)`,
+            );
+        }
+        req.body.phoneNumber.countryCode = countryCode.trim();
         // 📧 Email Format Validation
-        if (!emailRegex.test(req.body.emailID.trim())) {
+        const emailID = req.body.emailID.trim();
+        // ✅ Move these two checks inside the "else" of password
+        if (emailID.length < emailLength.min || emailID.length > emailLength.max) {
+            return throwInvalidResourceError(res, `Email ID, Email ID must be at least (${emailLength.min}) characters long and not more than (${emailLength.max}) characters`);
+        } 
+        if (!emailRegex.test(req.body.emailID.trim())){
             return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
+        req.body.emailID = emailID;
         // Very next line should be:
         if (!res.headersSent) return next();
     }catch(err){
