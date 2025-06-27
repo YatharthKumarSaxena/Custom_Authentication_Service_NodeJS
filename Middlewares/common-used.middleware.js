@@ -16,7 +16,7 @@ const { DEVICE_TYPES } = require("../configs/user-enums.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const {  FORBIDDEN, LOGIN_TIMEOUT } = require("../configs/http-status.config");
-const { validateLength } = require("../utils/field-validators");
+const { validateLength, isValidRegex } = require("../utils/field-validators");
 const { deviceNameLength } = require("../configs/fields-length.config");
 
 // ✅ Checking if User Account is Active
@@ -303,7 +303,7 @@ const verifyDeviceField = async (req,res,next) => {
         }
         // Attach to request object for later use in controller
         req.deviceID = deviceID.trim();
-        if (!UUID_V4_REGEX.test(req.deviceID)) {
+        if (!isValidRegex(deviceID,UUID_V4_REGEX)) {
             logMiddlewareError("Verify Device Field, Invalid Device ID format");
             return throwInvalidResourceError(res, `Device UUID, Provided Device UUID (${req.deviceID}) is not in a valid UUID v4 format`);
         }
@@ -314,7 +314,7 @@ const verifyDeviceField = async (req,res,next) => {
                 return throwAccessDeniedError(res, `Device Name length should be between ${deviceNameLength.min} and ${deviceNameLength.max} characters`);
             }
         }
-        if (deviceType && deviceType.trim() !=="" ) {
+        if (deviceType && deviceType.trim() !=="") {
             const type = deviceType.toUpperCase().trim();
             if (!DEVICE_TYPES.includes(type)) {
                 logMiddlewareError("Verify Device Field, Invalid Device Type Provided");
