@@ -6,7 +6,7 @@
 /* If an Error Occured in Middleware then Middleware will throw an Error , Request will not be forwarded to Controller */
 
 // Extracting the Required Modules
-const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError, throwAccessDeniedError, throwConflictError, getLogIdentifiers } = require("../configs/error-handler.configs");
+const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError, throwAccessDeniedError, throwConflictError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
@@ -19,64 +19,41 @@ const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body for Sign Up from device ID: ${req.deviceID}`);
+            logMiddlewareError("An Empty Sign Up Body", req);
             return throwResourceNotFoundError(res,"SignUp Body");
         }
-        // Check name is present in Request Body or not
-        let userIsValid = true; // Assuming that Request Provided is correct
-        let reason = ""; // Stores Reason for Invalid Request
         let {name,emailID,phoneNumber,password} = req.body;
         emailID = emailID.trim();
-        name = name.trim();
         password = password.trim();
+        // Check name is present in Request Body or not
+        name = name.trim();
         // Check if Name Field Provided Is It Valid Or Not
         if(typeof name === 'string' && name.length){
             if (!validateLength(name,nameLength.min,nameLength.max)){
+                logMiddlewareError("Sign Up, Invalid Name Length",req);
                 return throwInvalidResourceError(res,`Name , Name must be of minimum ${nameLength.min} letters and maximum ${nameLength.max} letters`);
             }
             if(!nameRegex.test(name)){
+                logMiddlewareError("Sign Up, Invalid Name format",req);
                 return throwInvalidResourceError(res,"Name can only include letters, spaces, apostrophes ('), periods (.), and hyphens (-).");
             }
             req.body.name = name;
         }
-        // Check Email ID is present in Request Body or not
-        if(!emailID || !emailID.length){
-            if(userIsValid)reason = reason+"Email ID";
-            else reason = reason+", Email ID";
-            userIsValid = false;
-        }
-        // Check Phone Number is present in Request Body or not
-        if(!phoneNumber){
-            if(userIsValid)reason = reason+"Phone Number";
-            else reason = reason+" ,Phone Number";
-            userIsValid = false;
-        }
-        let { countryCode,number } = req.body.phoneNumber;
-        // Check Country Code in Phone Number Field is present in Request Body or not
-        if(!countryCode|| !countryCode.length){
-            if(userIsValid)reason = reason+"Country Code field in Phone Number";
-            else reason = reason+" ,Country Code field in Phone Number";
-            userIsValid = false;
-        }
-        // Check Number in Phone Number Field is present in Request Body or not
-        if(!number || !number.length){
-            if(userIsValid)reason = reason+"Number field in Phone Number";
-            else reason = reason+" ,Number field in Phone Number";
-            userIsValid = false;
-        }
-        countryCode = countryCode.trim();
-        number = number.trim();
-         // Check Password is present in Request Body or not
-        if(!password || !password.length){
-            if(userIsValid)reason = reason+"Password";
-            else reason = reason+" and Password";
-            userIsValid = false;
-        } else {
+        let { countryCode,number } = phoneNumber || {};
+        const missingFields = [];
+        if (!emailID) missingFields.push("Email ID");
+        if (!phoneNumber) missingFields.push("Phone Number");
+        if (!countryCode) missingFields.push("Country Code field in Phone Number");
+        if (!number) missingFields.push("Number field in Phone Number");
+        if (!password) missingFields.push("Password");
+        else {
             // ✅ Move these two checks inside the "else" of password
             if (!validateLength(password,passwordLength.min,passwordLength.max)) {
+                logMiddlewareError("Sign Up, Invalid Password Length",req);
                 return throwInvalidResourceError(res, `Password, Password must be at least ${passwordLength.min} characters long and not more than ${passwordLength.max} characters`);
             }
             if (!isValidRegex(password,strongPasswordRegex)) {
+                logMiddlewareError("Sign Up, Invalid Password Format",req);
                 return throwInvalidResourceError(
                     res,
                     "Password Format, Password must contain at least one letter, one number, and one special character",
@@ -84,14 +61,19 @@ const verifySignUpBody = async (req,res,next) =>{
             }
             req.body.password = password;
         }
-        if(!userIsValid){ // Throw Error as User Details are not properly given
-            return throwResourceNotFoundError(res,reason);
+        if(missingFields.length > 0){ // Throw Error as User Details are not properly given
+            logMiddlewareError("Sign Up,Required Fields Missing",req);
+            return throwResourceNotFoundError(res, missingFields.join(", "));
         }
+        countryCode = countryCode.trim();
+        number = number.trim();
         // 📧 Number Format Validation
         if (!validateLength(number,phoneNumberLength.min,phoneNumberLength.max)) {
+            logMiddlewareError("Sign Up, Invalid Number length of Phone Number",req);
             return throwInvalidResourceError(res, `Number, Number must be at least ${phoneNumberLength.min} digits long and not more than ${phoneNumberLength.max} digits`);
         }
         if (!isValidRegex(number,numberRegex)){
+            logMiddlewareError("Sign Up, Invalid Number format in Phone Number",req);
             return throwInvalidResourceError(
                 res,
                 "Phone Number Format, Please enter a valid phone number that consist of only numeric digits .",
@@ -100,9 +82,11 @@ const verifySignUpBody = async (req,res,next) =>{
         req.body.phoneNumber.number = number;
         // 📧 Country Code Format Validation
         if (!validateLength(countryCode,countryCodeLength.min,countryCodeLength.max)) {
+            logMiddlewareError("Sign Up, Invalid Length of Country Code",req);
             return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least ${countryCodeLength.min} digits long and not more than ${countryCodeLength.max} digits`);
         }
         if (!isValidRegex(countryCode,countryCodeRegex)){
+            logMiddlewareError("Sign Up, Invalid Country Code format in Phone Number",req);
             return throwInvalidResourceError(
                 res,
                 `Country Code Format, Please enter a valid international country code number not starting from 0 and consist only numeric digits (e.g., 1 || 91 || 78)`,
@@ -112,9 +96,11 @@ const verifySignUpBody = async (req,res,next) =>{
         // 📧 Email Format Validation
         // ✅ Move these two checks inside the "else" of password
         if (!validateLength(emailID,emailLength.min,emailLength.max)) {
+            logMiddlewareError("Sign Up, Invalid Length of Email ID",req);
             return throwInvalidResourceError(res, `Email ID, Email ID must be at least ${emailLength.min} characters long and not more than ${emailLength.max} characters`);
         } 
         if (!isValidRegex(emailID,emailRegex)){
+            logMiddlewareError("Sign Up, Invalid Email ID Format",req);
             return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
         req.body.emailID = emailID;
@@ -132,17 +118,18 @@ const verifySignInBody = async (req,res,next) =>{
     // Validating the User SignIn Body
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body for Sign In from device ID: ${req.deviceID}`);
+            logMiddlewareError("Empty Sign In Body",req);
             return throwResourceNotFoundError(res,"Body");
         }
         if(!req.body.password){
+            logMiddlewareError("Sign In, Password Field Missing",req);
             return throwResourceNotFoundError(res,"Password");
         }
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Login Request Cancelled for Unknown User from device ID: ${req.deviceID}`)
+            logMiddlewareError("Sign In ,Provided User is unauthorized",req);
             return;
         }
         req.user = req.foundUser;
@@ -183,14 +170,14 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body to Activate Account from device ID: ${req.deviceID}`);
+            logMiddlewareError("Empty Activate Account Body", req);
             return throwResourceNotFoundError(res,"Body");
         }
         const validateRequestBody = validateSingleIdentifier(req,res);
         if(!validateRequestBody)return;
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Activate Account with id: ${req.user.userID} Request Cancelled. Request is done from ${req.deviceID}`);
+            logMiddlewareError("Activate Account, Unauthorized User Provided",req);
             return;
         }
         if(req.foundUser.userType === "ADMIN"){
@@ -198,11 +185,12 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
             return throwAccessDeniedError(res, "Admin account cannot be activated. Admin is a system-level user and cannot be modified like a normal user.")
         }
         if(!req.body.password){
+            logMiddlewareError("Activate Account, Password Field Missing", req);
             return throwResourceNotFoundError(res,"Password");
         }
         const user = req.foundUser;
         if(user.isActive === true){
-            logWithTime(`Request is made from ${req.deviceID}`);
+            logMiddlewareError("Active Account, Account already active");
             return throwConflictError(res,"User Account is already Active.", "Please deactivate your account first before trying to activate again.");
         }
         // Very next line should be:
@@ -219,7 +207,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
     // Validating Request Body
     try{
         if(!req.body){
-            logWithTime(`An Unknown User has provided an empty body to Deactivate Account from device ID: ${req.deviceID}`);
+            logMiddlewareError("Empty Deactivate Account Body", req);
             return throwResourceNotFoundError(res,"Body");
         }
         const user = req.user;
@@ -231,7 +219,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         }
         let verifyWith = await fetchUser(req,res);
         if(verifyWith === ""){
-            logWithTime(`Deactivate Account with id: ${req.user.userID} Request Cancelled. Request is done from ${req.deviceID}`);
+            logMiddlewareError("Deactivate Account, Unauthorized User Provided",req);
             return;
         }
         // Decativate account Require either Phone Number, Email ID or UserID for Verification along with Password
@@ -244,10 +232,11 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
             });
         }
         if(!req.body.password){
+            logMiddlewareError("Deactivate Account, Password Field Missing");
             return throwResourceNotFoundError(res,"Password");
         }
         if(user.isActive === false){
-            logWithTime(`Request is made from ${req.deviceID}`);
+            logMiddlewareError("Decativate Account, Account already deactive");
             return throwConflictError(res,"User Account is already Inactive.","Please activate your account first before trying to deactivate again.")
         }
         // Very next line should be:
@@ -271,17 +260,20 @@ const verifyChangePasswordBody = async(req,res,next) => {
             });
         }
         if(!req.body){
-            logWithTime(`User ${req.user.userID} has provided an empty body to change password from device ID: ${req.deviceID}`);
+            logMiddlewareError("Empty Change Password Body",req);
             return throwResourceNotFoundError(res,"Body");
         }
         const { oldPassword,newPassword } = req.body;
         if(!oldPassword){
+            logMiddlewareError("Change Password, Old Password Field Missing",req);
             return throwResourceNotFoundError(res,"Old Password");
         }
         if(!newPassword){
+            logMiddlewareError("Change Password, New Password Field Missing",req);
             return throwResourceNotFoundError(res,"New Password");
         }
         if(oldPassword === newPassword){
+            logMiddlewareError("Change Password, Old and New Password are same",req);
             return res.status(BAD_REQUEST).json({
                 success: false,
                 message: "New password must be different from your current password."
@@ -289,10 +281,12 @@ const verifyChangePasswordBody = async(req,res,next) => {
         }
         // Check for minimum length
         if (!validateLength(newPassword,passwordLength.min,passwordLength.max)) {
+            logMiddlewareError("Sign Up, Invalid Password Length",req);
             return throwInvalidResourceError(res, `Password, Password must be at least ${passwordLength.min} characters long and not more than ${passwordLength.max} characters`);
         }
         // Strong Password Format: At least one letter, one digit, and one special character
         if (!isValidRegex(newPassword,strongPasswordRegex)) {
+            logMiddlewareError("Sign Up, Invalid Password format",req);
             return throwInvalidResourceError(
                 res,
                 "Password, Password must contain at least one letter, one number, and one special character",
