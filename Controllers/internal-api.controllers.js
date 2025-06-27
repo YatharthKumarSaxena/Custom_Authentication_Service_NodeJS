@@ -2,12 +2,12 @@
 
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
-const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError } =  require("../configs/error-handler.configs");
-const { nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
-const { emailRegex, phoneRegex, nameRegex, countryCodeRegex, numberRegex } = require("../configs/regex.config");
+const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError, getLogIdentifiers } =  require("../configs/error-handler.configs");
+const { emailRegex, nameRegex, countryCodeRegex, numberRegex } = require("../configs/regex.config");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
 const { validateLength, isValidRegex } = require("../utils/field-validators");
+const { createFullPhoneNumber } = require("../utils/auth.utils");
 const { nameLength, emailLength, countryCodeLength, phoneNumberLength } = require("../configs/fields-length.config");
 
 const updateUserProfile = async(req,res) => {
@@ -76,6 +76,13 @@ const updateUserProfile = async(req,res) => {
             updatedFields.push("Number in Phone Number");
             user.phoneNumber.number = number;
           }
+          if(!(!number && !countryCode)){
+            if(!number)number = user.phoneNumber.number;
+            if(!countryCode)countryCode = user.phoneNumber.countryCode;
+            const isPhoneNumberUpdated = await createFullPhoneNumber(user,res,countryCode,number);
+            if(!isPhoneNumberUpdated)return;
+            logWithTime(`Phone Number updated successfully for User ${user.userID}`);
+          }
         }
         if(updatedFields.length === 0){
             logWithTime(`❌ User Account Details with User ID: (${user.userID}) is not modified from device ID: (${req.deviceID}) in Updation Request`);
@@ -93,8 +100,8 @@ const updateUserProfile = async(req,res) => {
             updatedFields
         });
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while updating the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while updating the User Profile ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }

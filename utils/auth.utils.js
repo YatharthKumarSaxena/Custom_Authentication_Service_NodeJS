@@ -87,8 +87,10 @@ const createFullPhoneNumber = async(user,res,countryCode,number) => {
         return false;
     }
 }
+
 module.exports = {
   validateSingleIdentifier: validateSingleIdentifier,
+  createFullPhoneNumber: createFullPhoneNumber,
   checkPasswordIsValid: checkPasswordIsValid,
   checkUserExists: checkUserExists,
   isAdminID: isAdminID
