@@ -4,6 +4,9 @@ const {secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfRefreshTok
 const { logWithTime } = require("./time-stamps.utils");
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logAuthEvent, adminAuthLogForSetUp } = require("../utils/auth-log-utils");
+const getTokenCategory = (expiryTimeOfToken) =>{
+    return (expiryTimeOfToken === expiryTimeOfRefreshToken)? "REFRESH_TOKEN": "ACCESS_TOKEN";
+}
 
 exports.makeTokenWithMongoID = async(req,res,expiryTimeOfToken) => {
     try {
@@ -17,7 +20,7 @@ exports.makeTokenWithMongoID = async(req,res,expiryTimeOfToken) => {
             secretCode,
             { expiresIn: expiryTimeOfToken }
         );
-        const tokenCategory = (expiryTimeOfToken === expiryTimeOfRefreshToken)? "REFRESH_TOKEN": "ACCESS_TOKEN";
+        const tokenCategory = getTokenCategory(expiryTimeOfToken);
         // Update data into auth.logs
         await logAuthEvent(req, tokenCategory, { performedOn: user });
         logWithTime(`✅ (${tokenCategory}) successfully created for user: ${user.userID}. Request is made from deviceID: (${req.deviceID})`);
@@ -41,7 +44,7 @@ exports.makeTokenWithMongoIDForAdmin = async(user,expiryTimeOfToken) => {
             secretCode,
             { expiresIn: expiryTimeOfToken }
         );
-        const tokenCategory = (expiryTimeOfToken === expiryTimeOfRefreshToken)? "REFRESH_TOKEN": "ACCESS_TOKEN";
+        const tokenCategory = getTokenCategory(expiryTimeOfToken);
         // Update data into auth.logs
         await adminAuthLogForSetUp(user, tokenCategory);
         logWithTime(`✅ (${tokenCategory}) successfully created for user: ${user.userID}. Request is made from deviceID: (${user.devices[0].deviceID})`);
