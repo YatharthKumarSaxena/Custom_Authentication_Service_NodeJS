@@ -46,6 +46,19 @@ const verifySignUpBody = async (req,res,next) =>{
             else reason = reason+" ,Phone Number";
             userIsValid = false;
         }
+        const { countryCode,number } = req.body.phoneNumber;
+        // Check Country Code in Phone Number Field is present in Request Body or not
+        if(!countryCode){
+            if(userIsValid)reason = reason+"Country Code field in Phone Number";
+            else reason = reason+" ,Country Code field in Phone Number";
+            userIsValid = false;
+        }
+        // Check Number in Phone Number Field is present in Request Body or not
+        if(!number){
+            if(userIsValid)reason = reason+"Number field in Phone Number";
+            else reason = reason+" ,Number field in Phone Number";
+            userIsValid = false;
+        }
          // Check Password is present in Request Body or not
         if(!req.body.password){
             if(userIsValid)reason = reason+"Password";
@@ -56,7 +69,7 @@ const verifySignUpBody = async (req,res,next) =>{
             if (req.body.password.length < 8) {
                 return throwInvalidResourceError(res, "Password, Password must be at least 8 characters long");
             }
-            if (!strongPasswordRegex.test(req.body.password.trim())) {
+            if (!strongPasswordRegex.test(req.body.password)) {
                 return throwInvalidResourceError(
                     res,
                     "Password Format, Password must contain at least one letter, one number, and one special character",
@@ -70,7 +83,7 @@ const verifySignUpBody = async (req,res,next) =>{
         if (!phoneRegex.test(req.body.phoneNumber.trim())) {
             return throwInvalidResourceError(
                 res,
-                "Phone Number Format, Phone Number must contain exactly 10 Numeric Digits",
+                "Phone Number Format, Please enter a valid international phone number in E.164 format (e.g., +14155552671)",
             );
         }
         // 📧 Email Format Validation

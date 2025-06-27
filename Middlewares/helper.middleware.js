@@ -9,35 +9,35 @@ const fetchUser = async(req,res) =>{
         let verifyWith = "";
         let anyResourcePresent = true;
         if(req?.query?.userID){
-            user = await UserModel.findOne({userID: req.query.userID});
+            user = await UserModel.findOne({userID: req.query.userID.trim()});
             if(user){
                 verifyWith = verifyWith+"USER_ID";
             }
         }
         else if (req?.query?.emailID){
-            user = await UserModel.findOne({emailID: req.query.emailID});
+            user = await UserModel.findOne({emailID: req.query.emailID.trim().toLowerCase()});
             if(user){
                 verifyWith = verifyWith+"EMAIL";
             }
         }
         else if (req?.query?.phoneNumber){
-            user = await UserModel.findOne({phoneNumber: req.query.phoneNumber});
+            user = await UserModel.findOne({phoneNumber: req.query.phoneNumber.trim()});
             if(user){
                 verifyWith = verifyWith+"PHONE";
             }
         }
         else if(req?.body?.userID){
-            user = await UserModel.findOne({userID: req.body.userID});
+            user = await UserModel.findOne({userID: req.body.userID.trim()});
             if(user){
                 verifyWith = verifyWith+"USER_ID";
             }
         }else if(req?.body?.emailID){
-            user = await UserModel.findOne({emailID: req.body.emailID});
+            user = await UserModel.findOne({emailID: req.body.emailID.trim().toLowerCase()});
             if(user){
                 verifyWith = verifyWith+"EMAIL";
             }
         }else if(req?.body?.phoneNumber){
-            user = await UserModel.findOne({phoneNumber: req.body.phoneNumber});
+            user = await UserModel.findOne({phoneNumber: req.body.phoneNumber.trim()});
             if(user){
                 verifyWith = verifyWith+"PHONE";
             }

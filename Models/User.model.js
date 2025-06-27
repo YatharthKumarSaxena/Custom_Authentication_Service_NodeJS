@@ -1,7 +1,19 @@
 const mongoose = require("mongoose");
 const { USER_TYPE,UNBLOCK_VIA,BLOCK_VIA,DEVICE_TYPES,nameMinLength, nameMaxLength } = require("../configs/user-enums.config");
 const { BLOCK_REASONS,UNBLOCK_REASONS } = require("../configs/user-id.config")
-const { phoneRegex, emailRegex , strongPasswordRegex, nameRegex} = require("../configs/regex.config");
+const { numberRegex, emailRegex , nameRegex, countryCodeRegex, fullPhoneNumberRegex} = require("../configs/regex.config");
+
+const deviceUniquenessValidator = {
+  validator: function (deviceList) {
+    const seen = new Set();
+    return deviceList.every(d => {
+      if (seen.has(d.deviceID)) return false;
+      seen.add(d.deviceID);
+      return true;
+    });
+  },
+  message: 'Duplicate deviceID found in user\'s devices list.'
+};
 
 /* User Schema */
 
@@ -47,11 +59,34 @@ const userSchema = mongoose.Schema({
         default: null
     },
     phoneNumber:{
+        countryCode: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 2,
+            maxlength: 4,
+            match: countryCodeRegex
+        },
+        number: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 9,
+            maxlength: 12,
+            match: numberRegex
+        },
+        _id: false,
+        index: true
+    },
+    fullPhoneNumber: {
         type: String,
-        match: phoneRegex,
-        required: true,
         unique: true,
         trim: true,
+        index: true,
+        required: true,
+        match: fullPhoneNumberRegex,
+        minlength: 11,
+        maxlength: 16
     },
     password:{
         type: String,
@@ -139,17 +174,21 @@ const userSchema = mongoose.Schema({
         type: Number, 
         default: 0 
     },
-    devices: [
-        {
-             _id: false,
-            deviceID: { type: String, required: true, index: true}, // e.g. generated UUID
-            deviceName: { type: String }, // e.g. Redmi Note 8, Chrome on Mac
-            deviceType: {type: String, enum: DEVICE_TYPES, default: null},
-            requestCount: {type: Number, default: 1},
-            addedAt: { type: Date, default: Date.now },
-            lastUsedAt: { type: Date, default: Date.now }
+    devices: {
+        info: {
+            type: [{
+                _id: false,
+                deviceID: { type: String, required: true, index: true },
+                deviceName: { type: String },
+                deviceType: { type: String, enum: DEVICE_TYPES, default: null },
+                requestCount: { type: Number, default: 1 },
+                addedAt: { type: Date, default: Date.now },
+                lastUsedAt: { type: Date, default: Date.now }
+            }],
+            validate: deviceUniquenessValidator,
+            default: []
         }
-    ],
+    },
     otp: {
         code: { type: String }, // 6-digit OTP (hashed ideally)
         expiresAt: { type: Date },
