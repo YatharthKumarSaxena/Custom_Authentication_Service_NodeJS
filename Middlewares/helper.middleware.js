@@ -1,5 +1,5 @@
 // Extracting required Modules, their functions and values
-const { throwInvalidResourceError, throwResourceNotFoundError, throwInternalServerError, errorMessage } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, throwResourceNotFoundError, throwInternalServerError, errorMessage, logMiddlewareError, getLogIdentifiers } = require("../configs/error-handler.configs");
 const UserModel = require("../models/user.model");
 const { logWithTime } = require("../utils/time-stamps.utils");
 
@@ -45,11 +45,13 @@ const fetchUser = async(req,res) =>{
             anyResourcePresent = false;
         }
         if(!anyResourcePresent){
-            const resource = "Phone Number, Email ID or Customer ID (Any One of these field)"
+            const resource = "Phone Number, Email ID or Customer ID (Any One of these field)";
+            logMiddlewareError("Fetch User, No resource provided to identify User",req);
             throwResourceNotFoundError(res,resource);
             return verifyWith;
         }
         if(!user){
+            logMiddlewareError("Fetch User, Unauthorized User details provided",req);
             throwInvalidResourceError(res, "Phone Number, Email ID or Customer ID");
             return verifyWith;
         }
@@ -60,8 +62,8 @@ const fetchUser = async(req,res) =>{
         logWithTime(`🆔 User identified using: ${verifyWith}`);
         return verifyWith;
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while fetching the User Request with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while fetching the User Request ${getIdentifiers}`);
         errorMessage(err);
         throwInternalServerError(res);
         return "";
