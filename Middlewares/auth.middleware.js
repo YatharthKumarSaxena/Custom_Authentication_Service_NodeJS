@@ -13,7 +13,7 @@ const { validateSingleIdentifier } = require("../utils/auth.utils");
 const { nameRegex, emailRegex, strongPasswordRegex, numberRegex, countryCodeRegex } = require("../configs/regex.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 const { nameLength, passwordLength, countryCodeLength, emailLength, phoneNumberLength }  = require("../configs/fields-length.config");
-
+const { isValidRegex, validateLength } = require("../utils/field-validators");
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
@@ -24,10 +24,13 @@ const verifySignUpBody = async (req,res,next) =>{
         // Check name is present in Request Body or not
         let userIsValid = true; // Assuming that Request Provided is correct
         let reason = ""; // Stores Reason for Invalid Request
+        let {name,emailID,phoneNumber,password} = req.body;
+        emailID = emailID.trim();
+        name = name.trim();
+        password = password.trim();
         // Check if Name Field Provided Is It Valid Or Not
-        if(typeof req.body.name === 'string' && req.body.name.trim().length){
-            const name = req.body.name.trim();
-            if (name.length < nameLength.min || name.length > nameLength.max){
+        if(typeof name === 'string' && name.length){
+            if (!validateLength(name,nameLength.min,nameLength.max)){
                 return throwInvalidResourceError(res,`Name , Name must be of minimum (${nameLength.min}) letters and maximum (${nameLength.max}) letters`);
             }
             if(!nameRegex.test(name)){
@@ -36,42 +39,43 @@ const verifySignUpBody = async (req,res,next) =>{
             req.body.name = name;
         }
         // Check Email ID is present in Request Body or not
-        if(!req.body.emailID || !req.body.emailID.trim().length){
+        if(!emailID || !emailID.length){
             if(userIsValid)reason = reason+"Email ID";
             else reason = reason+", Email ID";
             userIsValid = false;
         }
         // Check Phone Number is present in Request Body or not
-        if(!req.body.phoneNumber){
+        if(!phoneNumber){
             if(userIsValid)reason = reason+"Phone Number";
             else reason = reason+" ,Phone Number";
             userIsValid = false;
         }
-        const { countryCode,number } = req.body.phoneNumber;
+        let { countryCode,number } = req.body.phoneNumber;
         // Check Country Code in Phone Number Field is present in Request Body or not
-        if(!countryCode|| !countryCode.trim().length){
+        if(!countryCode|| !countryCode.length){
             if(userIsValid)reason = reason+"Country Code field in Phone Number";
             else reason = reason+" ,Country Code field in Phone Number";
             userIsValid = false;
         }
         // Check Number in Phone Number Field is present in Request Body or not
-        if(!number || !number.trim().length){
+        if(!number || !number.length){
             if(userIsValid)reason = reason+"Number field in Phone Number";
             else reason = reason+" ,Number field in Phone Number";
             userIsValid = false;
         }
+        countryCode = countryCode.trim();
+        number = number.trim();
          // Check Password is present in Request Body or not
-        if(!req.body.password || !req.body.password.trim().length){
+        if(!password || !password.length){
             if(userIsValid)reason = reason+"Password";
             else reason = reason+" and Password";
             userIsValid = false;
         } else {
-            const password = req.body.password.trim();
             // ✅ Move these two checks inside the "else" of password
-            if (password.length < passwordLength.min || password.length > passwordLength.max) {
+            if (!validateLength(password,passwordLength.min,passwordLength.max)) {
                 return throwInvalidResourceError(res, `Password, Password must be at least (${passwordLength.min}) characters long and not more than (${passwordLength.max}) characters`);
             }
-            if (!strongPasswordRegex.test(req.body.password)) {
+            if (!isValidRegex(password,strongPasswordRegex)) {
                 return throwInvalidResourceError(
                     res,
                     "Password Format, Password must contain at least one letter, one number, and one special character",
@@ -83,34 +87,33 @@ const verifySignUpBody = async (req,res,next) =>{
             return throwResourceNotFoundError(res,reason);
         }
         // 📧 Number Format Validation
-        if (number.trim().length < phoneNumberLength.min || number.length > phoneNumberLength.max) {
+        if (!validateLength(number,phoneNumberLength.min,phoneNumberLength.max)) {
             return throwInvalidResourceError(res, `Number, Number must be at least (${phoneNumberLength.min}) digits long and not more than (${phoneNumberLength.max}) digits`);
         }
-        if (!numberRegex.test(number.trim())){
+        if (!isValidRegex(number,numberRegex)){
             return throwInvalidResourceError(
                 res,
                 "Phone Number Format, Please enter a valid phone number that consist of only numeric digits .",
             );
         }
-        req.body.phoneNumber.number = number.trim();
+        req.body.phoneNumber.number = number;
         // 📧 Country Code Format Validation
-        if (countryCode.trim().length < countryCodeLength.min || countryCode.trim().length > countryCodeLength.max) {
+        if (!validateLength(countryCode,countryCodeLength.min,countryCodeLength.max)) {
             return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least (${countryCodeLength.min}) digits long and not more than (${countryCodeLength.max}) digits`);
         }
-        if (!countryCodeRegex.test(countryCode.trim())){
+        if (!isValidRegex(countryCode,countryCodeRegex)){
             return throwInvalidResourceError(
                 res,
                 `Country Code Format, Please enter a valid international country code number not starting from 0 and consist only numeric digits (e.g., 1 || 91 || 78)`,
             );
         }
-        req.body.phoneNumber.countryCode = countryCode.trim();
+        req.body.phoneNumber.countryCode = countryCode;
         // 📧 Email Format Validation
-        const emailID = req.body.emailID.trim();
         // ✅ Move these two checks inside the "else" of password
-        if (emailID.length < emailLength.min || emailID.length > emailLength.max) {
+        if (!validateLength(emailID,emailLength.min,emailLength.max)) {
             return throwInvalidResourceError(res, `Email ID, Email ID must be at least (${emailLength.min}) characters long and not more than (${emailLength.max}) characters`);
         } 
-        if (!emailRegex.test(req.body.emailID.trim())){
+        if (!isValidRegex(emailID,emailRegex)){
             return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
         }
         req.body.emailID = emailID;
