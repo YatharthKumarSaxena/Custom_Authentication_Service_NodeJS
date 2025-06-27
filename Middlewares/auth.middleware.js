@@ -108,7 +108,7 @@ const verifySignUpBody = async (req,res,next) =>{
         if (!res.headersSent) return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while verifying the Sign up Request with User ID: ${getIdentifiers}.`);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign up Request ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -137,7 +137,7 @@ const verifySignInBody = async (req,res,next) =>{
         if (!res.headersSent) return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while verifying the Sign in Request with User ID: ${getIdentifiers}.`);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign in Request ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -160,7 +160,7 @@ const verifySignOutBody = async (req,res,next) => {
         if (!res.headersSent) return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while verifying the Sign out Request with User ID: ${getIdentifiers}.`);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Sign out Request ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -197,7 +197,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         if (!res.headersSent) return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while verifying the Activate Account Request with User ID: ${getIdentifiers}.`);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Activate Account Request ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -243,7 +243,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         if (!res.headersSent) return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while verifying the Deactivate Account Request with User ID: ${getIdentifiers}.`);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Deactivate Account Request ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -295,7 +295,7 @@ const verifyChangePasswordBody = async(req,res,next) => {
         if(!res.headersSent)return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while verifying the Change Password Request with User ID: ${getIdentifiers}.`);
+        logWithTime(`❌ An Internal Error Occurred while verifying the Change Password Request ${getIdentifiers}.`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
