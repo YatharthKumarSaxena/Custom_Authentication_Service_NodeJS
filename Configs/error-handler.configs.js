@@ -8,6 +8,7 @@
 
 // Extracts file that include timeStamp function
 const {logWithTime} = require("../utils/time-stamps.utils");
+const { BAD_REQUEST, INTERNAL_ERROR, UNAUTHORIZED, FORBIDDEN } = require("./http-status.config");
 
 exports.errorMessage = (err) => {
     logWithTime("🛑 Error occurred:");
@@ -27,7 +28,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
     logWithTime("⚠️ Missing required fields in the request:");
     console.log(resource);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(400).json({
+    return res.status(BAD_REQUEST).json({
         success: false,
         warning: "The following required field(s) are missing:",
         fields: resource,
@@ -43,7 +44,7 @@ exports.throwResourceNotFoundError = (res,resource) =>{
 exports.throwInternalServerError = (res) => {
     logWithTime("💥 Internal Server Error occurred.");
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(500).json({
+    return res.status(INTERNAL_ERROR).json({
         success: false,
         response: "An internal server error occurred while processing your request.",
         message: "We apologize for the inconvenience. Please try again later."
@@ -59,7 +60,7 @@ exports.throwInvalidResourceError = (res,resource) => {
     logWithTime("⚠️ Invalid "+resource);
     logWithTime("❌ Invalid Credentials! Please try again.");
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(401).json({
+    return res.status(UNAUTHORIZED).json({
         success: false,
         type: "InvalidResource",
         resource: resource,
@@ -76,7 +77,7 @@ exports.throwInvalidResourceError = (res,resource) => {
 exports.throwAccessDeniedError = (res, reason = "Access Denied") => {
     logWithTime("⛔️ Access Denied: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(403).json({
+    return res.status(FORBIDDEN).json({
         success: false,
         type: "AccessDenied",
         warning: reason,
@@ -93,7 +94,7 @@ exports.throwBlockedAccountError = (req,res) => {
     const reason = req.user.blockReason;
     logWithTime("⛔️ Blocked Account: " + reason);
     if (res.headersSent) return; // 🔐 Prevent duplicate send
-    return res.status(403).json({
+    return res.status(FORBIDDEN).json({
         success: false,
         type: "BlockedAccount",
         warning: reason,
@@ -103,5 +104,10 @@ exports.throwBlockedAccountError = (req,res) => {
 
 exports.globalErrorHandler = (err, req, res, next) => {
     logWithTime("💥 Uncaught Server Error:", err.message);
-    return res.status(500).json({ success: false, message: "🔧 Internal Server Error!" });
+    return res.status(INTERNAL_ERROR).json({ success: false, message: "🔧 Internal Server Error!" });
+};
+
+exports.logMiddlewareError = (context, req) => {
+    const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
+    logWithTime(`❌ Middleware Error: [${context}] | User: (${userID}) | Device: (${req.deviceID})`);
 };

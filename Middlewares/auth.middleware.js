@@ -14,6 +14,7 @@ const { nameRegex, emailRegex, strongPasswordRegex, numberRegex, countryCodeRege
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
 const { nameLength, passwordLength, countryCodeLength, emailLength, phoneNumberLength }  = require("../configs/fields-length.config");
 const { isValidRegex, validateLength } = require("../utils/field-validators");
+const { CONFLICT, BAD_REQUEST, UNAUTHORIZED, FORBIDDEN } = require("../configs/http-status.config");
 const verifySignUpBody = async (req,res,next) =>{
     // Validating the User Request
     try{
@@ -162,7 +163,7 @@ const verifySignOutBody = async (req,res,next) => {
         const isNotVerified = await checkUserIsNotVerified(req,res);
         if (isNotVerified) {
             logWithTime(`🚫 Logout Request Denied: User (${req.user.userID}) is already logged out from device ID: (${req.deviceID})`);
-            return res.status(409).json({
+            return res.status(CONFLICT).json({
                 success: false,
                 message: "User is already logged out.",
                 suggestion: "Please login first before trying to logout again."
@@ -202,7 +203,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         const user = req.foundUser;
         if(user.isActive === true){
             logWithTime(`🚫 User Account Activation Request Denied: User Account of User (${user.userID}) is already Active from device ID: (${req.deviceID}).`);
-            return res.status(400).json({
+            return res.status(CONFLICT).json({
                 success: false,
                 message: "User Account is already Active.",
                 suggestion: "Please deactivate your account first before trying to activate again."
@@ -240,7 +241,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         // Decativate account Require either Phone Number, Email ID or UserID for Verification along with Password
         if(user.userID !== req.foundUser.userID){ 
             logWithTime(`🚫 Deactivation Request Denied: Authenticated user (${user.userID}) tried to deactivate another account (${req.foundUser.userID})`);
-            return res.status(403).json({
+            return res.status(UNAUTHORIZED).json({
                 success: false,
                 message: "You are not authorized to deactivate this account.",
                 reason: "Authenticated user and target user do not match."
@@ -251,7 +252,7 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
         }
         if(user.isActive === false){
             logWithTime("🚫 User Account Deactivation Request Denied: User Account is already Inactive.");
-            return res.status(400).json({
+            return res.status(CONFLICT).json({
                 success: false,
                 message: "User Account is already Inactive.",
                 suggestion: "Please activate your account first before trying to deactivate again."
@@ -271,7 +272,7 @@ const verifyChangePasswordBody = async(req,res,next) => {
     try{
         if(req.user.userType === "ADMIN"){
             logWithTime(`🚫 Change Password Request Blocked: Admin (${req.user.userID}) attempted to change password from device (${req.deviceID})`);
-            return res.status(403).json({
+            return res.status(FORBIDDEN).json({
                 success: false,
                 message: "Admin password cannot be changed via this route.",
                 reason: "Admin accounts are system-level and cannot be modified like regular users."
@@ -289,17 +290,17 @@ const verifyChangePasswordBody = async(req,res,next) => {
             return throwResourceNotFoundError(res,"New Password");
         }
         if(oldPassword === newPassword){
-            return res.status(400).json({
+            return res.status(BAD_REQUEST).json({
                 success: false,
                 message: "New password must be different from your current password."
             });
         }
         // Check for minimum length
-        if (newPassword.length < 8) {
-            return throwInvalidResourceError(res, "Password must be at least 8 characters long");
+        if (!validateLength(newPassword,passwordLength.min,passwordLength.max)) {
+            return throwInvalidResourceError(res, `Password, Password must be at least (${passwordLength.min}) characters long and not more than (${passwordLength.max}) characters`);
         }
         // Strong Password Format: At least one letter, one digit, and one special character
-        if (!strongPasswordRegex.test(newPassword)) {
+        if (!isValidRegex(newPassword,strongPasswordRegex)) {
             return throwInvalidResourceError(
                 res,
                 "Password, Password must contain at least one letter, one number, and one special character",
