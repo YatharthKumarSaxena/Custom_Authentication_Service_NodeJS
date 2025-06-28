@@ -265,8 +265,12 @@ const verifyTokenOwnership = async(req, res, next) => {
         try {
             decodedAccess = jwt.verify(accessToken, secretCodeOfAccessToken);
         } catch (err) {
-            logWithTime("Access token provided is invalid or expired");
-            return throwInvalidResourceError(res, "Access Token");
+        if (err.name === "TokenExpiredError") {
+            logWithTime("⚠️ Access token is expired, passing control to next middleware");
+            if (!res.headersSent) return next(); // ✅ Let next middleware handle it
+        }
+        logWithTime("❌ Access token is invalid");
+        return throwInvalidResourceError(res, "Access Token");
         }
         // 5. Match both token owners
         if (decodedAccess && String(decodedAccess.id) !== String(decodedRefresh.id)) {
