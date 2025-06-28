@@ -10,8 +10,8 @@ module.exports = {
     max: 64
   },
   countryCodeLength: {
-    min: 2, // '+1' or '+91'
-    max: 4
+    min: 1,
+    max: 3
   },
   phoneNumberLength: {
     min: 9,

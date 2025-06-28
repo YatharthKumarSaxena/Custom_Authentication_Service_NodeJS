@@ -113,18 +113,7 @@ const checkUserIsNotVerified = async(req,res) => {
 const signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
-    // Check that User Exists with Phone Number or Email ID
-    let emailID = request_body.emailID.trim().toLowerCase();
-    let phoneNumber = request_body.phoneNumber.trim();
-    // Checking User already exists or not 
-    const userExistReason = await checkUserExists(emailID,phoneNumber,res);
-    if(userExistReason !== ""){
-        return res.status(BAD_REQUEST).json({
-            success: false,
-            message: "User Already Exists with "+userExistReason,
-            warning: "Use different Email ID or Phone Number or both based on Message"
-        })
-    }
+    let emailID = request_body.emailID;
     /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
     let generatedUserID; // To resolve Scope Resolution Issue
     try{
@@ -148,6 +137,16 @@ const signUp = async (req,res) => { // Made this function async to use await
 
     const newNumber = createFullPhoneNumber(req,res);
     if(!newNumber)return;
+    
+    // Checking User already exists or not 
+    const userExistReason = await checkUserExists(emailID,newNumber,res);
+    if(userExistReason !== ""){
+        return res.status(BAD_REQUEST).json({
+            success: false,
+            message: "User Already Exists with "+userExistReason,
+            warning: "Use different Email ID or Phone Number or both based on Message"
+        })
+    }
     const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
     const device = createDeviceField(req,res);
     if(!device){

@@ -38,27 +38,27 @@ const validateSingleIdentifier = (req, res, source = 'body') => {
 
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID
-const checkUserExists = async(emailID,phoneNumber,res) => {
+const checkUserExists = async(emailID,fullPhoneNumber,res) => {
     try{
         let count = 0;
-        let user = await UserModel.findOne({fullPhoneNumber: phoneNumber})
+        let user = await UserModel.findOne({fullPhoneNumber: fullPhoneNumber})
         let reason = "";
         if(user){
-            logWithTime("⚠️ User Already Exists with Phone Number: "+phoneNumber);
-            reason = "Phone Number: "+phoneNumber;
+            logWithTime("⚠️ User Already Exists with Phone Number: "+fullPhoneNumber);
+            reason = "Phone Number: "+fullPhoneNumber;
             count++;
         }
         user = await UserModel.findOne({emailID: emailID});
         if(user){
             logWithTime("⚠️ User Already Exists with Email ID: "+emailID);
-            if(count)reason= "Phone Number: "+phoneNumber+" and Email ID: "+emailID;
+            if(count)reason= "Phone Number: "+fullPhoneNumber+" and Email ID: "+emailID;
             else reason = "Email ID: "+emailID;
             count++;
         }
         if(count!==0)logWithTime("⚠️ Invalid Registration");
         return reason;
     }catch(err){
-        logWithTime(`❌ An Internal Error occurred while checking existing user with phone number: (${phoneNumber}) and emailID: (${emailID}).`);
+        logWithTime(`❌ An Internal Error occurred while checking existing user with phone number: (${fullPhoneNumber}) and emailID: (${emailID}).`);
         errorMessage(err);
         throwInternalServerError(res);
         return "";

@@ -23,10 +23,10 @@ const verifySignUpBody = async (req,res,next) =>{
             return throwResourceNotFoundError(res,"SignUp Body");
         }
         let {name,emailID,phoneNumber,password} = req.body;
-        emailID = emailID.trim();
-        password = password.trim();
+        if(emailID)emailID = emailID.trim();
+        if(password)password = password.trim();
         // Check name is present in Request Body or not
-        name = name.trim();
+        if(name)name = name.trim();
         // Check if Name Field Provided Is It Valid Or Not
         if(typeof name === 'string' && name.length){
             if (!validateLength(name,nameLength.min,nameLength.max)){
@@ -43,8 +43,10 @@ const verifySignUpBody = async (req,res,next) =>{
         const missingFields = [];
         if (!emailID) missingFields.push("Email ID");
         if (!phoneNumber) missingFields.push("Phone Number");
-        if (!countryCode) missingFields.push("Country Code field in Phone Number");
-        if (!number) missingFields.push("Number field in Phone Number");
+        else {
+            if (!countryCode) missingFields.push("Country Code field in Phone Number");
+            if (!number) missingFields.push("Number field in Phone Number");
+        }
         if (!password) missingFields.push("Password");
         else {
             // ✅ Move these two checks inside the "else" of password
