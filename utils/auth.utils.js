@@ -8,7 +8,7 @@ const { fullPhoneNumberRegex } = require("../configs/regex.config");
 const { fullPhoneNumberLength } = require("../configs/fields-length.config");
 
 const validateSingleIdentifier = (req, res, source = 'body') => {
-    const identifierKeys = ['userID', 'emailID', 'phoneNumber'];
+    const identifierKeys = ['userID', 'emailID', 'fullPhoneNumber'];
     const data = req[source];
 
     const validIdentifiers = identifierKeys.filter(key =>
