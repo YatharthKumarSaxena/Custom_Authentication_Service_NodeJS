@@ -114,21 +114,6 @@ const signUp = async (req,res) => { // Made this function async to use await
     /* 1. Read the User Request Body */
     const request_body = req.body; // Extract User Data from the User Post Request
     let emailID = request_body.emailID;
-    /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
-    let generatedUserID; // To resolve Scope Resolution Issue
-    try{
-        generatedUserID= await makeUserID(res); // Generating Customer ID 
-        if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
-            return res.status(INSUFFICIENT_STORAGE).json({
-                success: false,
-                message: "User limit reached. Cannot register more users at this time."
-            });
-        }
-    }catch(err){
-        logWithTime(`⚠️ Error Occured while making the User ID of Phone Number: (${req.body.phoneNumber}) and EmailID (${req.body.emailID}) from device id: (${req.deviceID})`);
-        errorMessage(err);
-        return throwInternalServerError(res);
-    }
 
     /*
       ✅ SRP: User object is composed here only once after getting all required parts.
@@ -150,9 +135,26 @@ const signUp = async (req,res) => { // Made this function async to use await
     const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
     const device = createDeviceField(req,res);
     if(!device){
-        logWithTime(`❌ Device creation failed for User (${generatedUserID}) for device id: (${req.deviceID}) at the time of Sign Up Request`);
+        logWithTime(`❌ Device creation failed for User for device id: (${req.deviceID}) at the time of Sign Up Request`);
         return throwInternalServerError(res);
     }
+
+    /* 2. Insert the Data in the Users Collection of Mongo DB ecomm_db Database */ 
+    let generatedUserID; // To resolve Scope Resolution Issue
+    try{
+        generatedUserID= await makeUserID(res); // Generating Customer ID 
+        if (generatedUserID === "") { // Check that Machine can Accept More Users Data or not
+            return res.status(INSUFFICIENT_STORAGE).json({
+                success: false,
+                message: "User limit reached. Cannot register more users at this time."
+            });
+        }
+    }catch(err){
+        logWithTime(`⚠️ Error Occured while making the User ID of Phone Number: (${req.body.phoneNumber}) and EmailID (${req.body.emailID}) from device id: (${req.deviceID})`);
+        errorMessage(err);
+        return throwInternalServerError(res);
+    }
+
     const { countryCode,number } = request_body.phoneNumber;
     const User = {
         phoneNumber: {
