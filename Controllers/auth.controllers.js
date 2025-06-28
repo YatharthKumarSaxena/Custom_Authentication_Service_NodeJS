@@ -10,7 +10,7 @@
 const { SALT, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs")
-const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError, getLogIdentifiers } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError, getLogIdentifiers, throwResourceNotFoundError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { checkUserExists, checkPasswordIsValid, createFullPhoneNumber } = require("../utils/auth.utils");
@@ -268,7 +268,7 @@ const signIn = async (req,res) => {
         if(device){
             device.lastUsedAt = Date.now();
             await user.save();
-            logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device id (${req.deviceID})`);
+            logWithTime(`⚠️ Access Denied: User with userID: ${user.userID} attempted to login on same device id ${req.deviceID}`);
             return res.status(BAD_REQUEST).json({
                 success: false,
                 message: "User is already logged in.",
@@ -279,7 +279,7 @@ const signIn = async (req,res) => {
         if(isThresholdCrossed)return;
         device = createDeviceField(req,res);
         if(!device){
-            logWithTime(`❌ Device creation failed for User (${generatedUserID}) for device id: (${req.deviceID}) at the time of Sign In Request`);
+            logWithTime(`❌ Device creation failed for User ${user.userID} for device id: ${req.deviceID} at the time of Sign In Request`);
             return throwInternalServerError(res);
         }
         // Check Password is Correct or Not
@@ -288,33 +288,33 @@ const signIn = async (req,res) => {
             // Sign with JWT Token
             const refreshToken = await signInWithToken(req,res);
             if (refreshToken === "") {
-                logWithTime(`❌ Refresh token generation failed during login of User with userID: (${user.userID}) from device id: (${req.deviceID})`);
+                logWithTime(`❌ Refresh token generation failed during login of User with userID: ${user.userID} from device id: ${req.deviceID}`);
                 return throwInternalServerError(res);
             }
             const isCookieSet = setRefreshTokenCookie(res,refreshToken);
             if(!isCookieSet){
-                logWithTime(`❌ An Internal Error Occurred in setting refresh token for user (${user.userID}) at the time of Login. Request is made from device ID: (${req.deviceID})`);
+                logWithTime(`❌ An Internal Error Occurred in setting refresh token for user ${user.userID} at the time of Login. Request is made from device ID: ${req.deviceID}`);
                 return;
             }
             user.jwtTokenIssuedAt = Date.now();
             const isUserLoggedIn = await loginTheUser(user,refreshToken,device,res);
             if(!isUserLoggedIn){
-                logWithTime(`❌ An Internal Error Occurred in logging in the user (${user.userID}) at the time of login request. Request is made from device ID: (${req.deviceID})`);
+                logWithTime(`❌ An Internal Error Occurred in logging in the user ${user.userID} at the time of login request. Request is made from device ID: ${req.deviceID}`);
                 return;
             }
             // Update data into auth.logs
             await logAuthEvent(req, "LOGIN", { performedOn: user });
             const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
             if(!accessToken){
-                logWithTime(`❌ Access token creation failed for User (${user.userID}) at the time of sign up request. Request is made from device id: (${req.deviceID})`);
+                logWithTime(`❌ Access token creation failed for User ${user.userID} at the time of sign up request. Request is made from device id: ${req.deviceID}`);
                 return throwInternalServerError(res);
             }
             const isAccessTokenSet = setAccessTokenHeaders(res,accessToken);
             if(!isAccessTokenSet){
-                logWithTime(`❌ Access token set in header failed for User (${user.userID}) at the time of sign in request. Request is made from device id: (${req.deviceID})`);
+                logWithTime(`❌ Access token set in header failed for User ${user.userID} at the time of sign in request. Request is made from device id: ${req.deviceID}`);
                 return throwInternalServerError(res);
             }
-            logWithTime(`🔐 User with (${user.userID}) is Successfully logged in from device id: (${req.deviceID})`);
+            logWithTime(`🔐 User with ${user.userID} is Successfully logged in from device id: ${req.deviceID}`);
             const praiseBy = user.name || user.userID;
             return res.status(OK).json({
                 success: true,
@@ -322,7 +322,7 @@ const signIn = async (req,res) => {
             })
         }
         else{
-            logWithTime(`❌ Incorrect Password provided by User with userID: (${user.userID}) for Login Purpose from device id: (${req.deviceID})`);
+            logWithTime(`❌ Incorrect Password provided by User with userID: ${user.userID} for Login Purpose from device id: ${req.deviceID}`);
             return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
@@ -384,7 +384,7 @@ const signOutFromSpecificDevice = async(req,res) => {
         }
         const praiseBy = user.name || user.userID;
         // Check if User is Logged in on this Single Device  
-        if(user.devices.length === 1){ 
+        if(user.devices.info.length === 1){ 
             // If yes then isVerified is changed to False
             const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from current device request")
             if(!isUserLoggedOut)return;
@@ -456,6 +456,7 @@ const deactivateUserAccount = async(req,res) => {
             return throwInvalidResourceError(res,"Password");
         }
         user.isActive = false;
+        user.lastDeactivatedAt = Date.now();
         // Forcibly Log Out User when its Account is Deactivated
         const isUserLoggedOut = await logoutUserCompletely(user,res,req,"decativate account request")
         if(!isUserLoggedOut)return;
@@ -519,7 +520,7 @@ const getActiveDevices = async (req, res) => {
     }
     else user = req.user;
     
-    if (!Array.isArray(user.devices) || user.devices.length === 0) {
+    if (!Array.isArray(user.devices) || user.devices.info.length === 0) {
       logWithTime(`📭 No active devices found for User (${user.userID})`);
       return res.status(OK).json({
         success: true,
@@ -530,7 +531,7 @@ const getActiveDevices = async (req, res) => {
     }
 
     // Sort devices by lastUsedAt descending
-    const sortedDevices = user.devices.sort(
+    const sortedDevices = user.devices.info.sort(
       (a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt)
     );
 
