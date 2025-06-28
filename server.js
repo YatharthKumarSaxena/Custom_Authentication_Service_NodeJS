@@ -72,8 +72,6 @@ async function init(){ // To use await we need to make function Asynchronous
                     user.lastActivatedAt = Date.now();
                     await user.save();
                     console.log("📦 JWT Refresh Token: ", refreshToken);
-                    // Update data into auth.logs
-                    await adminAuthLogForSetUp(user, "REGISTER");
                 }
                 // Use this code only in Development Phase (Not For Production Phase)
                 const accessToken = await makeTokenWithMongoIDForAdmin(user,expiryTimeOfAccessToken);
@@ -86,6 +84,8 @@ async function init(){ // To use await we need to make function Asynchronous
                 }*/
                 logWithTime("Admin User details are given below:- ");
                 console.log(user);
+                // Update data into auth.logs
+                await adminAuthLogForSetUp(user, "REGISTER");
             }catch(err){
                 logWithTime("⚠️ Error Occured while Creating an Admin User");
                 errorMessage(err);

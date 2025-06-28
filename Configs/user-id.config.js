@@ -17,7 +17,11 @@ module.exports = {
     expiryTimeOfRefreshToken: Number(process.env.REFRESH_TOKEN_EXPIRY),
     adminUser:{
         name: process.env.ADMIN_NAME,
-        phoneNumber: process.env.ADMIN_PHONE,
+        phoneNumber: {
+            countryCode: process.env.ADMIN_COUNTRY_CODE,
+            number: process.env.ADMIN_NUMBER
+        },
+        fullPhoneNumber: process.env.ADMIN_FULL_PHONE_NUMBER,
         // Password is Encypted to make the Password more complicated to crack
         // When Someone by Chance get access to Database if password is stored in Encrypted format
         // It makes it complicated to decode and hence it increases the security of User Data Privacy
@@ -27,7 +31,9 @@ module.exports = {
         emailID: process.env.ADMIN_EMAIL_ID,
         userType: "ADMIN",
         userID: adminID,
-        devices: []
+        devices: {
+            info: []
+        }
     },
     // 🎯 Admin Action Reasons - Enum Based Design
     AdminActionReasons: Object.freeze({

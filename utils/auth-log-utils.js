@@ -46,19 +46,20 @@ const logAuthEvent = async (req, eventType, logOptions = {}) => {
 
 const adminAuthLogForSetUp = async(user,eventType) => {
     try{
+        const deviceID = user.devices?.info[0]?.deviceID || process.env.DEVICE_UUID;
         const baseLog = {
             userID: user.userID,
             eventType: eventType,
-            deviceID: user.devices.info[0].deviceID,
+            deviceID: deviceID,
             performedBy: user.userType
         };
 
-        if (user.devices.info[0].deviceName) baseLog.deviceName = user.devices.info[0].deviceName;
-        if (user.devices.info[0].deviceType) baseLog.deviceType = user.devices.info[0].deviceType;
+        baseLog.deviceName = user.devices?.info[0]?.deviceName || process.env.DEVICE_NAME;
+        baseLog.deviceType = user.devices?.info[0]?.deviceType || process.env.DEVICE_TYPE;
 
         const result = new AuthLogModel(baseLog);
         await result.save();
-        logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${user.userID} | device: ${user.devices.info[0].deviceID}`);
+        logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${user.userID} | device ID: ${deviceID}`);
     }catch(err){
         logWithTime(`❌ Internal Error saving AuthLog for Admin event: ${eventType} at set up phase`);
         errorMessage(err);

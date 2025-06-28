@@ -76,8 +76,7 @@ const userSchema = mongoose.Schema({
             maxlength: phoneNumberLength.max,
             match: numberRegex
         },
-        _id: false,
-        index: true
+        _id: false
     },
     fullPhoneNumber: {
         type: String,
