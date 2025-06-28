@@ -79,24 +79,34 @@ const isAdminID = (userID) => {
 };
 
 const createFullPhoneNumber = (req,res) => {
-    const { countryCode,number } = req.body.phoneNumber;
-    const newNumber = "+" + countryCode + number;
-    if(!validateLength(newNumber,fullPhoneNumberLength.min,fullPhoneNumberLength.max)){
-        const userID = req.user.userID || "Unauthorized User";
-        logWithTime(`Invalid Full Phone Number Length provided by ${userID} to update full phone number`);
-        throwInvalidResourceError(res, `Full Phone Number, Full Phone Number must be at least ${fullPhoneNumberLength.min} digits long and not more than ${fullPhoneNumberLength.max} digits`);
+    try{
+        const { countryCode,number } = req.body.phoneNumber;
+        const newNumber = "+" + countryCode + number;
+        if(!validateLength(newNumber,fullPhoneNumberLength.min,fullPhoneNumberLength.max)){
+            const userID = req.user.userID || "Unauthorized User";
+            logWithTime(`Invalid Full Phone Number Length provided by ${userID} to update full phone number`);
+            throwInvalidResourceError(res, `Full Phone Number, Full Phone Number must be at least ${fullPhoneNumberLength.min} digits long and not more than ${fullPhoneNumberLength.max} digits`);
+            return null;
+        }
+        if(!isValidRegex(newNumber,fullPhoneNumberRegex)){
+            const userID = req?.user?.userID || "New User";
+            logWithTime(`Invalid Full Phone Number Format provided by ${userID} to update full phone number`);
+            throwInvalidResourceError(
+                res,
+                "Full phone number Format, Please enter a valid full phone number that consist of only numeric digits .",
+            );
+            return null;
+        }
+        const userID = req.user?.userID || req?.foundUser?.userID || "New User";
+        logWithTime(`Full Phone Number Created Successfully for User with ${userID}`)
+        return newNumber;
+    }catch(err){
+        const userID = req.user?.userID || req?.foundUser?.userID || "New User";
+        logWithTime(`An Error Occurred while creating full phone number for User with ${userID}`);
+        errorMessage(err);
+        throwInternalServerError(res);
         return null;
     }
-    if(!isValidRegex(newNumber,fullPhoneNumberRegex)){
-        const userID = req?.user?.userID || "New User";
-        logWithTime(`Invalid Full Phone Number Format provided by ${userID} to update full phone number`);
-        throwInvalidResourceError(
-            res,
-            "Full phone number Format, Please enter a valid full phone number that consist of only numeric digits .",
-        );
-        return null;
-    }
-    return newNumber;
 }
 
 module.exports = {
