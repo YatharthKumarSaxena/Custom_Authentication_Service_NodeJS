@@ -10,7 +10,7 @@
 const { SALT, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs")
-const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError, getLogIdentifiers } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
 const { checkUserExists, checkPasswordIsValid, createFullPhoneNumber } = require("../utils/auth.utils");
@@ -20,7 +20,7 @@ const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceL
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
-const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE, INTERNAL_ERROR } = require("../configs/http-status.config");
+const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE, INTERNAL_ERROR, OK } = require("../configs/http-status.config");
 
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
@@ -269,7 +269,7 @@ const signIn = async (req,res) => {
             device.lastUsedAt = Date.now();
             await user.save();
             logWithTime(`⚠️ Access Denied: User with userID: (${user.userID}) attempted to login on same device id (${req.deviceID})`);
-            return res.status(400).json({
+            return res.status(BAD_REQUEST).json({
                 success: false,
                 message: "User is already logged in.",
                 suggestion: "Please logout first before trying to login again."
@@ -297,7 +297,6 @@ const signIn = async (req,res) => {
                 return;
             }
             user.jwtTokenIssuedAt = Date.now();
-            await user.save();
             const isUserLoggedIn = await loginTheUser(user,refreshToken,device,res);
             if(!isUserLoggedIn){
                 logWithTime(`❌ An Internal Error Occurred in logging in the user (${user.userID}) at the time of login request. Request is made from device ID: (${req.deviceID})`);
@@ -317,7 +316,7 @@ const signIn = async (req,res) => {
             }
             logWithTime(`🔐 User with (${user.userID}) is Successfully logged in from device id: (${req.deviceID})`);
             const praiseBy = user.name || user.userID;
-            return res.status(200).json({
+            return res.status(OK).json({
                 success: true,
                 message: "Welcome "+praiseBy+", You are successfully logged in",
             })
@@ -327,8 +326,8 @@ const signIn = async (req,res) => {
             return throwInvalidResourceError(res,"Password");
         }
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while logging in the User with userID: (${userID}) from device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error occurred while logging in the User ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }  
@@ -350,14 +349,14 @@ const signOut = async (req,res) => {
         }
         else logWithTime(`🔓 User with (${user.userID}) is Successfully logged out from all devices. User used device having device ID: (${req.deviceID})`);
         const praiseBy = user.name || user.userID;
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: praiseBy+", You are successfully logged out from all devices",
             userID: user.userID,
         })
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while logging out the User with userID: (${userID} from all devices.User tried this using device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error occurred while logging out the User ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -377,7 +376,7 @@ const signOutFromSpecificDevice = async(req,res) => {
         const result = await checkUserIsNotVerified(req,res);
         if(result){
             logWithTime(`🚫 Request Denied: User (${user.userID}) is already logged out from device ID: (${req.deviceID}). User tried this using device ID: (${req.deviceID})`);
-            return res.status(400).json({
+            return res.status(BAD_REQUEST).json({
                 success: false,
                 message: "User is already logged out from all devices.",
                 suggestion: "Please login first before trying to logout again."
@@ -392,12 +391,12 @@ const signOutFromSpecificDevice = async(req,res) => {
             logWithTime(`User (${user.userID}) has log out from last active device successfully from device id: (${req.deviceID})`);
             // Update data into auth.logs
             await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
-            return res.status(200).json({
+            return res.status(OK).json({
                 success: true,
                 message: praiseBy+", successfully signed out from the specified device. Now, You are not signed from any of the device"
             });
         }
-        user.devices = user.devices.filter(item => item.deviceID !== req.deviceID);
+        user.devices = user.devices.info.filter(item => item.deviceID !== req.deviceID);
 
         await user.save();
         if (user.isBlocked) {
@@ -407,14 +406,14 @@ const signOutFromSpecificDevice = async(req,res) => {
         else logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
         // Update data into auth.logs
         await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: praiseBy+", successfully signed out from this device."
         });
 
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while logging in the User with userID: (${userID}) on device having device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error occurred while logging in the User ${getIdentifiers}`);
         errorMessage(err)
         return throwInternalServerError(res);        
     }
@@ -435,14 +434,14 @@ const activateUserAccount = async(req,res) => {
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
         // Update data into auth.logs
         await logAuthEvent(req, "ACTIVATE", { performedOn: user });
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: "Account activated successfully.",
             suggestion: "Please login to continue."
         });
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while activating the User Account with userID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error occurred while activating the User Account ${getIdentifiers}`);
         errorMessage(err)
         return throwInternalServerError(res);
     }
@@ -464,14 +463,14 @@ const deactivateUserAccount = async(req,res) => {
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID} from device id: (${req.deviceID})`);
         // Update data into auth.logs
         await logAuthEvent(req, "DEACTIVATE", { performedOn: user });
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: "Account deactivated successfully.",
             notice: "You are logged out"
         });
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while deactivating the User Account with userID: (${userID}) from device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error occurred while deactivating the User Account ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -489,13 +488,13 @@ const changePassword = async(req,res) => {
         logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
         // Update data into auth.logs
         await logAuthEvent(req, "CHANGE_PASSWORD", { performedOn: user });  
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: "Your password has been changed successfully."
         });
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ Internal Error occurred while changing the password of User with userID: (${userID}) from device id: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error occurred while changing the password of User ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
@@ -522,7 +521,7 @@ const getActiveDevices = async (req, res) => {
     
     if (!Array.isArray(user.devices) || user.devices.length === 0) {
       logWithTime(`📭 No active devices found for User (${user.userID})`);
-      return res.status(200).json({
+      return res.status(OK).json({
         success: true,
         message: "No active devices found for the user.",
         total: 0,
@@ -546,15 +545,15 @@ const getActiveDevices = async (req, res) => {
         logWithTime(`Admin (${req.user.userID}) fetched User (${req.foundUser.userID}) active device sessions from device id: (${req.deviceID})`);
     }
     else logWithTime(`User (${req.user.userID}) fetched its active device sessions from device id: (${req.deviceID})`);
-    if(!res.headersSent)return res.status(200).json({
+    if(!res.headersSent)return res.status(OK).json({
       success: true,
       message: "Active devices fetched successfully.",
       total: sortedDevices.length,
       devices: sortedDevices
     });
   } catch (err) {
-    const userID = req?.user?.userID || "UNKNOWN_USER";
-    logWithTime(`❌ Internal Error occurred while fetching active devices for userID: (${userID})`);
+    const getIdentifiers = getLogIdentifiers(req);
+    logWithTime(`❌ Internal Error occurred while fetching active devices ${getIdentifiers}`);
     if(!res.headersSent)return throwInternalServerError(res);
   }
 };
@@ -582,14 +581,14 @@ const provideUserAccountDetails = async(req,res) => {
         // Update data into auth.logs
         await logAuthEvent(req, "PROVIDE_ACCOUNT_DETAILS", { performedOn: user });
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
-        return res.status(200).json({
+        return res.status(OK).json({
             success: true,
             message: "Here is User Account Details",
             User_Account_Details
         });
     }catch(err){
-        const userID = req?.foundUser?.userID || req?.user?.userID || "UNKNOWN_USER";
-        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile with User ID: (${userID}) from device ID: (${req.deviceID})`);
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile ${getIdentifiers}`);
         errorMessage(err);
         return throwInternalServerError(res);
     }
