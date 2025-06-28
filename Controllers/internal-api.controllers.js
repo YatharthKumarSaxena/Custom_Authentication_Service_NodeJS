@@ -3,12 +3,12 @@
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError, getLogIdentifiers } =  require("../configs/error-handler.configs");
-const { emailRegex, nameRegex, countryCodeRegex, numberRegex, fullPhoneNumberRegex } = require("../configs/regex.config");
+const { emailRegex, nameRegex, countryCodeRegex, numberRegex} = require("../configs/regex.config");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
 const { validateLength, isValidRegex } = require("../utils/field-validators");
 const { createFullPhoneNumber } = require("../utils/auth.utils");
-const { nameLength, emailLength, countryCodeLength, phoneNumberLength, fullPhoneNumberLength } = require("../configs/fields-length.config");
+const { nameLength, emailLength, countryCodeLength, phoneNumberLength} = require("../configs/fields-length.config");
 
 const updateUserProfile = async(req,res) => {
     try{
@@ -45,7 +45,6 @@ const updateUserProfile = async(req,res) => {
           let { countryCode,number } = phoneNumber;
           if(countryCode){
             countryCode = countryCode.trim();
-            logWithTime(`Invalid Country Code Length provided by ${req.user.userID} to update country code in phone number`);
             if(!validateLength(countryCode,countryCodeLength.min,countryCodeLength.max)){
               logWithTime(`Invalid Country Code Length provided by ${req.user.userID} to update number in phone number`);
               return throwInvalidResourceError(res, `Country Code length, Country Code length must be at least ${countryCodeLength.min} digits long and not more than ${countryCodeLength.max} digits`);
@@ -79,11 +78,9 @@ const updateUserProfile = async(req,res) => {
           if(!(!number && !countryCode)){
             if(!number)number = user.phoneNumber.number;
             if(!countryCode)countryCode = user.phoneNumber.countryCode;
-            const newNumber = createFullPhoneNumber(countryCode,number);
+            const newNumber = createFullPhoneNumber(req,res);
             if(!newNumber)return;
-            logWithTime(`Phone Number updated successfully for User ${user.userID}`);
             user.fullPhoneNumber = newNumber;
-            await user.save();
           }
         }
         if(updatedFields.length === 0){

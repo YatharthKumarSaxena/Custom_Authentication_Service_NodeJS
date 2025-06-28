@@ -20,7 +20,7 @@ const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceL
 const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
-const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE } = require("../configs/http-status.config");
+const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE, INTERNAL_ERROR } = require("../configs/http-status.config");
 
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
@@ -28,7 +28,7 @@ const loginTheUser = async (user, refreshToken, device, res) => {
         user.isVerified = true;
         user.lastLogin = Date.now();
         user.loginCount += 1;
-        user.devices.push(device);
+        user.devices.info.push(device);
         await user.save();
         return true;
     } catch (err) {
@@ -44,7 +44,7 @@ const logoutUserCompletely = async (user, res, req, context = "general") => {
     try {
         user.refreshToken = null;
         user.isVerified = false;
-        user.devices = [];
+        user.devices.info = [];
         user.jwtTokenIssuedAt = null;
         user.lastLogout = Date.now();
 
@@ -164,7 +164,9 @@ const signUp = async (req,res) => { // Made this function async to use await
         emailID: request_body.emailID,
         password: password,
         userID: generatedUserID,
-        devices: []
+        devices:{
+            info: []
+        }
     }
     if(request_body.name){
         User.name = request_body.name;
@@ -179,7 +181,9 @@ const signUp = async (req,res) => { // Made this function async to use await
             fullPhoneNumber: newNumber,
             userType: user.userType,
             createdAt: user.createdAt,
-            devices: []
+            devices:{
+                info: []
+            }
         }
         if(User.name)userGeneralDetails.name = request_body.name;
         // Update data into auth.logs
@@ -200,7 +204,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         const refreshToken = await makeTokenWithMongoID(req,res,expiryTimeOfRefreshToken);
         if(!refreshToken){
             logWithTime(`❌ Refresh Token generation failed after successful registration for User (${user.userID})!. User registered from device id: (${req.deviceID})`);
-            return res.status(500).json({
+            return res.status(INTERNAL_ERROR).json({
                 success: false,
                 message: "User registered but login (token generation) failed. Please try logging in manually.",
                 userDisplayDetails
