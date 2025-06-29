@@ -272,6 +272,31 @@ const getUserActiveDevicesForAdmin = async (req, res) => {
   }
 };
 
+// 📦 Controller to Get Total Registered Users (Admins + Customers)
+const getTotalRegisteredUsers = async (req, res) => {
+  try {
+    const totalUsers = await UserModel.countDocuments({});
+    const totalAdmins = await UserModel.countDocuments({ userType: "ADMIN" });
+    const totalCustomers = totalUsers - totalAdmins;
+
+    logWithTime(`📊 Total Users: ${totalUsers}, Admins: ${totalAdmins}, Customers: ${totalCustomers}`);
+
+    return res.status(OK).json({
+      success: true,
+      message: "Total registered users fetched successfully.",
+      totalUsers: totalUsers,
+      totalAdmins: totalAdmins,
+      totalCustomers: totalCustomers
+    });
+
+  } catch (err) {
+    const getIdentifiers = getLogIdentifiers(req);
+    logWithTime(`❌ An Internal Error Occurred while fetching the Total Registered Users ${getIdentifiers}`);
+    errorMessage(err);
+    return throwInternalServerError(res);
+  }
+};
+
 module.exports = {
     getUserAuthLogs: getUserAuthLogs,
     blockUserAccount: blockUserAccount,

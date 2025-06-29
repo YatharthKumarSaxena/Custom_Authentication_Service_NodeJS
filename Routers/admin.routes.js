@@ -6,14 +6,17 @@ const router = express.Router();
 const URIS = require("../configs/uri.config");
 const adminController = require("../controllers/admin.controllers");
 const commonUsedMiddleware = require("../middlewares/common-used.middleware");
-const internal = require("../middlewares/internal.api.middleware");
+const internalMiddleware = require("../middlewares/internal.api.middleware");
 const generalLimiter = require("../rate-limiters/general-api.rate-limiter");
 const adminMiddleware = require("../middlewares/admin.middleware");
+const internalController = require("../controllers/internal-api.controllers");
 
 const {
   BLOCK_USER, UNBLOCK_USER, GET_USER_AUTH_LOGS,
   GET_USER_ACTIVE_SESSIONS, FETCH_USER_DETAILS
 } = URIS.ADMIN_ROUTES.USERS;
+
+const { GET_TOTAL_REGISTERED_USERS } = URIS.ADMIN_ROUTES.STATISTICS;
 
 // 🚫 Admin Only: Block User Account
 // 🔒 Middleware:
@@ -74,7 +77,7 @@ router.post(GET_USER_AUTH_LOGS, [
   commonUsedMiddleware.verifyToken,
   generalLimiter.getUserAuthLogsRateLimiter,
   commonUsedMiddleware.isAdmin,
-  adminMiddleware.adminQueryUserMiddleware,
+  internalMiddleware.verifyAdminUserViewRequest,
   commonUsedMiddleware.checkUserIsVerified
 ], adminController.getUserAuthLogs);
 
@@ -96,9 +99,8 @@ router.get(FETCH_USER_DETAILS, [
   commonUsedMiddleware.verifyToken,
   generalLimiter.checkUserAccountDetailsRateLimiter,
   commonUsedMiddleware.isAdmin,
-  adminMiddleware.adminQueryUserMiddleware,
+  internalMiddleware.verifyAdminUserViewRequest,
   commonUsedMiddleware.checkUserIsVerified,
-  internal.verifyAdminUserViewRequest
 ], adminController.checkUserAccountStatus);
 
 // 🛡️ Admin Only: Provide details of devices of user to admin where he/she is logged in
@@ -118,8 +120,26 @@ router.get(GET_USER_ACTIVE_SESSIONS, [
   commonUsedMiddleware.verifyToken,
   generalLimiter.checkUserDeviceSessionsRateLimiter,
   commonUsedMiddleware.isAdmin,
-  adminMiddleware.adminQueryUserMiddleware,
+  internalMiddleware.verifyAdminUserViewRequest,
   commonUsedMiddleware.checkUserIsVerified
 ], adminController.getUserActiveDevicesForAdmin);
+
+// 🛡️ Admin Only: Provide details of devices of user to admin where he/she is logged in
+// 🔒 Middleware:
+// - Check whether Device provided or not
+// - Validates that Refresh Token Provided or not and is Valid and Access Token is Present or not
+// - Validates Access token or generate it if Expired
+// - Rate Limiter to prevent Server Crash from Heavy API Attacks
+// - Confirms the requester is an admin (role check)
+// - Confirms user is Logged in on that device
+// 🛠️ Controller:
+// - Provide the total number of registered users and type of users count
+router.get(GET_TOTAL_REGISTERED_USERS, [
+  commonUsedMiddleware.verifyDeviceField,
+  commonUsedMiddleware.verifyTokenOwnership,
+  commonUsedMiddleware.verifyToken,
+  commonUsedMiddleware.isAdmin,
+  commonUsedMiddleware.checkUserIsVerified
+], internalController.getTotalRegisteredUsers);
 
 module.exports = router;

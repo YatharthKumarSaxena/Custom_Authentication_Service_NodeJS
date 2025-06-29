@@ -26,12 +26,15 @@ const logAuthEvent = async (req, eventType, logOptions = {}) => {
         if (req.deviceType) baseLog.deviceType = req.deviceType;
 
         // Admin-specific target actions
-        if (logOptions.performedOn || logOptions.filter) {
+        if (userType === "ADMIN" || logOptions.performedOn || logOptions.filter) {
             baseLog.adminActions = {};
             if (logOptions.performedOn?.userID)
                 baseLog.adminActions.targetUserID = logOptions.performedOn.userID;
             if (logOptions.filter)
                 baseLog.adminActions.filter = logOptions.filter;
+            if (logOptions.reason || req.body?.reason || req.query?.reason) {
+                baseLog.adminActions.reason = logOptions.reason || req.body?.reason?.trim() || req.query?.reason?.trim() || null;
+            }
         }
 
         const result = new AuthLogModel(baseLog);

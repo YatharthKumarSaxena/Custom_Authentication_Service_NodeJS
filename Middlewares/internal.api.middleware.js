@@ -61,7 +61,7 @@ const verifyAdminUserViewRequest = async(req,res,next) => {
             logMiddlewareError("Verify Admin User View Request, Invalid Admin Action Reason Provided",req);
             return throwAccessDeniedError(res,"Reason provided. Allowed reasons are: " + Object.values(AdminActionReasons).join(", "))
         }
-        logWithTime(`🔍 Admin with id: (${req.user.userID})tried to check User Account Details of User having UserID: (${req.query.userID}) with reason: (${req.query.reason}) from device having device ID: (${req.deviceID})`);
+        logWithTime(`🔍 Admin with id: (${req.user.userID})tried to check User Details of User having UserID: (${req.query.userID}) with reason: (${req.query.reason}) from device having device ID: (${req.deviceID})`);
         if(!res.headersSent)return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);

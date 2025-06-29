@@ -56,42 +56,7 @@ const verifyAdminCheckUserSessionsBody = async(req,res,next) => {
     }
 }
 
-const adminQueryUserMiddleware = async (req, res, next) => {
-  try {
-
-    const isValid = validateSingleIdentifier(req, res, "query");
-    if (!isValid) return;
-
-    await fetchUser(req, res);
-    if (res.headersSent) return;
-
-    const reason = req.query.reason?.trim();
-    if (!reason) {
-      logWithTime(`⚠️ Admin (${req.user.userID}) requested action on (${req.foundUser.userID}) without reason.`);
-      return res.status(BAD_REQUEST).json({
-        success: false,
-        message: "Admin must provide a valid reason for this action."
-      });
-    }
-
-    // Checking Provided Reasons for User Details Check are Invalid
-    if (!Object.values(AdminActionReasons).includes(reason)) {
-        logWithTime(`✅ Admin (${req.user.userID}) tried to check user (${req.foundUser.userID }) details with invalid reason (${reason}) from device ID: (${req.deviceID})`);
-        return throwInvalidResourceError(res,`Unblock reason. Accepted reasons: ${Object.values(AdminActionReasons).join(", ")}`);
-    }
-
-    if(!res.headersSent)return next();
-   } catch (err) {
-    const userID = req.foundUser.userID || "Unauthorized User";
-    const getIdentifiers = getLogIdentifiers(req);
-    logWithTime(`❌ Internal Error occurred while verifying the Admin Body Request (${getIdentifiers}) on user with userID: (${userID})`);
-    errorMessage(err);
-    return throwInternalServerError(res);
-  }
-};
-
 module.exports = {
-    adminQueryUserMiddleware: adminQueryUserMiddleware,
     verifyAdminBlockUnblockBody: verifyAdminBlockUnblockBody,
     verifyAdminCheckUserSessionsBody: verifyAdminCheckUserSessionsBody
 }

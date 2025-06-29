@@ -34,15 +34,24 @@ const authLogSchema = new mongoose.Schema({
     enum: ["CUSTOMER", "ADMIN"],
     default: "CUSTOMER"
   },
-  adminActions: {
-    targetUserID:{
-      type: String
+adminActions: {
+  type: new mongoose.Schema({
+    targetUserID: {
+      type: String,
+      default: null
     },
-    filter:{
+    reason: {
+      type: String,
+      default: null
+    },
+    filter: {
       type: [String],
-      enum: AUTH_LOG_EVENTS
-    },
-  }
+      enum: AUTH_LOG_EVENTS,
+      default: undefined  // not null; avoids storing empty arrays unnecessarily
+    }
+  }, { _id: false }),
+  default: undefined
+}
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("AuthLog", authLogSchema);

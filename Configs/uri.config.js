@@ -51,6 +51,9 @@ module.exports = {
             GET_USER_ACTIVE_SESSIONS: `/active-sessions`,   // GET /custom-auth-service/api/v1/admin/active-sessions
             FETCH_USER_DETAILS: `/fetch-user-details`       // GET /custom-auth-service/api/v1/admin/users/fetch-user-details 
         },
+        STATISTICS: {
+            GET_TOTAL_REGISTERED_USERS: "/stats/total-users"  // GET /custom-auth-service/api/v1/admin/stats/total-users
+        }
     },
     INTERNAL_ROUTES: {
         SET_REFRESH_COOKIE: "/admin/set-refresh-cookie"  // POST /custom-auth-service/internal/admin/set-refresh-cookie

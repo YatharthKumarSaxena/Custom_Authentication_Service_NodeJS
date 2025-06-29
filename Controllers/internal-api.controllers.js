@@ -9,6 +9,7 @@ const { OK } = require("../configs/http-status.config");
 const { validateLength, isValidRegex } = require("../utils/field-validators");
 const { createFullPhoneNumber } = require("../utils/auth.utils");
 const { nameLength, emailLength, countryCodeLength, phoneNumberLength} = require("../configs/fields-length.config");
+const { getLogIdentifiers } = require("../configs/error-handler.configs")
 
 const updateUserProfile = async(req,res) => {
     try{
@@ -131,7 +132,33 @@ const setRefreshCookieForAdmin = async (req, res) => {
   }
 };
 
+// 📦 Controller to Get Total Registered Users (Admins + Customers)
+const getTotalRegisteredUsers = async (req, res) => {
+  try {
+    const totalUsers = await UserModel.countDocuments({});
+    const totalAdmins = await UserModel.countDocuments({ userType: "ADMIN" });
+    const totalCustomers = totalUsers - totalAdmins;
+
+    logWithTime(`📊 Total Users: ${totalUsers}, Admins: ${totalAdmins}, Customers: ${totalCustomers}`);
+
+    return res.status(OK).json({
+      success: true,
+      message: "Total registered users fetched successfully.",
+      totalUsers: totalUsers,
+      totalAdmins: totalAdmins,
+      totalCustomers: totalCustomers
+    });
+
+  } catch (err) {
+    const getIdentifiers = getLogIdentifiers(req);
+    logWithTime(`❌ An Internal Error Occurred while fetching the Total Registered Users ${getIdentifiers}`);
+    errorMessage(err);
+    return throwInternalServerError(res);
+  }
+};
+
 module.exports = {
     updateUserProfile: updateUserProfile,
+    getTotalRegisteredUsers: getTotalRegisteredUsers,
     setRefreshCookieForAdmin: setRefreshCookieForAdmin
 }
