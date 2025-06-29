@@ -10,10 +10,10 @@
 const { SALT, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs")
-const { throwInvalidResourceError, errorMessage, throwInternalServerError, throwAccessDeniedError, getLogIdentifiers, throwResourceNotFoundError } = require("../configs/error-handler.configs");
+const { throwInvalidResourceError, errorMessage, throwInternalServerError, getLogIdentifiers, throwResourceNotFoundError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
-const { checkUserExists, checkPasswordIsValid, createFullPhoneNumber } = require("../utils/auth.utils");
+const { checkUserExists, checkPasswordIsValid, createFullPhoneNumber, validateSingleIdentifier } = require("../utils/auth.utils");
 const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceLimit } = require("../utils/device.utils");
@@ -21,6 +21,7 @@ const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
 const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE, INTERNAL_ERROR, OK } = require("../configs/http-status.config");
+
 
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
@@ -506,61 +507,35 @@ const changePassword = async(req,res) => {
     }
 }
 
-// Controller to Fetch All Active Devices of a User
-const getActiveDevices = async (req, res) => {
+const getMyActiveDevices = async (req, res) => {
   try {
-    // If Get Request has a User then We have to Extract its Details and give to the Admin
-    if(req?.query?.userID || req?.query?.emailID || req?.query?.phoneNumber){
-        await fetchUser(req,res);
-        if (res.headersSent) return; // If response is returned by fetchUser
-    }
-    let user;
-    if(req.foundUser){
-        const isUserCheckedAdmin = isAdminID(req.foundUser.userID);
-        if(isUserCheckedAdmin && req.foundUser.userID !== adminID){
-            logWithTime(`❌ Admin (${req.user.userID}) attempted to access logs of another admin (${req.foundUser.userID})`);
-            return throwAccessDeniedError(res,"Access denied. You cannot access another admin's authentication logs.");
-        }
-        user = req.foundUser;
-    }
-    else user = req.user;
-    
-    if (!Array.isArray(user.devices) || user.devices.info.length === 0) {
+    const user = req.user;
+
+    if (!Array.isArray(user.devices?.info) || user.devices.info.length === 0) {
       logWithTime(`📭 No active devices found for User (${user.userID})`);
       return res.status(OK).json({
         success: true,
-        message: "No active devices found for the user.",
+        message: "No active devices found.",
         total: 0,
         devices: []
       });
     }
 
-    // Sort devices by lastUsedAt descending
-    const sortedDevices = user.devices.info.sort(
-      (a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt)
-    );
+    const publicDevices = user.devices.info.map(({ lastUsedAt, deviceType }) => ({
+      lastUsedAt,
+      deviceType: deviceType || "Unknown"
+    })).sort((a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt));
 
-    // Update data into auth.logs
-    await logAuthEvent(req, "GET_ACTIVE_DEVICES_LOG", { performedOn: user });
-    logWithTime(`📲 Fetched ${sortedDevices.length} active devices for User (${user.userID})`);
-    if(req.foundUser){
-        // Update data into auth.logs
-        getActiveDevicesLog["adminActions"] = {
-            targetUserID: user.userID
-        }
-        logWithTime(`Admin (${req.user.userID}) fetched User (${req.foundUser.userID}) active device sessions from device id: (${req.deviceID})`);
-    }
-    else logWithTime(`User (${req.user.userID}) fetched its active device sessions from device id: (${req.deviceID})`);
-    if(!res.headersSent)return res.status(OK).json({
+    logWithTime(`🙋‍♂️ User (${user.userID}) fetched public view of their active devices.`);
+    return res.status(OK).json({
       success: true,
-      message: "Active devices fetched successfully.",
-      total: sortedDevices.length,
-      devices: sortedDevices
+      message: "Your active sessions fetched successfully.",
+      total: publicDevices.length,
+      devices: publicDevices
     });
   } catch (err) {
-    const getIdentifiers = getLogIdentifiers(req);
-    logWithTime(`❌ Internal Error occurred while fetching active devices ${getIdentifiers}`);
-    if(!res.headersSent)return throwInternalServerError(res);
+    errorMessage(err);
+    return throwInternalServerError(res);
   }
 };
 
@@ -605,7 +580,7 @@ module.exports = {
     signIn: signIn,
     signOut: signOut,
     changePassword: changePassword,
-    getActiveDevices: getActiveDevices,
+    getMyActiveDevices: getMyActiveDevices,
     activateUserAccount: activateUserAccount,
     deactivateUserAccount: deactivateUserAccount,
     checkUserIsNotVerified: checkUserIsNotVerified,

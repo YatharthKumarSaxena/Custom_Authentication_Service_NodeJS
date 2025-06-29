@@ -9,7 +9,9 @@ const { fullPhoneNumberLength } = require("../configs/fields-length.config");
 
 const validateSingleIdentifier = (req, res, source = 'body') => {
     const identifierKeys = ['userID', 'emailID', 'fullPhoneNumber'];
-    const data = req[source];
+
+    // 👇 This ensures both req.body and req.query work reliably
+    const data = source === 'query' ? Object.assign({}, req.query) : req.body;
 
     const validIdentifiers = identifierKeys.filter(key =>
         data.hasOwnProperty(key) && typeof data[key] === 'string' && data[key].trim() !== ''
@@ -35,6 +37,7 @@ const validateSingleIdentifier = (req, res, source = 'body') => {
     logWithTime(`🧩 Valid identifier input detected from device id: (${req.deviceID}).`);
     return true;
 };
+
 
 
 // ✅ SRP: This function only checks for existing users via phoneNumber or emailID

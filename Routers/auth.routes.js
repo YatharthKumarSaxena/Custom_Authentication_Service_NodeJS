@@ -158,6 +158,6 @@ router.get(CHECK_ACTIVE_SESSIONS, [
   commonUsedMiddleware.isUserBlocked,
   commonUsedMiddleware.isUserAccountActive,
   commonUsedMiddleware.checkUserIsVerified
-], authController.getActiveDevices);
+], authController.getMyActiveDevices);
 
 module.exports = router;

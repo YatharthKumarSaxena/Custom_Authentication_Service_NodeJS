@@ -56,6 +56,10 @@ module.exports = {
     updateUserProfile: {
       maxRequests: 3,
       windowMs: 10 * 60 * 1000     // every 10 minutes
+    },
+    checkUserDeviceSessions: {
+      maxRequests: 5,
+      windowMs: 10 * 60 * 1000     // every 10 minutes
     }
   }
 };

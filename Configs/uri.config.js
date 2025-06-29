@@ -49,7 +49,7 @@ module.exports = {
             UNBLOCK_USER: `/unblock-user`,          // PATCH /custom-auth-service/api/v1/admin/unblock-user
             GET_USER_AUTH_LOGS: `/auth-logs`,       // POST / /custom-auth-service/api/v1/admin/auth-logs
             GET_USER_ACTIVE_SESSIONS: `/active-sessions`,   // GET /custom-auth-service/api/v1/admin/active-sessions
-            FETCH_USER_DETAILS: `/fetch-user-details`     // GET /custom-auth-service/api/v1/admin/users/fetch-user-details  
+            FETCH_USER_DETAILS: `/fetch-user-details`       // GET /custom-auth-service/api/v1/admin/users/fetch-user-details 
         },
     },
     INTERNAL_ROUTES: {

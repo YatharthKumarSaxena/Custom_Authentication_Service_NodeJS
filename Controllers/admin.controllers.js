@@ -9,7 +9,8 @@ const { fetchUser } = require("../middlewares/helper.middleware");
 const { isAdminID } = require("../utils/auth.utils");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
-const { getLogIdentifiers } = require("../configs/error-handler.configs")
+const { getLogIdentifiers } = require("../configs/error-handler.configs");
+const { fetchUser } = require("../middlewares/helper.middleware");
 
 const blockUserAccount = async(req,res) => {
     try{
@@ -223,9 +224,58 @@ const checkUserAccountStatus = async(req,res) => {
     }
 }
 
+const getUserActiveDevicesForAdmin = async (req, res) => {
+  try {
+
+    // 🚫 Disallow viewing other admins (unless super-admin override)
+    const isTargetAdmin = isAdminID(req.foundUser.userID);
+    if (isTargetAdmin && req.foundUser.userID !== adminID) {
+      logWithTime(`🚫 Admin (${req.user.userID}) tried to access another admin (${req.foundUser.userID}) device sessions.`);
+      return throwAccessDeniedError(res, "You cannot access another admin’s authentication logs.");
+    }
+
+    // ✅ Proceed with extracting devices
+    const user = req.foundUser;
+    if (!Array.isArray(user.devices?.info) || user.devices.info.length === 0) {
+      logWithTime(`📭 No active devices found for User (${user.userID})`);
+      return res.status(OK).json({
+        success: true,
+        message: "No active devices found for this user.",
+        total: 0,
+        devices: []
+      });
+    }
+
+    // 🧾 Sort by lastUsedAt descending
+    const sortedDevices = user.devices.info.sort((a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt));
+
+    // 📝 Log event
+    const getActiveDevicesLog = await logAuthEvent(req, "GET_ACTIVE_DEVICES_LOG", {
+      performedOn: user,
+      adminActions: { reason, targetUserID: user.userID }
+    });
+
+    logWithTime(`👁️ Admin (${req.user.userID}) viewed ${sortedDevices.length} active devices of User (${user.userID})`);
+
+    return res.status(OK).json({
+      success: true,
+      message: `Fetched active device sessions of User (${user.userID})`,
+      total: sortedDevices.length,
+      devices: sortedDevices
+    });
+
+  } catch (err) {
+    const getIdentifiers = getLogIdentifiers(req);
+    logWithTime(`❌ Internal Error occurred while fetching user's active devices ${getIdentifiers}`);
+    errorMessage(err);
+    return throwInternalServerError(res);
+  }
+};
+
 module.exports = {
     getUserAuthLogs: getUserAuthLogs,
     blockUserAccount: blockUserAccount,
     unblockUserAccount: unblockUserAccount,
-    checkUserAccountStatus: checkUserAccountStatus
+    checkUserAccountStatus: checkUserAccountStatus,
+    getUserActiveDevicesForAdmin: getUserActiveDevicesForAdmin
 }
