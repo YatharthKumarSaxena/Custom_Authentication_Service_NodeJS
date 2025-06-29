@@ -397,7 +397,7 @@ const signOutFromSpecificDevice = async(req,res) => {
                 message: praiseBy+", successfully signed out from the specified device. Now, You are not signed from any of the device"
             });
         }
-        user.devices = user.devices.info.filter(item => item.deviceID !== req.deviceID);
+        user.devices.info = user.devices.info.filter(item => item.deviceID !== req.deviceID);
 
         await user.save();
         if (user.isBlocked) {

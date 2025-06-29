@@ -174,7 +174,14 @@ const verifyToken = (req,res,next) => {
     jwt.verify(accessToken,secretCodeOfAccessToken,async (err,decoded)=>{
         try{
             let user = req.user;
-            if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid           
+            if (err || !decoded || !decoded.id) { // Means Access Token Provided is found invalid  
+                if (!user) {
+                    // Try extracting from refreshToken again (defensive fallback)
+                    const refreshToken = extractRefreshToken(req);
+                    const decodedRefresh = jwt.verify(refreshToken, secretCodeOfRefreshToken);
+                    user = await UserModel.findById(decodedRefresh.id);
+                    req.user = user;
+                }         
                 const isRefreshTokenInvalid = await checkUserIsNotVerified(req,res);
                 if(isRefreshTokenInvalid){
                     //  Validate Token Payload Strictly
@@ -258,6 +265,7 @@ const verifyTokenOwnership = async(req, res, next) => {
         // 4. Extract Access token
         const accessToken = extractAccessToken(req);
         if(!accessToken){
+            req.user = tokenExists;
             logMiddlewareError(`Verify Token Ownership, Access Token Field Missing`, req);
             return throwResourceNotFoundError(res, "Access token");
         }
