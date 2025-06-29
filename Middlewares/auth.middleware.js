@@ -179,7 +179,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
             return;
         }
         if(req.foundUser.userType === "ADMIN"){
-            logWithTime(`🚫 Request Denied: Admin account with id: ${req.user.userID} cannot be activated. Admin tried to do it from device ID: ${req.deviceID}.`);
+            logWithTime(`🚫 Request Denied: Admin account with id: ${req.foundUser.userID} cannot be activated. Admin tried to do it from device ID: ${req.deviceID}.`);
             return throwAccessDeniedError(res, "Admin account cannot be activated. Admin is a system-level user and cannot be modified like a normal user.")
         }
         if(!req.body.password){
@@ -188,7 +188,7 @@ const verifyActivateUserAccountBody = async(req,res,next) => {
         }
         const user = req.foundUser;
         if(user.isActive === true){
-            logMiddlewareError("Active Account, Account already active");
+            logMiddlewareError("Active Account, Account already active",req);
             return throwConflictError(res,"User Account is already Active.", "Please deactivate your account first before trying to activate again.");
         }
         // Very next line should be:
@@ -230,11 +230,11 @@ const verifyDeactivateUserAccountBody = async(req,res,next) => {
             });
         }
         if(!req.body.password){
-            logMiddlewareError("Deactivate Account, Password Field Missing");
+            logMiddlewareError("Deactivate Account, Password Field Missing",req);
             return throwResourceNotFoundError(res,"Password");
         }
         if(user.isActive === false){
-            logMiddlewareError("Decativate Account, Account already deactive");
+            logMiddlewareError("Decativate Account, Account already deactive",req);
             return throwConflictError(res,"User Account is already Inactive.","Please activate your account first before trying to deactivate again.")
         }
         // Very next line should be:

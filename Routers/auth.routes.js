@@ -89,8 +89,8 @@ router.post(SIGNOUT_FROM_SPECIFIC_DEVICE, [
 router.patch(ACTIVATE_USER, [
   commonUsedMiddleware.verifyDeviceField,
   specialLimiter.activateAccountRateLimiter,
-  commonUsedMiddleware.isUserBlocked,
-  authMiddleware.verifyActivateUserAccountBody
+  authMiddleware.verifyActivateUserAccountBody,
+  commonUsedMiddleware.isUserBlocked
 ], authController.activateUserAccount);
 
 // 🚫 Public User: Deactivate Own Account
@@ -109,10 +109,10 @@ router.patch(DEACTIVATE_USER, [
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
   generalLimiter.deactivateAccountRateLimiter,
+  authMiddleware.verifyDeactivateUserAccountBody,
   commonUsedMiddleware.isUserBlocked,
   commonUsedMiddleware.isUserAccountActive,
-  commonUsedMiddleware.checkUserIsVerified,
-  authMiddleware.verifyDeactivateUserAccountBody
+  commonUsedMiddleware.checkUserIsVerified
 ], authController.deactivateUserAccount);
 
 // 👤 Authenticated User: Change their own Password
