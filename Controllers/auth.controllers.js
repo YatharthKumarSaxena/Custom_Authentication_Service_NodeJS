@@ -482,7 +482,11 @@ const changePassword = async(req,res) => {
     try{
         const user = req.user;
         const password = req.body.newPassword;
-        user.password = await bcrypt.hash(password, SALT); // Password is Encrypted
+        let isPasswordValid = await checkPasswordIsValid(req,user);
+        if(!isPasswordValid){
+            return throwInvalidResourceError(res,"Password");
+        }
+        user.password = await bcryptjs.hash(password, SALT); // Password is Encrypted
         user.passwordChangedAt = Date.now();
         await user.save();
         const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from current device request")

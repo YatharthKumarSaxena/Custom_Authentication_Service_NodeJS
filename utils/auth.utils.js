@@ -66,7 +66,7 @@ const checkUserExists = async(emailID,fullPhoneNumber,res) => {
 }
 
 const checkPasswordIsValid = async(req,user) => {
-    const providedPassword = req.body.password;
+    const providedPassword = req.body.password || req.body.oldPassword;
     const userWithPassword = await UserModel.findOne({ userID: user.userID }).select("+password");
     if (!userWithPassword) return false;
     const actualPassword = userWithPassword.password;

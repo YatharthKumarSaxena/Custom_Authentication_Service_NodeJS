@@ -5,7 +5,7 @@ module.exports = Object.freeze([
   "DEACTIVATE",
   "BLOCKED",
   "UNBLOCKED",
-  "CHANGED_PASSWORD",
+  "CHANGE_PASSWORD",
   "REGISTER",
   "LOGOUT_SPECIFIC_DEVICE",
   "CHECK_AUTH_LOGS",

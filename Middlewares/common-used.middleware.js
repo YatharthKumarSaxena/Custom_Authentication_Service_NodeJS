@@ -62,15 +62,18 @@ const isUserAccountActive = async(req,res,next) => {
 const isUserBlocked = async(req,res,next) => {
     try{
         let user = req.user || req.foundUser;
-        let verifyWith;
         if(!user){
-            verifyWith = await fetchUser(req,res);
+            const verifyWith = await fetchUser(req,res);
+            if(verifyWith === ""){
+                logMiddlewareError("Is User Blocked, Unauthorized or Invalid User Identifier", req);
+                return;
+            }
+            else {
+                // Attached complete user details with request, save time for controller
+                user = req.foundUser;
+                req.user = req.foundUser;
+            }
         }
-        if(verifyWith === ""){
-            logMiddlewareError("Is User Blocked, Unauthorized or Invalid User Identifier", req);
-            return;
-        }
-        user = req.foundUser;
         if(user.userType === "ADMIN"){
             if(!res.headersSent)return next();
         }
@@ -79,14 +82,12 @@ const isUserBlocked = async(req,res,next) => {
                 logWithTime(`⚠️ Blocked User Account is denied access whose user id is (${user.userID}) on device id: (${req.deviceID})`);
                 return throwBlockedAccountError(req,res);
             };
-            // Attached complete user details with request, save time for controller
-            req.user = req.foundUser;
             // Very next line should be:
             if (!res.headersSent) return next();
         }
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while checking User is blockeed or not ${getIdentifiers}`);
+        logWithTime(`❌ An Internal Error Occurred while checking User is blocked or not ${getIdentifiers}`);
         errorMessage(err);
         if (!res.headersSent) {
             return throwInternalServerError(res);

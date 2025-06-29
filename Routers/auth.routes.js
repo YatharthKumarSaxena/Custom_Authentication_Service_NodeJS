@@ -133,10 +133,10 @@ router.patch(CHANGE_PASSWORD, [
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
   generalLimiter.changePasswordRateLimiter,
+  authMiddleware.verifyChangePasswordBody,
   commonUsedMiddleware.isUserBlocked,
   commonUsedMiddleware.isUserAccountActive,
-  commonUsedMiddleware.checkUserIsVerified,
-  authMiddleware.verifyChangePasswordBody
+  commonUsedMiddleware.checkUserIsVerified
 ], authController.changePassword);
 
 // 👤 Authenticated User: Provide details of devices to user where he/she is logged in
