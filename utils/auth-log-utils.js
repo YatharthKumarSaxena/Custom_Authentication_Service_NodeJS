@@ -12,8 +12,8 @@ const { errorMessage } = require("../configs/error-handler.configs");
  */
 const logAuthEvent = async (req, eventType, logOptions = {}) => {
     try {
-        const userID = logOptions.performedOn?.userID || req.user?.userID || null;
-        const userType = req.user?.userType || logOptions.performedOn?.userType || "CUSTOMER";
+        const userID = req.user?.userID || req.foundUser?.userID || null;
+        const userType = req.user?.userType || req.foundUser?.userType;
 
         const baseLog = {
             userID: userID,
@@ -26,14 +26,14 @@ const logAuthEvent = async (req, eventType, logOptions = {}) => {
         if (req.deviceType) baseLog.deviceType = req.deviceType;
 
         // Admin-specific target actions
-        if (userType === "ADMIN" || logOptions.performedOn || logOptions.filter) {
+        if (logOptions && (userType === "ADMIN" || logOptions.performedOn || logOptions.filter)) {
             baseLog.adminActions = {};
-            if (logOptions.performedOn?.userID)
-                baseLog.adminActions.targetUserID = logOptions.performedOn.userID;
+            if (logOptions.performedOn)
+                baseLog.adminActions.targetUserID = logOptions.adminActions.targetUserID;
             if (logOptions.filter)
-                baseLog.adminActions.filter = logOptions.filter;
+                baseLog.adminActions.filter = logOptions.filter || null;
             if (logOptions.reason || req.body?.reason || req.query?.reason) {
-                baseLog.adminActions.reason = logOptions.reason || req.body?.reason?.trim() || req.query?.reason?.trim() || null;
+                baseLog.adminActions.reason =  req.body?.reason?.trim() || req.query?.reason?.trim() || logOptions.adminActions?.reason?.trim() || null;
             }
         }
 

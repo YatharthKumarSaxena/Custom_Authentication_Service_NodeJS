@@ -92,7 +92,7 @@ const updateUserProfile = async(req,res) => {
         }
         await user.save();
         // Update data into auth.logs
-        await logAuthEvent(req, "UPDATE_ACCOUNT_DETAILS", { performedOn: user });
+        await logAuthEvent(req, "UPDATE_ACCOUNT_DETAILS", null);
         logWithTime(`✅ User (${user.userID}) updated fields: [${updatedFields.join(", ")}] from device: (${req.deviceID})`);
         return res.status(OK).json({
             success: true,
@@ -121,6 +121,9 @@ const setRefreshCookieForAdmin = async (req, res) => {
       return;
     }
 
+    // Update data into auth.logs
+    await logAuthEvent(req, "SET_REFRESH_TOKEN_FOR_ADMIN", null);
+
     return res.status(OK).json({
       success: true,
       message: "✅ Admin refresh token set in cookie successfully."
@@ -140,6 +143,9 @@ const getTotalRegisteredUsers = async (req, res) => {
     const totalCustomers = totalUsers - totalAdmins;
 
     logWithTime(`📊 Total Users: ${totalUsers}, Admins: ${totalAdmins}, Customers: ${totalCustomers}`);
+        
+    // Update data into auth.logs
+    await logAuthEvent(req, "GET_TOTAL_REGISTERED_USERS", null);
 
     return res.status(OK).json({
       success: true,

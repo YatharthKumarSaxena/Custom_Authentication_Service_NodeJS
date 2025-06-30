@@ -22,7 +22,6 @@ const { logAuthEvent } =require("../utils/auth-log-utils");
 const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE, INTERNAL_ERROR, OK } = require("../configs/http-status.config");
 
-
 const loginTheUser = async (user, refreshToken, device, res) => {
     try {
         user.refreshToken = refreshToken;
@@ -189,7 +188,7 @@ const signUp = async (req,res) => { // Made this function async to use await
         }
         if(User.name)userGeneralDetails.name = request_body.name;
         // Update data into auth.logs
-        await logAuthEvent(req, "REGISTER", { performedOn: user });
+        await logAuthEvent(req, "REGISTER", null);
         const userDisplayDetails = {
             details:"Here is your Basic Profile Details given below:-", 
             userID: user.userID,
@@ -225,7 +224,7 @@ const signUp = async (req,res) => { // Made this function async to use await
             return;
         }
         // Update data into auth.logs
-        await logAuthEvent(req, "LOGIN", { performedOn: user });
+        await logAuthEvent(req, "LOGIN", null);
         const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
         if(!accessToken){
             logWithTime(`❌ Access token creation failed for User (${user.userID}) at the time of sign up request. Request is made from device id: (${req.deviceID})`);
@@ -305,7 +304,7 @@ const signIn = async (req,res) => {
                 return;
             }
             // Update data into auth.logs
-            await logAuthEvent(req, "LOGIN", { performedOn: user });
+            await logAuthEvent(req, "LOGIN", null);
             const accessToken = await makeTokenWithMongoID(req,res,expiryTimeOfAccessToken);
             if(!accessToken){
                 logWithTime(`❌ Access token creation failed for User ${user.userID} at the time of sign up request. Request is made from device id: ${req.deviceID}`);
@@ -344,7 +343,7 @@ const signOut = async (req,res) => {
         const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from all device request")
         if(!isUserLoggedOut)return;
         // Update data into auth.logs
-        await logAuthEvent(req, "LOGOUT_ALL_DEVICE", { performedOn: user });    
+        await logAuthEvent(req, "LOGOUT_ALL_DEVICE", null);    
         if (user.isBlocked) {
             logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from all devices from (${req.deviceID}).`);
             return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
@@ -392,7 +391,7 @@ const signOutFromSpecificDevice = async(req,res) => {
             if(!isUserLoggedOut)return;
             logWithTime(`User (${user.userID}) has log out from last active device successfully from device id: (${req.deviceID})`);
             // Update data into auth.logs
-            await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
+            await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", null);  
             return res.status(OK).json({
                 success: true,
                 message: praiseBy+", successfully signed out from the specified device. Now, You are not signed from any of the device"
@@ -407,7 +406,7 @@ const signOutFromSpecificDevice = async(req,res) => {
         }
         else logWithTime(`📤 User (${user.userID}) signed out from device: ${req.deviceID}`);
         // Update data into auth.logs
-        await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE", { performedOn: user });  
+        await logAuthEvent(req, "LOGOUT_SPECIFIC_DEVICE");  
         return res.status(OK).json({
             success: true,
             message: praiseBy+", successfully signed out from this device."
@@ -435,7 +434,7 @@ const activateUserAccount = async(req,res) => {
         // Activation success log
         logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
         // Update data into auth.logs
-        await logAuthEvent(req, "ACTIVATE", { performedOn: user });
+        await logAuthEvent(req, "ACTIVATE", null);
         return res.status(OK).json({
             success: true,
             message: "Account activated successfully.",
@@ -465,7 +464,7 @@ const deactivateUserAccount = async(req,res) => {
         // Deactivation success log
         logWithTime(`🚫 Account deactivated for UserID: ${user.userID} from device id: (${req.deviceID})`);
         // Update data into auth.logs
-        await logAuthEvent(req, "DEACTIVATE", { performedOn: user });
+        await logAuthEvent(req, "DEACTIVATE", null);
         return res.status(OK).json({
             success: true,
             message: "Account deactivated successfully.",
@@ -494,7 +493,7 @@ const changePassword = async(req,res) => {
         if(!isUserLoggedOut)return;
         logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
         // Update data into auth.logs
-        await logAuthEvent(req, "CHANGE_PASSWORD", { performedOn: user });  
+        await logAuthEvent(req, "CHANGE_PASSWORD", null);  
         return res.status(OK).json({
             success: true,
             message: "Your password has been changed successfully."
@@ -525,6 +524,9 @@ const getMyActiveDevices = async (req, res) => {
       lastUsedAt,
       deviceType: deviceType || "Unknown"
     })).sort((a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt));
+
+    // Update data into auth.logs
+    await logAuthEvent(req, "GET_MY_ACTIVE_DEVICES", null);
 
     logWithTime(`🙋‍♂️ User (${user.userID}) fetched public view of their active devices.`);
     return res.status(OK).json({
@@ -558,11 +560,11 @@ const provideUserAccountDetails = async(req,res) => {
             "Blocked Account": user.isBlocked ? "Yes" : "No"
         }
         if(user.passwordChangedAt)User_Account_Details["Password Changed At"] = user.passwordChangedAt;
-        if(user.activatedAt)User_Account_Details["Activated Account At"] = user.activatedAt;
-        if(user.deactivatedAt)User_Account_Details["Deactivated Account At"] = user.deactivatedAt;
+        if(user.activatedAt)User_Account_Details["Activated Account At"] = user.lastActivatedAt;
+        if(user.deactivatedAt)User_Account_Details["Deactivated Account At"] = user.lastDeactivatedAt;
         if(user.lastLogout)User_Account_Details["Last Logout At"] = user.lastLogout;
         // Update data into auth.logs
-        await logAuthEvent(req, "PROVIDE_ACCOUNT_DETAILS", { performedOn: user });
+        await logAuthEvent(req, "PROVIDE_MY_ACCOUNT_DETAILS", null);
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
         return res.status(OK).json({
             success: true,

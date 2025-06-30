@@ -1,9 +1,10 @@
-const { errorMessage, throwInternalServerError, throwAccessDeniedError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
+const { errorMessage, throwInternalServerError, throwAccessDeniedError, throwResourceNotFoundError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { AdminActionReasons } = require("../configs/user-id.config");
 const { immutableFields } = require("../configs/user-enums.config");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
 const { OK, FORBIDDEN } = require("../configs/http-status.config");
+const { fetchUser } = require("./helper.middleware");
 
 const checkUpdateMyProfileRequest = (req,res,next) => {
     try{
@@ -51,17 +52,19 @@ const verifyAdminUserViewRequest = async(req,res,next) => {
         const validateRequestBody = validateSingleIdentifier(req,res,"query");
         if(!validateRequestBody)return;
         if(!req.query.reason.trim() || req.query.reason.trim() === ""){ // Checking that Reason is Provided by Admin or not
-            logMiddlewareError("Verify Admin User View Request, Reason Field Missing");
+            logMiddlewareError("Verify Admin User View Request, Reason Field Missing",req);
             return throwResourceNotFoundError(res,"Reason to fetch user account details");
         }
         // Check that Provided Reason is Valid or not
-        const reason = req.query.reason.trim().toLowerCase();
+        const reason = req.query.reason.trim();
         // 🔒 Validate whether the reason is one of the valid enums
         if (!Object.values(AdminActionReasons).includes(reason)) {
             logMiddlewareError("Verify Admin User View Request, Invalid Admin Action Reason Provided",req);
             return throwAccessDeniedError(res,"Reason provided. Allowed reasons are: " + Object.values(AdminActionReasons).join(", "))
         }
-        logWithTime(`🔍 Admin with id: (${req.user.userID})tried to check User Details of User having UserID: (${req.query.userID}) with reason: (${req.query.reason}) from device having device ID: (${req.deviceID})`);
+        const verifyWith = await fetchUser(req,res);
+        if(verifyWith === "")return;
+        logWithTime(`🔍 Admin with id: (${req.user.userID})tried to check User Details of User having UserID: (${req.foundUser.userID}) with reason: (${req.query.reason}) from device having device ID: (${req.deviceID})`);
         if(!res.headersSent)return next();
     }catch(err){
         const getIdentifiers = getLogIdentifiers(req);

@@ -22,7 +22,7 @@ exports.makeTokenWithMongoID = async(req,res,expiryTimeOfToken) => {
         );
         const tokenCategory = getTokenCategory(expiryTimeOfToken);
         // Update data into auth.logs
-        await logAuthEvent(req, tokenCategory, { performedOn: user });
+        await logAuthEvent(req, tokenCategory, null);
         logWithTime(`✅ (${tokenCategory}) successfully created for user: ${user.userID}. Request is made from deviceID: (${req.deviceID})`);
         return newToken;
     } catch (err) {

@@ -44,7 +44,10 @@ const blockUserAccount = async(req,res) => {
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) blocked user (${user.userID}) from device ID: (${req.deviceID}) with (${blockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
-        await logAuthEvent(req, "BLOCKED", { performedOn: user });
+        await logAuthEvent(req, "BLOCKED",{
+            performedOn: user,
+            adminActions: { reason: blockReason, targetUserID: user.userID }
+        });  
         return res.status(OK).json({
             success: true,
             message: `User (${user.userID}) has been successfully blocked.`,
@@ -90,7 +93,10 @@ const unblockUserAccount = async(req,res) => {
         await user.save();
         logWithTime(`✅ Admin (${req.user.userID}) unblocked user (${user.userID}) from device ID: (${req.deviceID}) with (${unblockReason}) reason via (${verifyWith})`);
         // Update data into auth.logs
-        await logAuthEvent(req, "UNBLOCKED", { performedOn: user });  
+        await logAuthEvent(req, "UNBLOCKED",{
+            performedOn: user,
+            adminActions: { reason: unblockReason, targetUserID: user.userID }
+        });  
         return res.status(OK).json({
             success: true,
             message: `User (${user.userID}) has been successfully unblocked.`,
@@ -137,7 +143,6 @@ const getUserAuthLogs = async (req, res) => {
 
     // Update data into auth.logs
     await logAuthEvent(req, "CHECK_AUTH_LOGS", {
-        performedOn: { userID: userID },
         filter: eventType || "ALL"
     });
 
@@ -203,9 +208,13 @@ const checkUserAccountStatus = async(req,res) => {
             User_Account_Details["Unblock Reason"] = user.unblockReason;
             User_Account_Details["Unblocked Via"] = user.unblockedVia;
         }
+
+        const reason = req.query.reason;
+
         // Update data into auth.logs
-        await logAuthEvent(req, "PROVIDE_ACCOUNT_DETAILS", {
-            performedOn: req.foundUser
+        await logAuthEvent(req, "PROVIDE_USER_ACCOUNT_DETAILS", {
+            performedOn: user,
+            adminActions: { reason: reason, targetUserID: user.userID }
         });
 
         logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to Admin (${req.user.userID}) from device ID: (${req.deviceID}) via (${verifyWith})`);
@@ -248,10 +257,12 @@ const getUserActiveDevicesForAdmin = async (req, res) => {
     // 🧾 Sort by lastUsedAt descending
     const sortedDevices = user.devices.info.sort((a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt));
 
+    const reason = req.query.reason;
+
     // 📝 Log event
-    const getActiveDevicesLog = await logAuthEvent(req, "GET_ACTIVE_DEVICES_LOG", {
+    const getActiveDevicesLog = await logAuthEvent(req, "GET_USER_ACTIVE_DEVICES", {
       performedOn: user,
-      adminActions: { reason, targetUserID: user.userID }
+      adminActions: { reason: reason, targetUserID: user.userID }
     });
 
     logWithTime(`👁️ Admin (${req.user.userID}) viewed ${sortedDevices.length} active devices of User (${user.userID})`);
@@ -266,31 +277,6 @@ const getUserActiveDevicesForAdmin = async (req, res) => {
   } catch (err) {
     const getIdentifiers = getLogIdentifiers(req);
     logWithTime(`❌ Internal Error occurred while fetching user's active devices ${getIdentifiers}`);
-    errorMessage(err);
-    return throwInternalServerError(res);
-  }
-};
-
-// 📦 Controller to Get Total Registered Users (Admins + Customers)
-const getTotalRegisteredUsers = async (req, res) => {
-  try {
-    const totalUsers = await UserModel.countDocuments({});
-    const totalAdmins = await UserModel.countDocuments({ userType: "ADMIN" });
-    const totalCustomers = totalUsers - totalAdmins;
-
-    logWithTime(`📊 Total Users: ${totalUsers}, Admins: ${totalAdmins}, Customers: ${totalCustomers}`);
-
-    return res.status(OK).json({
-      success: true,
-      message: "Total registered users fetched successfully.",
-      totalUsers: totalUsers,
-      totalAdmins: totalAdmins,
-      totalCustomers: totalCustomers
-    });
-
-  } catch (err) {
-    const getIdentifiers = getLogIdentifiers(req);
-    logWithTime(`❌ An Internal Error Occurred while fetching the Total Registered Users ${getIdentifiers}`);
     errorMessage(err);
     return throwInternalServerError(res);
   }
