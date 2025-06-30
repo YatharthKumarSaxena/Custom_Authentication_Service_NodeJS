@@ -31,7 +31,7 @@ const authLogSchema = new mongoose.Schema({
   },
   performedBy: {
     type: String,
-    enum: ["CUSTOMER", "ADMIN"],
+    enum: ["CUSTOMER", "ADMIN", "SYSTEM"],
     default: "CUSTOMER"
   },
 adminActions: {

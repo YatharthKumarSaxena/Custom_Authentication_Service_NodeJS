@@ -260,7 +260,7 @@ const getUserActiveDevicesForAdmin = async (req, res) => {
     const reason = req.query.reason;
 
     // 📝 Log event
-    const getActiveDevicesLog = await logAuthEvent(req, "GET_USER_ACTIVE_DEVICES", {
+    await logAuthEvent(req, "GET_USER_ACTIVE_DEVICES", {
       performedOn: user,
       adminActions: { reason: reason, targetUserID: user.userID }
     });

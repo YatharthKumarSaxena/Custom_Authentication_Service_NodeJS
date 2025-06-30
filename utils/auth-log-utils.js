@@ -26,7 +26,7 @@ const logAuthEvent = async (req, eventType, logOptions = {}) => {
         if (req.deviceType) baseLog.deviceType = req.deviceType;
 
         // Admin-specific target actions
-        if (logOptions && (userType === "ADMIN" || logOptions.performedOn || logOptions.filter)) {
+        if (logOptions && (logOptions.performedOn?.userType || logOptions.filter)) {
             baseLog.adminActions = {};
             if (logOptions.performedOn)
                 baseLog.adminActions.targetUserID = logOptions.adminActions.targetUserID;
