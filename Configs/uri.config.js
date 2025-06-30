@@ -47,12 +47,12 @@ module.exports = {
         USERS: {
             BLOCK_USER: `/block-user`,              // PATCH /custom-auth-service/api/v1/admin/block-user
             UNBLOCK_USER: `/unblock-user`,          // PATCH /custom-auth-service/api/v1/admin/unblock-user
-            GET_USER_AUTH_LOGS: `/auth-logs`,       // POST / /custom-auth-service/api/v1/admin/auth-logs
             GET_USER_ACTIVE_SESSIONS: `/active-sessions`,   // GET /custom-auth-service/api/v1/admin/active-sessions
-            FETCH_USER_DETAILS: `/fetch-user-details`       // GET /custom-auth-service/api/v1/admin/users/fetch-user-details 
+            FETCH_USER_DETAILS: `/fetch-user-details`       // GET /custom-auth-service/api/v1/admin/fetch-user-details 
         },
         STATISTICS: {
-            GET_TOTAL_REGISTERED_USERS: "/stats/total-users"  // GET /custom-auth-service/api/v1/admin/stats/total-users
+            GET_TOTAL_REGISTERED_USERS: "/stats/total-users", // GET /custom-auth-service/api/v1/admin/stats/total-users
+            GET_USER_AUTH_LOGS: `/auth-logs`                  // POST / /custom-auth-service/api/v1/admin/stats/auth-logs
         }
     },
     INTERNAL_ROUTES: {

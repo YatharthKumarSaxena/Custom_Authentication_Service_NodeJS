@@ -239,7 +239,7 @@ const getUserActiveDevicesForAdmin = async (req, res) => {
     const isTargetAdmin = isAdminID(req.foundUser.userID);
     if (isTargetAdmin && req.foundUser.userID !== adminID) {
       logWithTime(`🚫 Admin (${req.user.userID}) tried to access another admin (${req.foundUser.userID}) device sessions.`);
-      return throwAccessDeniedError(res, "You cannot access another admin’s authentication logs.");
+      return throwAccessDeniedError(res, "You cannot access another admin's authentication logs.");
     }
 
     // ✅ Proceed with extracting devices
