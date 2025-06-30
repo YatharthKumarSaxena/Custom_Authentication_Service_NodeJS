@@ -10,7 +10,6 @@ const { isAdminID } = require("../utils/auth.utils");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
 const { getLogIdentifiers } = require("../configs/error-handler.configs");
-const { fetchUser } = require("../middlewares/helper.middleware");
 
 const blockUserAccount = async(req,res) => {
     try{

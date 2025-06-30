@@ -9,7 +9,6 @@ const { OK } = require("../configs/http-status.config");
 const { validateLength, isValidRegex } = require("../utils/field-validators");
 const { createFullPhoneNumber } = require("../utils/auth.utils");
 const { nameLength, emailLength, countryCodeLength, phoneNumberLength} = require("../configs/fields-length.config");
-const { getLogIdentifiers } = require("../configs/error-handler.configs")
 
 const updateUserProfile = async(req,res) => {
     try{

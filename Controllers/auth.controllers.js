@@ -534,6 +534,8 @@ const getMyActiveDevices = async (req, res) => {
       devices: publicDevices
     });
   } catch (err) {
+    const getIdentifiers = getLogIdentifiers(req);
+    logWithTime(`❌ An Internal Error Occurred while fetching the User Active Device Sessions ${getIdentifiers}`);
     errorMessage(err);
     return throwInternalServerError(res);
   }
