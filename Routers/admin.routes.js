@@ -12,11 +12,11 @@ const adminMiddleware = require("../middlewares/admin.middleware");
 const internalController = require("../controllers/internal-api.controllers");
 
 const {
-  BLOCK_USER, UNBLOCK_USER, GET_USER_AUTH_LOGS,
+  BLOCK_USER, UNBLOCK_USER,
   GET_USER_ACTIVE_SESSIONS, FETCH_USER_DETAILS
 } = URIS.ADMIN_ROUTES.USERS;
 
-const { GET_TOTAL_REGISTERED_USERS } = URIS.ADMIN_ROUTES.STATISTICS;
+const { GET_TOTAL_REGISTERED_USERS, GET_USER_AUTH_LOGS } = URIS.ADMIN_ROUTES.STATISTICS;
 
 // 🚫 Admin Only: Block User Account
 // 🔒 Middleware:
@@ -77,7 +77,6 @@ router.post(GET_USER_AUTH_LOGS, [
   commonUsedMiddleware.verifyToken,
   generalLimiter.getUserAuthLogsRateLimiter,
   commonUsedMiddleware.isAdmin,
-  internalMiddleware.verifyAdminUserViewRequest,
   commonUsedMiddleware.checkUserIsVerified
 ], adminController.getUserAuthLogs);
 

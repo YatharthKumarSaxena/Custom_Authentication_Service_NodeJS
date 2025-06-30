@@ -6,10 +6,11 @@ const { logWithTime } = require("../utils/time-stamps.utils");
 const { BLOCK_REASONS, UNBLOCK_REASONS, adminID } = require("../configs/user-id.config");
 const AuthLogModel = require("../models/auth-logs.model");
 const { fetchUser } = require("../middlewares/helper.middleware");
-const { isAdminID } = require("../utils/auth.utils");
+const { isAdminID, validateSingleIdentifier } = require("../utils/auth.utils");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
 const { getLogIdentifiers } = require("../configs/error-handler.configs");
+const { verify } = require("jsonwebtoken");
 
 const blockUserAccount = async(req,res) => {
     try{
@@ -112,10 +113,22 @@ const unblockUserAccount = async(req,res) => {
 const getUserAuthLogs = async (req, res) => {
   try {
     const { eventType, startDate, endDate } = req.body;
-    
-    const user = req.foundUser;
 
-    const userID = user.userID;
+    let validateBody;
+    let verifyWith;
+    if(req.body && (req.body.userID || req.body.emailID || req.body.fullPhoneNumber)){
+        validateBody = validateSingleIdentifier(req,res);
+        if(!validateBody)return;
+        verifyWith = await fetchUser(req,res);
+    }
+
+    let user;
+    if(verifyWith !== ""){
+        user = req.foundUser;
+    }
+
+    let userID;
+    if(user)userID = user.userID;
 
     const query = {};
 

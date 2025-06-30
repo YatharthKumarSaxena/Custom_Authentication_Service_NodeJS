@@ -52,7 +52,7 @@ module.exports = {
         },
         STATISTICS: {
             GET_TOTAL_REGISTERED_USERS: "/stats/total-users", // GET /custom-auth-service/api/v1/admin/stats/total-users
-            GET_USER_AUTH_LOGS: `/auth-logs`                  // POST / /custom-auth-service/api/v1/admin/stats/auth-logs
+            GET_USER_AUTH_LOGS: `/stats/auth-logs`                  // POST  /custom-auth-service/api/v1/admin/stats/auth-logs
         }
     },
     INTERNAL_ROUTES: {
