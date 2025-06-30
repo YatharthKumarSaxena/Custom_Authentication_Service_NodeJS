@@ -16,6 +16,14 @@ const cleanAuthLogs = async () => {
     const result = await AuthLogModel.deleteMany({
       createdAt: { $lt: cutoffDate }
     });
+    await logAuthEvent({
+      user: { userID: "SYSTEM_BATCH_CRON", userType: "SYSTEM" },
+      deviceID: process.env.DEVICE_UUID,
+      deviceName: process.env.DEVICE_NAME,
+      deviceType: process.env.DEVICE_TYPE
+    }, "CLEAN_UP_AUTH_LOGS", {
+    reason: `Deleted ${result.deletedCount} auth logs (> ${userCleanup.deactivatedRetentionDays} days)`
+    });
     if(result.deletedCount === 0){
       logWithTime(`📭 No auth logs eligible for deletion (older than ${authLogCleanup.deactivatedRetentionDays} days).`);
     }else {

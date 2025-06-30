@@ -13,13 +13,13 @@ const { errorMessage } = require("../configs/error-handler.configs");
 const logAuthEvent = async (req, eventType, logOptions = {}) => {
     try {
         const userID = req.user?.userID || req.foundUser?.userID || null;
-        const userType = req.user?.userType || req.foundUser?.userType;
-
+        const performedBy = eventType.toLowerCase().includes("token") ? "SYSTEM" : (req.user?.userType || req.foundUser?.userType || "CUSTOMER");
+        
         const baseLog = {
             userID: userID,
             eventType: eventType,
             deviceID: req.deviceID,
-            performedBy: userType
+            performedBy: performedBy
         };
 
         if (req.deviceName) baseLog.deviceName = req.deviceName;
