@@ -15,15 +15,14 @@ const app = express(); // App is an Express Function
 const { DB_URL } = require("./configs/db.config");
 const UserModel = require("./models/user.model"); 
 const { expiryTimeOfAccessToken, expiryTimeOfRefreshToken, adminUser } = require("./configs/user-id.config");
-const {errorMessage, globalErrorHandler, malformedJsonHandler} = require("./configs/error-handler.configs");
+const {errorMessage} = require("./configs/error-handler.configs");
 const { logWithTime } = require("./utils/time-stamps.utils");
 const { makeTokenWithMongoIDForAdmin } = require("./utils/issue-token.utils");
 const { adminAuthLogForSetUp } = require("./utils/auth-log-utils");
-
-// 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
-app.use(express.json()); // Converts the JSON Object Requests into JavaScript Object
+const { malformedJsonHandler,globalErrorHandler } = require("./configs/server-error-handler.config");
 
 const cookieParser = require("cookie-parser");
+const { TOO_MANY_REQUESTS } = require("./configs/http-status.config");
 app.use(cookieParser()); // ✅ Makes req.cookies accessible
 
 /*
@@ -99,18 +98,68 @@ async function init(){ // To use await we need to make function Asynchronous
     }
 }
 
-// Attach malformed JSON handler before any routes
-app.use(malformedJsonHandler);
-
 // 🔹 Mount All Routes via Centralized Router Index
 require("./routers/index.routes")(app);
 
 // 404 Route Handler (for undefined endpoints)
-app.use((req, res) => {
-  res.status(404).json({ message: "❌ API Route Not Found!" });
+app.use(async (req, res, next) => {
+    const deviceID = req.headers["x-device-uuid"];
+    req.deviceID = deviceID;
+
+    if (!deviceID) {
+        logWithTime("🕵️ No Device ID in request (404 or unauthorized), skipping rate limit silently.");
+        return next();
+    }
+
+    try {
+        const { shouldBlockRequest, getRateLimitMeta, incrementRateLimitCount } = require("./services/rate-limiter.service");
+
+        const routeKey = `UNKNOWN_OR_UNAUTHORIZED_${req.method}_${req.originalUrl}`;
+        const { requestCount, lastRequestAt } = await getRateLimitMeta(deviceID, routeKey);
+
+        if (shouldBlockRequest(requestCount, lastRequestAt)) {
+            logWithTime(`🚫 Too many unauthorized/invalid requests from device: ${deviceID}`);
+            const TIME_WINDOW_MS = 60 * 1000; // 60 Seconds
+
+            let retryAfterSeconds = 1;
+            if (typeof lastRequestAt === "number") {
+                const msRemaining = TIME_WINDOW_MS - (Date.now() - lastRequestAt);
+                retryAfterSeconds = msRemaining > 0 ? Math.ceil(msRemaining / 1000) : 1;
+            } else {
+                logWithTime(`⚠️ lastRequestAt is invalid or missing: ${lastRequestAt}`);
+            }
+
+            res.set("Retry-After", retryAfterSeconds);
+
+            return res.status(TOO_MANY_REQUESTS).json({
+            success: false,
+                type: "RateLimitExceeded",
+                message: "Too many invalid/unauthorized requests. Please slow down.",
+                retryAfterSeconds,
+            });
+        }
+
+        await incrementRateLimitCount(deviceID, routeKey);
+        logWithTime(`🔁 Rate counted for unauthorized/missing route from device: ${deviceID}`);
+        return next();
+
+    } catch (err) {
+        logWithTime("⚠️ Error in jugaadu 404/unauthorized route limiter");
+        console.error(err);
+        return next(); // don't break flow
+    }
 });
 
-// Used Only when code is production ready
+
+app.use((req, res) => {
+  logWithTime(`❌ 404 - API Route Not Found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ success: false, message: "❌ API Route Not Found!" });
+});
+
+// Attach malformed JSON handler before any routes
+app.use(malformedJsonHandler);
+
+// 🔹 Global Error Handler (must be last middleware)
 app.use(globalErrorHandler);
 
 // 🔹 Initializing Server by Express

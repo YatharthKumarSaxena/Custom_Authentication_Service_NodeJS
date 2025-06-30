@@ -12,8 +12,12 @@ const signInRateLimiter = createDeviceBasedRateLimiter(perDevice.signin.maxReque
 // ✅ middlewares/rateLimit_activateAccount.js
 const activateAccountRateLimiter = createDeviceBasedRateLimiter(perDevice.activateAccount.maxRequests, perDevice.activateAccount.windowMs);
 
+// ✅ Malformed And Wrong Requests/rateLimit_activateAccount.js
+const malformedAndWrongRequestRateLimiter = createDeviceBasedRateLimiter(3, 15_000); // ⏳ 3 requests every 15 sec
+
 module.exports = {
     signUpRateLimiter: signUpRateLimiter,
     signInRateLimiter: signInRateLimiter,
-    activateAccountRateLimiter: activateAccountRateLimiter
+    activateAccountRateLimiter: activateAccountRateLimiter,
+    malformedAndWrongRequestRateLimiter: malformedAndWrongRequestRateLimiter
 }

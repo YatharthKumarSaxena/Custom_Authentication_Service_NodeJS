@@ -8,6 +8,8 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const commonUsedMiddleware = require("../middlewares/common-used.middleware");
 const specialLimiter = require("../rate-limiters/special-api-rate-limiter");
 const generalLimiter = require("../rate-limiters/general-api.rate-limiter");
+// 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
+const bodyParser = express.json();  // Converts the JSON Object Requests into JavaScript Object
 
 const {
   SIGNUP, SIGNIN, SIGNOUT, SIGNOUT_FROM_SPECIFIC_DEVICE,
@@ -22,6 +24,7 @@ const {
 // 📌 Controller:
 // - Creates and stores user in DB
 router.post(SIGNUP, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   specialLimiter.signUpRateLimiter,
   authMiddleware.verifySignUpBody
@@ -37,6 +40,7 @@ router.post(SIGNUP, [
 // 📌 Controller:
 // - Logs user in and returns access token
 router.post(SIGNIN, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   specialLimiter.signInRateLimiter,
   authMiddleware.verifySignInBody,
@@ -54,6 +58,7 @@ router.post(SIGNIN, [
 // 📌 Controller:
 // - Logs user out by invalidating session/token
 router.post(SIGNOUT, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
@@ -71,6 +76,7 @@ router.post(SIGNOUT, [
 // 📌 Controller:
 // - Logs user out by invalidating session/token from Specific Device
 router.post(SIGNOUT_FROM_SPECIFIC_DEVICE, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
@@ -87,6 +93,7 @@ router.post(SIGNOUT_FROM_SPECIFIC_DEVICE, [
 // 📌 Controller:
 // - Activates inactive user account
 router.patch(ACTIVATE_USER, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   specialLimiter.activateAccountRateLimiter,
   authMiddleware.verifyActivateUserAccountBody,
@@ -105,6 +112,7 @@ router.patch(ACTIVATE_USER, [
 // 📌 Controller:
 // - Deactivates account and logs user out
 router.patch(DEACTIVATE_USER, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
@@ -129,6 +137,7 @@ router.patch(DEACTIVATE_USER, [
 // - Updates the Password of User if it satisfies some constraints
 // - Responds with either a success message + no changes made
 router.patch(CHANGE_PASSWORD, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,

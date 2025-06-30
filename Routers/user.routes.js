@@ -9,6 +9,8 @@ const internalMiddleware = require("../middlewares/internal.api.middleware");
 const commonUsedMiddleware = require("../middlewares/common-used.middleware");
 const internalController = require("../controllers/internal-api.controllers");
 const authController = require("../controllers/auth.controllers");
+// 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
+const bodyParser = express.json();  // Converts the JSON Object Requests into JavaScript Object
 
 const { FETCH_MY_PROFILE,UPDATE_PROFILE } = URIS.USER_ROUTES;
 
@@ -47,6 +49,7 @@ router.get(FETCH_MY_PROFILE, [
 // - Updates only the allowed and changed fields (name, email, address, etc.)
 // - Responds with either a success message + updated fields OR no changes made
 router.patch(UPDATE_PROFILE,[
+    bodyParser,
     commonUsedMiddleware.verifyDeviceField,
     commonUsedMiddleware.verifyTokenOwnership,
     commonUsedMiddleware.verifyToken,

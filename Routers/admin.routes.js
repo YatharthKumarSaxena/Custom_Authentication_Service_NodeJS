@@ -10,6 +10,8 @@ const internalMiddleware = require("../middlewares/internal.api.middleware");
 const generalLimiter = require("../rate-limiters/general-api.rate-limiter");
 const adminMiddleware = require("../middlewares/admin.middleware");
 const internalController = require("../controllers/internal-api.controllers");
+// 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES
+const bodyParser = express.json();  // Converts the JSON Object Requests into JavaScript Object
 
 const {
   BLOCK_USER, UNBLOCK_USER,
@@ -30,6 +32,7 @@ const { GET_TOTAL_REGISTERED_USERS, GET_USER_AUTH_LOGS } = URIS.ADMIN_ROUTES.STA
 // 📌 Controller:
 // - Blocks another user’s account
 router.patch(BLOCK_USER, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
@@ -51,6 +54,7 @@ router.patch(BLOCK_USER, [
 // 📌 Controller:
 // - Unblocks the specified user
 router.patch(UNBLOCK_USER, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
@@ -72,6 +76,7 @@ router.patch(UNBLOCK_USER, [
 // 🛠️ Controller:
 // - Fetches the User Auth Logs based on filter provided by the admin
 router.post(GET_USER_AUTH_LOGS, [
+  bodyParser,
   commonUsedMiddleware.verifyDeviceField,
   commonUsedMiddleware.verifyTokenOwnership,
   commonUsedMiddleware.verifyToken,
