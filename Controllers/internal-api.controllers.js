@@ -41,10 +41,10 @@ const updateUserProfile = async(req,res) => {
             updatedFields.push("Email ID");
             user.emailID = emailID;
         }
-        const phoneNumber = req.body.phonenumber;
-        if(phoneNumber){
+        const phoneNumber = req.body.phoneNumber;
+        if(phoneNumber && phoneNumber !== user.phoneNumber){
           let { countryCode,number } = phoneNumber;
-          if(countryCode){
+          if(countryCode && countryCode.trim() !== user.phoneNumber.countryCode){
             countryCode = countryCode.trim();
             if(!validateLength(countryCode,countryCodeLength.min,countryCodeLength.max)){
               logWithTime(`Invalid Country Code Length provided by ${req.user.userID} to update number in phone number`);
@@ -60,7 +60,7 @@ const updateUserProfile = async(req,res) => {
             updatedFields.push("Country Code in Phone Number");
             user.phoneNumber.countryCode = countryCode;
           }
-          if(number){ 
+          if(number && number.trim() !== user.phoneNumber.number){ 
             number = number.trim();
             if(!validateLength(number,phoneNumberLength.min,phoneNumberLength.max)){
               logWithTime(`Invalid Number Length provided by ${req.user.userID} to update number in phone number`);
@@ -76,7 +76,7 @@ const updateUserProfile = async(req,res) => {
             updatedFields.push("Number in Phone Number");
             user.phoneNumber.number = number;
           }
-          if(!(!number && !countryCode)){
+          if(!(!number || !countryCode)){
             if(!number)number = user.phoneNumber.number;
             if(!countryCode)countryCode = user.phoneNumber.countryCode;
             const newNumber = createFullPhoneNumber(req,res);
