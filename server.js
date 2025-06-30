@@ -15,7 +15,7 @@ const app = express(); // App is an Express Function
 const { DB_URL } = require("./configs/db.config");
 const UserModel = require("./models/user.model"); 
 const { expiryTimeOfAccessToken, expiryTimeOfRefreshToken, adminUser } = require("./configs/user-id.config");
-const {errorMessage, globalErrorHandler} = require("./configs/error-handler.configs");
+const {errorMessage, globalErrorHandler, malformedJsonHandler} = require("./configs/error-handler.configs");
 const { logWithTime } = require("./utils/time-stamps.utils");
 const { makeTokenWithMongoIDForAdmin } = require("./utils/issue-token.utils");
 const { adminAuthLogForSetUp } = require("./utils/auth-log-utils");
@@ -99,6 +99,9 @@ async function init(){ // To use await we need to make function Asynchronous
     }
 }
 
+// Attach malformed JSON handler before any routes
+app.use(malformedJsonHandler);
+
 // 🔹 Mount All Routes via Centralized Router Index
 require("./routers/index.routes")(app);
 
@@ -108,12 +111,7 @@ app.use((req, res) => {
 });
 
 // Used Only when code is production ready
-/*
-exports.globalErrorHandler = (err, req, res, next) => {
-    logWithTime("💥 Uncaught Server Error:", err.message);
-    return res.status(500).json({ message: "🔧 Internal Server Error!" });
-};
-*/
+app.use(globalErrorHandler);
 
 // 🔹 Initializing Server by Express
 app.listen(PORT_NUMBER,()=>{

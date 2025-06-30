@@ -102,9 +102,41 @@ exports.throwBlockedAccountError = (req,res) => {
     });
 }
 
+/**
+ * 🧠 Handles malformed JSON specifically before delegating to global handler.
+ * 🔐 Place this BEFORE routes.
+ */
+exports.malformedJsonHandler = (err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+        logWithTime("⛔ Malformed JSON in request body detected.");
+        return res.status(BAD_REQUEST).json({
+            success: false,
+            type: "MalformedRequest",
+            message: "The request body contains invalid JSON. Please fix your syntax."
+        });
+    }
+    next(err); // Delegate to global error handler if it's not a SyntaxError
+};
+
+/**
+ * 🔥 Catches all uncaught errors thrown anywhere in the route chain.
+ * ✅ Logs detailed message and prevents server crash
+ */
 exports.globalErrorHandler = (err, req, res, next) => {
-    logWithTime("💥 Uncaught Server Error:", err.message);
-    return res.status(INTERNAL_ERROR).json({ success: false, message: "🔧 Internal Server Error!" });
+    logWithTime("💥 Uncaught Server Error: " + err.message);
+
+    // Optional: stack trace in development
+    if (process.env.NODE_ENV === "development") {
+        console.log(err.stack);
+    }
+
+    if (res.headersSent) return; // 🔐 Prevent duplicate response
+
+    return res.status(INTERNAL_ERROR).json({
+        success: false,
+        type: "InternalServerError",
+        message: "🔧 Internal Server Error! Please try again later."
+    });
 };
 
 exports.logMiddlewareError = (context, req) => {
