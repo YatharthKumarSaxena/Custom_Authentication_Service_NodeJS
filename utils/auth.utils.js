@@ -68,6 +68,22 @@ const checkUserExists = async(emailID,fullPhoneNumber,res) => {
     }
 }
 
+const checkAndAbortIfUserExists = async (emailID, fullPhoneNumber, res) => {
+  const userExistReason = await checkUserExists(emailID, fullPhoneNumber, res);
+  if (userExistReason !== "") {
+    logWithTime(`⛔ Conflict Detected: ${userExistReason}`);
+    if (!res.headersSent) {
+      res.status(BAD_REQUEST).json({
+        success: false,
+        message: "User Already Exists with " + userExistReason,
+        warning: "Use different Email ID or Phone Number or both based on Message"
+      });
+    }
+    return true; // signal that response is already sent or conflict detected
+  }
+  return false;
+};
+
 const checkPasswordIsValid = async(req,user) => {
     const providedPassword = req.body.password || req.body.oldPassword;
     const userWithPassword = await UserModel.findOne({ userID: user.userID }).select("+password");
@@ -113,6 +129,7 @@ const createFullPhoneNumber = (req,res) => {
 }
 
 module.exports = {
+  checkAndAbortIfUserExists: checkAndAbortIfUserExists,
   validateSingleIdentifier: validateSingleIdentifier,
   createFullPhoneNumber: createFullPhoneNumber,
   checkPasswordIsValid: checkPasswordIsValid,

@@ -7,7 +7,7 @@ const { emailRegex, nameRegex, countryCodeRegex, numberRegex} = require("../conf
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");
 const { validateLength, isValidRegex } = require("../utils/field-validators");
-const { createFullPhoneNumber } = require("../utils/auth.utils");
+const { createFullPhoneNumber,  checkAndAbortIfUserExists } = require("../utils/auth.utils");
 const { nameLength, emailLength, countryCodeLength, phoneNumberLength} = require("../configs/fields-length.config");
 const UserModel = require("../models/user.model");
 
@@ -37,7 +37,10 @@ const updateUserProfile = async(req,res) => {
             if(!isValidRegex(emailID,emailRegex)){
               logWithTime(`Invalid Email ID Format provided by ${req.user.userID} to update email ID`);
               return throwInvalidResourceError(res, "Email ID format. Email ID should have:- 🔹 Have no spaces,🔹 Contain exactly one @,🔹 Include a valid domain like .com, .in, etc.");
-            }            
+            }      
+            // Checking User already exists or not 
+            const userExist = await checkAndAbortIfUserExists(emailID,user.fullPhoneNumber,res);
+            if(userExist)return;
             updatedFields.push("Email ID");
             user.emailID = emailID;
         }
@@ -81,6 +84,9 @@ const updateUserProfile = async(req,res) => {
             if(!countryCode)countryCode = user.phoneNumber.countryCode;
             const newNumber = createFullPhoneNumber(req,res);
             if(!newNumber)return;
+            // Checking User already exists or not 
+            const userExist = await checkAndAbortIfUserExists(user.emailID,newNumber,res);
+            if(userExist)return;
             user.fullPhoneNumber = newNumber;
           }
         }

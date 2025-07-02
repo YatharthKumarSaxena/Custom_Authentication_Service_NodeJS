@@ -13,7 +13,7 @@ const bcryptjs = require("bcryptjs")
 const { throwInvalidResourceError, errorMessage, throwInternalServerError, getLogIdentifiers, throwResourceNotFoundError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
-const { checkUserExists, checkPasswordIsValid, createFullPhoneNumber, validateSingleIdentifier } = require("../utils/auth.utils");
+const { checkPasswordIsValid, createFullPhoneNumber,  checkAndAbortIfUserExists } = require("../utils/auth.utils");
 const { signInWithToken } = require("../services/token.service");
 const { makeUserID } = require("../services/userID.service");
 const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceLimit } = require("../utils/device.utils");
@@ -124,14 +124,8 @@ const signUp = async (req,res) => { // Made this function async to use await
     if(!newNumber)return;
     
     // Checking User already exists or not 
-    const userExistReason = await checkUserExists(emailID,newNumber,res);
-    if(userExistReason !== ""){
-        return res.status(BAD_REQUEST).json({
-            success: false,
-            message: "User Already Exists with "+userExistReason,
-            warning: "Use different Email ID or Phone Number or both based on Message"
-        })
-    }
+    const userExist = await checkAndAbortIfUserExists(emailID.trim().toLowerCase(), newNumber, res);
+    if(userExist)return;
     const password = await bcryptjs.hash(request_body.password, SALT); // Password is Encrypted
     const device = createDeviceField(req,res);
     if(!device){
