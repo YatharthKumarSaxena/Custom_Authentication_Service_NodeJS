@@ -55,7 +55,7 @@ const logoutUserCompletely = async (user, res, req, context = "general") => {
         }
 
         await user.save();
-        logWithTime(`👋 User (${user.userID}) logged out successfully during ${context}. Device ID: (${req.deviceID})`);
+        logWithTime(`👋 User (${user.userID}) logged out successfully from all devices during ${context}. Device ID: (${req.deviceID})`);
         return true;
     } catch (err) {
         logWithTime(`❌ Error while logging out user (${user.userID}) during ${context}. Device ID: (${req.deviceID})`);
@@ -489,7 +489,7 @@ const changePassword = async(req,res) => {
         user.password = await bcryptjs.hash(password, SALT); // Password is Encrypted
         user.passwordChangedAt = Date.now();
         await user.save();
-        const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from current device request")
+        const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from all device request")
         if(!isUserLoggedOut)return;
         logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
         // Update data into auth.logs
