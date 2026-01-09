@@ -1,6 +1,6 @@
 // 🛡️ utils/rateLimiter.factory.js
 const { errorMessage, throwInternalServerError, throwResourceNotFoundError, getLogIdentifiers } = require("../configs/error-handler.configs");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const UserModel = require("../models/user.model");
 const DeviceRateLimit = require("../models/device-rate-limit.model");
 const { TOO_MANY_REQUESTS, NOT_FOUND } = require("../configs/http-status.config");
