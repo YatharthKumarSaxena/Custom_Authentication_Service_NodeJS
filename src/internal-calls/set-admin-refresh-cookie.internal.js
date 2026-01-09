@@ -1,6 +1,6 @@
 // 📁 internal-calls/set-admin-refresh-cookie.internal.js
 
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const { setRefreshCookieForAdmin } = require("../controllers/internal-api.controllers");
 const { errorMessage } = require("../configs/error-handler.configs");
 

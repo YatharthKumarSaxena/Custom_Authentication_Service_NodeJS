@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 const AuthLogModel = require("../models/auth-logs.model");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const { authLogCleanup } = require("../configs/cron.config");
 const { errorMessage} = require("../configs/error-handler.configs");
 
