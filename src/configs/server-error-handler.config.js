@@ -1,4 +1,4 @@
-const {logWithTime} = require("../utils/time-stamps.utils");
+const {logWithTime} = require("../utils/time-stamps.util");
 const { malformedAndWrongRequestRateLimiter } = require("../rate-limiters/special-api-rate-limiter");
 const { BAD_REQUEST, INTERNAL_ERROR } = require("./http-status.config");
 
