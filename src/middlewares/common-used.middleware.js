@@ -4,7 +4,7 @@ const UserModel = require("../src/models/user.model");
 const { UUID_V4_REGEX } = require("../configs/regex.config");
 // Extracting Required Functions and Values
 
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
 const { secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("../utils/issue-token.utils");

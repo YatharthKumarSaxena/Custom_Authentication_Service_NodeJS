@@ -1,5 +1,5 @@
 const { errorMessage, throwInternalServerError, throwAccessDeniedError, throwResourceNotFoundError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const { AdminActionReasons } = require("../configs/user-id.config");
 const { immutableFields } = require("../configs/user-enums.config");
 const { validateSingleIdentifier } = require("../utils/auth.utils");

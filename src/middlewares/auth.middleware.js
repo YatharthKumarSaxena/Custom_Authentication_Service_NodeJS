@@ -7,7 +7,7 @@
 
 // Extracting the Required Modules
 const { throwResourceNotFoundError, throwInternalServerError, errorMessage, throwInvalidResourceError, throwAccessDeniedError, throwConflictError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const { fetchUser } = require("./helper.middleware");
 const { validateSingleIdentifier } = require("../utils/auth.utils");
 const { emailRegex, strongPasswordRegex, numberRegex, countryCodeRegex } = require("../configs/regex.config");
