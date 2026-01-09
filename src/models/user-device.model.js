@@ -16,4 +16,6 @@ const userDeviceSchema = new mongoose.Schema({
 // Ensure 1:1 user-device mapping
 userDeviceSchema.index({ userId: 1, deviceId: 1 }, { unique: true });
 
-module.exports = mongoose.model("UserDevice", userDeviceSchema);
+module.exports = {
+  UserDeviceModel: mongoose.model("UserDevice", userDeviceSchema)
+};

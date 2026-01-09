@@ -18,4 +18,6 @@ const counterSchema = mongoose.Schema({
 },{versionKey: false});
 
 // Defined Collection Counter in ecommerce_db Database
-module.exports = mongoose.model("Counters",counterSchema)
+module.exports = {
+    CounterModel: mongoose.model("Counters",counterSchema)
+};

@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
-const { USER_TYPE } = require("@configs/user-enums.config");
+const { UserTypes } = require("@configs/enums.config");
 const { AuthModes } = require("@configs/enums.config");
 const {
-    passwordLength,
     fullPhoneNumberLength,
     emailLength,
     nameLength
@@ -61,16 +60,14 @@ const userSchema = new mongoose.Schema({
 
     password: {
         type: String,
-        minlength: passwordLength.min,
-        maxlength: passwordLength.max,
         required: true,
         select: false
     },
 
     userType: {
         type: String,
-        enum: Object.values(USER_TYPE),
-        default: USER_TYPE.CUSTOMER
+        enum: Object.values(UserTypes),
+        default: UserTypes.CUSTOMER
     },
 
     isEmailVerified: {

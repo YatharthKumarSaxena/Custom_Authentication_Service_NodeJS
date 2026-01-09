@@ -1,57 +1,60 @@
 const mongoose = require("mongoose");
-const AUTH_LOG_EVENTS = require("../configs/auth-log-events.config");
-const { DEVICE_TYPES } = require("../configs/user-enums.config");
+const { AUTH_LOG_EVENTS }  = require("@configs/auth-log-events.config");
+const { DeviceTypes } = require("@configs/enums.config");
+const { UUID_V4_REGEX, userIdRegex } = require("@configs/regex.config");
+const { deviceNameLength } = require("@configs/fields-length.config");
 
 const authLogSchema = new mongoose.Schema({
   userID: {
     type: String,
     required: true,
+    match: userIdRegex,
     index: true
   },
-  eventType: {
-    type: String,
-    enum: AUTH_LOG_EVENTS,
-    required: true
+
+  description: { 
+    type: String, 
+    default: null, 
+    required: true 
   },
-  deviceID: {
-    type: String,
-    required: true
-  },
-  deviceName: {
-    type: String
-  },
-  deviceType: {
-    type: String,
-    enum: DEVICE_TYPES,
+
+  oldData: {
+    type: mongoose.Schema.Types.Mixed,
     default: null
   },
-  timestamp: {
-    type: Date,
-    default: Date.now
+
+  newData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
-  performedBy: {
+
+  eventType: {
     type: String,
-    enum: ["CUSTOMER", "ADMIN", "SYSTEM"],
-    default: "CUSTOMER"
+    enum: Object.values(AUTH_LOG_EVENTS),
+    required: true
   },
-  adminActions: {
-    type: new mongoose.Schema({
-      targetUserID: {
-        type: String,
-        default: null
-      },
-      reason: {
-        type: String,
-        default: null
-      },
-      filter: {
-        type: [String],
-        enum: AUTH_LOG_EVENTS,
-        default: undefined  // not null; avoids storing empty arrays unnecessarily
-      }
-    }, { _id: false }),
-    default: undefined
+
+  deviceID: {
+    type: String,
+    match: UUID_V4_REGEX,
+    required: true
+  },
+
+  deviceName: {
+    type: String,
+    trim: true,
+    minlength: deviceNameLength.min,
+    maxlength: deviceNameLength.max,
+    default: null
+  },
+
+  deviceType: {
+    type: String,
+    enum: Object.values(DeviceTypes),
+    default: null
   }
 }, { timestamps: true, versionKey: false });
 
-module.exports = mongoose.model("AuthLog", authLogSchema);
+module.exports = {
+  AuthLogModel: mongoose.model("AuthLog", authLogSchema)
+};
