@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@testing/*": ["src/testing/*"],
+      "@app": ["src/app.js"],
+      "@configs/*": ["src/configs/*"],
+      "@utils/*": ["src/utils/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@rate-limiters/*": ["src/rate-limiters/*"],
+      "@services/*": ["src/services/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@routes/*": ["src/routers/*"],
+      "@models/*": ["src/models/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

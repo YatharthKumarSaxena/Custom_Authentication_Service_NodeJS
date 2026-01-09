@@ -4,9 +4,9 @@
 const express = require("express");
 const router = express.Router();
 const URIS = require("../configs/uri.config");
-const generalLimiter = require("../rate-limiters/general-api.rate-limiter");
-const internalMiddleware = require("../middlewares/internal.api.middleware");
-const commonUsedMiddleware = require("../middlewares/common-used.middleware");
+const generalLimiter = require("../../rate-limiters/general-api.rate-limiter");
+const internalMiddleware = require("../../middlewares/internal.api.middleware");
+const commonUsedMiddleware = require("../../middlewares/common-used.middleware");
 const internalController = require("../controllers/internal-api.controllers");
 const authController = require("../controllers/auth.controllers");
 // 🔹 Middleware: Body Parser - THIS MUST BE BEFORE ROUTES

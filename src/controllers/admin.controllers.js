@@ -5,7 +5,7 @@ const { throwInvalidResourceError, throwInternalServerError, errorMessage, throw
 const { logWithTime } = require("../utils/time-stamps.utils");
 const { BLOCK_REASONS, UNBLOCK_REASONS, adminID } = require("../configs/user-id.config");
 const AuthLogModel = require("../models/auth-logs.model");
-const { fetchUser } = require("../middlewares/helper.middleware");
+const { fetchUser } = require("../../middlewares/helper.middleware");
 const { isAdminID, validateSingleIdentifier } = require("../utils/auth.utils");
 const { logAuthEvent } = require("../utils/auth-log-utils");
 const { OK } = require("../configs/http-status.config");

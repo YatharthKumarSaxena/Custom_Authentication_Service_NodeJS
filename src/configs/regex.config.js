@@ -4,5 +4,7 @@ module.exports = {
     countryCodeRegex: /^[1-9]\d{0,2}$/,
     numberRegex: /^\d{9,12}$/,
     fullPhoneNumberRegex: /^\+([1-9]\d{0,2})(\d{9,12})$/,
-    emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    nameRegex: /^[A-Za-z.'-]{2,50}$/,
+    userIdRegex: /^[A-Z]{3}[0-9]{7}$/
 }

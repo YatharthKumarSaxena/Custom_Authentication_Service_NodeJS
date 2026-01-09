@@ -1,7 +1,7 @@
 // Extracting required Modules, their functions and values
 const { throwInvalidResourceError, throwResourceNotFoundError, throwInternalServerError, errorMessage, logMiddlewareError, getLogIdentifiers } = require("../configs/error-handler.configs");
-const UserModel = require("../models/user.model");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const UserModel = require("../src/models/user.model");
+const { logWithTime } = require("../src/utils/time-stamps.utils");
 
 const fetchUser = async(req,res) =>{
     try{

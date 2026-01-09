@@ -14,7 +14,21 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
     "mongoose": "^8.15.1",
     "node-cron": "^4.1.0"
+  },
+  "_moduleAliases": {
+    "@": "src",
+    "@app": "src/app",
+    "@testing": "src/testing",
+    "@configs": "src/configs",
+    "@utils": "src/utils",
+    "@middlewares": "src/middlewares",
+    "@services": "src/services",
+    "@rate-limiters": "src/rate-limiters",
+    "@controllers": "src/controllers",
+    "@routes": "src/routers",
+    "@models": "src/models"
   }
 }

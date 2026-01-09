@@ -28,5 +28,9 @@ module.exports = {
   otpLength: {
     min: 6,
     max: 6
+  },
+  nameLength: {
+    min: 2,
+    max: 50
   }
 };
