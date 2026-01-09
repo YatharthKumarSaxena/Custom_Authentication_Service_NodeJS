@@ -1,6 +1,6 @@
 // controllers/internal-api.controllers.js
 
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("../utils/time-stamps.util");
 const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
 const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError, getLogIdentifiers } =  require("../configs/error-handler.configs");
 const { emailRegex, countryCodeRegex, numberRegex} = require("../configs/regex.config");
