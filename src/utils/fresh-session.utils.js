@@ -1,7 +1,7 @@
 const { errorMessage,throwInternalServerError, getLogIdentifiers} = require("../configs/error-handler.configs");
 const { expiryTimeOfRefreshToken,refreshThresholdInMs } = require("../configs/user-id.config");
 const { makeTokenWithMongoID } = require("./issue-token.utils"); 
-const { logWithTime } = require("./time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 const { setRefreshTokenCookie } = require("./cookie-manager.utils");
 
 const resetRefreshToken = async(req,res) => {

@@ -1,4 +1,4 @@
-const { logWithTime } = require("./time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 
 const setAccessTokenHeaders = (res, accessToken) => {
     if (!res || res.headersSent) {

@@ -1,7 +1,7 @@
 // Extract the required Module
 const jwt = require("jsonwebtoken");
 const {secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfRefreshToken} = require("../configs/user-id.config");
-const { logWithTime } = require("./time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { logAuthEvent, adminAuthLogForSetUp } = require("../utils/auth-log-utils");
 const getTokenCategory = (expiryTimeOfToken) =>{

@@ -1,5 +1,5 @@
 const AuthLogModel = require("../models/auth-logs.model");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 const { errorMessage } = require("../configs/error-handler.configs");
 
 /**
@@ -9,29 +9,15 @@ const logAuthEvent = (req, eventType, logOptions = {}) => {
     (async () => {
         try {
             const userID = req.user?.userID || req.foundUser?.userID || null;
-            const performedBy = eventType.toLowerCase().includes("token") ? "SYSTEM" : (req.user?.userType || req.foundUser?.userType || "CUSTOMER");
             
             const baseLog = {
                 userID: userID,
                 eventType: eventType,
-                deviceID: req.deviceID,
-                performedBy: performedBy
+                deviceID: req.deviceID
             };
 
             if (req.deviceName) baseLog.deviceName = req.deviceName;
             if (req.deviceType) baseLog.deviceType = req.deviceType;
-
-            // Admin-specific target actions
-            if (logOptions && (logOptions.performedOn?.userType || logOptions.filter)) {
-                baseLog.adminActions = {};
-                if (logOptions.performedOn)
-                    baseLog.adminActions.targetUserID = logOptions.adminActions.targetUserID;
-                if (logOptions.filter)
-                    baseLog.adminActions.filter = logOptions.filter || null;
-                if (logOptions.reason || req.body?.reason || req.query?.reason) {
-                    baseLog.adminActions.reason =  req.body?.reason?.trim() || req.query?.reason?.trim() || logOptions.adminActions?.reason?.trim() || null;
-                }
-            }
 
             const result = new AuthLogModel(baseLog);
             await result.save();
@@ -51,8 +37,7 @@ const adminAuthLogForSetUp = (user, eventType) => {
             const baseLog = {
                 userID: user.userID,
                 eventType: eventType,
-                deviceID: deviceID,
-                performedBy: user.userType
+                deviceID: deviceID
             };
 
             baseLog.deviceName = user.devices?.info[0]?.deviceName || process.env.DEVICE_NAME;

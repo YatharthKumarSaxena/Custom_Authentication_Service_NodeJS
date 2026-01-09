@@ -1,7 +1,7 @@
 const { httpOnly, secure, sameSite } = require("../configs/cookies.config");
 const { errorMessage, throwInternalServerError } = require("../configs/error-handler.configs");
 const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
-const { logWithTime } = require("./time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 
 // utils/cookie-manager.utils.js
 

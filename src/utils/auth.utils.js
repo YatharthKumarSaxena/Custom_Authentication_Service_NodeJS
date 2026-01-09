@@ -1,5 +1,5 @@
 const { errorMessage,throwInternalServerError,throwInvalidResourceError } = require("../configs/error-handler.configs");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
 const { BAD_REQUEST } = require("../configs/http-status.config");

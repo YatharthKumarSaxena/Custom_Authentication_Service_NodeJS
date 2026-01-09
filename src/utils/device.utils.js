@@ -1,5 +1,5 @@
 const { deviceThreshold, usersPerDevice } = require("../configs/user-id.config");
-const { logWithTime } = require("../utils/time-stamps.utils");
+const { logWithTime } = require("./time-stamps.util");
 const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
 const UserModel = require("../models/user.model");
 const { FORBIDDEN } = require("../configs/http-status.config");
