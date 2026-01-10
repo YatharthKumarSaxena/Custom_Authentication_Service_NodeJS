@@ -1,35 +1,34 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
-const { OTP_Purpose } = require("@configs/enums.config");
+const { LinkPurpose } = require("@configs/enums.config");
 
-const otpSchema = new mongoose.Schema({
+const verificationLinkSchema = new mongoose.Schema({
   userId: {
     type: ObjectId,
     ref: "User",
-    default: null,
+    required: true,
     index: true
   },
 
   deviceId: {
     type: ObjectId,
     ref: "Device",
-    default: null,
-    index: true
+    default: null
   },
 
   contact: {
-    type: String, // email or fullPhoneNumber
+    type: String, // email or phone
     required: true,
     index: true
   },
 
   purpose: {
     type: String,
-    enum: Object.values(OTP_Purpose),
+    enum: Object.values(LinkPurpose),
     required: true
   },
 
-  otpHash: {
+  tokenHash: {
     type: String,
     required: true,
     select: false
@@ -40,16 +39,6 @@ const otpSchema = new mongoose.Schema({
     required: true
   },
 
-  attemptCount: {
-    type: Number,
-    default: 0
-  },
-
-  maxAttempts: {
-    type: Number,
-    default: 5
-  },
-
   isUsed: {
     type: Boolean,
     default: false
@@ -57,9 +46,9 @@ const otpSchema = new mongoose.Schema({
 
 }, { timestamps: true, versionKey: false });
 
-/* 🔥 Auto-delete OTP after expiry */
-otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+/* 🔥 Auto delete after expiry */
+verificationLinkSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = {
-    OTPModel: mongoose.model("OTP", otpSchema)
+  VerificationLinkModel: mongoose.model("VerificationLink", verificationLinkSchema)
 };

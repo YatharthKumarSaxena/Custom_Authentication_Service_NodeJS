@@ -5,7 +5,7 @@ const { UUID_V4_REGEX, userIdRegex } = require("@configs/regex.config");
 const { deviceNameLength } = require("@configs/fields-length.config");
 
 const authLogSchema = new mongoose.Schema({
-  userID: {
+  userId: {
     type: String,
     required: true,
     match: userIdRegex,
