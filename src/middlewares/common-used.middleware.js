@@ -7,16 +7,16 @@ const { UUID_V4_REGEX } = require("../configs/regex.config");
 const { logWithTime } = require("../utils/time-stamps.util");
 const { throwAccessDeniedError, errorMessage, throwInternalServerError, throwResourceNotFoundError, throwInvalidResourceError, throwBlockedAccountError, getLogIdentifiers, logMiddlewareError } = require("../configs/error-handler.configs");
 const { secretCodeOfAccessToken, secretCodeOfRefreshToken, expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("../configs/user-id.config");
-const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
+const { makeTokenWithMongoID } = require("../utils/issue-token.util");
 const { fetchUser } = require("./helper.middleware");
-const { extractAccessToken, extractRefreshToken } = require("../utils/extract-token.utils");
-const { resetRefreshToken } = require("../utils/fresh-session.utils");
-const { getDeviceByID } = require("../utils/device.utils");
+const { extractAccessToken, extractRefreshToken } = require("../utils/extract-token.util");
+const { resetRefreshToken } = require("../controllers/common/fresh-session.util");
+const { getDeviceByID } = require("../utils/device.util");
 const { DEVICE_TYPES } = require("../configs/user-enums.config");
 const { checkUserIsNotVerified } = require("../controllers/auth.controllers");
-const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
+const { setAccessTokenHeaders } = require("../utils/token-headers.util");
 const {  FORBIDDEN, LOGIN_TIMEOUT } = require("../configs/http-status.config");
-const { validateLength, isValidRegex } = require("../utils/field-validators");
+const { validateLength, isValidRegex } = require("../utils/field-validators.util");
 const { deviceNameLength } = require("../configs/fields-length.config");
 
 // ✅ Checking if User Account is Active

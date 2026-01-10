@@ -7,7 +7,7 @@ const isUserAccountBlocked = async (req, res, next) => {
     try {
         const user = req.user;
         if(user.userType === UserTypes.ADMIN){
-            logWithTime(`✅ User (${user.userID}) is Admin, skipping blocked check`);
+            logWithTime(`✅ User (${user.userId}) is Admin, skipping blocked check`);
             return next();
         }
         if (user.isBlocked === true) {
@@ -15,7 +15,7 @@ const isUserAccountBlocked = async (req, res, next) => {
             return throwAccessDeniedError(res, "Your account has been blocked. Please contact support for assistance.");
         }
         // ✅ Active user – Allow to proceed
-        logWithTime(`✅ User (${user.userID}) account is not blocked`);
+        logWithTime(`✅ User (${user.userId}) account is not blocked`);
         return next();
     } catch (err) {
         logMiddlewareError("isUserAccountBlocked", "Internal error during user blocked check", req);

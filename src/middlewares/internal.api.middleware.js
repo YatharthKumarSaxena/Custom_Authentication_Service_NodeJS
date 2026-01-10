@@ -2,7 +2,7 @@ const { errorMessage, throwInternalServerError, throwAccessDeniedError, throwRes
 const { logWithTime } = require("../utils/time-stamps.util");
 const { AdminActionReasons } = require("../configs/user-id.config");
 const { immutableFields } = require("../configs/user-enums.config");
-const { validateSingleIdentifier } = require("../utils/auth.utils");
+const { validateSingleIdentifier } = require("../utils/auth.util");
 const { OK, FORBIDDEN } = require("../configs/http-status.config");
 const { fetchUser } = require("./helper.middleware");
 

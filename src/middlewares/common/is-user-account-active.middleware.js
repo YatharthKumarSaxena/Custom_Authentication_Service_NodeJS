@@ -9,7 +9,7 @@ const isUserAccountActive = async (req, res, next) => {
             logMiddlewareError("isUserAccountActive", "User account is deactivated", req);
             return throwAccessDeniedError(res, "Your account has been deactivated. Please activate your account before continuing.");
         }
-        logWithTime(`✅ User (${user.userID}) account is active`);
+        logWithTime(`✅ User (${user.userId}) account is active`);
         // ✅ Active user – Allow to proceed
         return next();
     } catch (err) {
