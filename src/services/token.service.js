@@ -1,4 +1,4 @@
-const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
+const { makeTokenWithMongoID } = require("../utils/issue-token.util");
 const { logWithTime } = require("../utils/time-stamps.util");
 const { expiryTimeOfRefreshToken } = require("../configs/user-id.config");
 

@@ -1,7 +1,7 @@
 const CounterModel = require("../models/id-generator.model");
-const { IP_Address_Code,userRegistrationCapacity,adminUserID } = require("../configs/user-id.config");
-const { customerIDPrefix } = require("../configs/id-prefixes.config");
-const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
+const { IP_Address_Code,userRegistrationCapacity,adminUserId } = require("../configs/user-id.config");
+const { customerIdPrefix } = require("../configs/id-prefixes.config");
+const { errorMessage,throwInternalServerError } = require("@utils/error-handler.util");
 const { logWithTime } = require("../utils/time-stamps.util");
 
 /*
@@ -16,7 +16,7 @@ const { logWithTime } = require("../utils/time-stamps.util");
 const increaseCustomerCounter = async (res) => {
     try {
         const customerCounter = await CounterModel.findOneAndUpdate(
-            { _id: customerIDPrefix },
+            { _id: customerIdPrefix },
             { $inc: { seq: 1 } },
             { new: true }
         );
@@ -55,19 +55,19 @@ const createCustomerCounter = async (res) => {
 
 /*
   ✅ Factory Pattern:
-  This function encapsulates the logic to "create" a new userID based on machine code and total customers.
+  This function encapsulates the logic to "create" a new userId based on machine code and total customers.
   The logic varies dynamically depending on counter state but the output structure is consistent — like a factory.
   
   ✅ Open-Closed Principle (OCP):
   The function is closed for modification but open for extension.
-  In future, more logic can be added to generate userIDs differently for different user types without modifying this logic directly.
+  In future, more logic can be added to generate userIds differently for different user types without modifying this logic directly.
   
   ✅ SRP:
-  It only deals with userID creation and nothing else — clean separation.
+  It only deals with userId creation and nothing else — clean separation.
 */
 
 // User ID Creation
-const makeUserID = async(res) => {
+const makeUserId = async(res) => {
     let totalCustomers = 1; // By default as Admin User Already Exists 
     let customerCounter; // To remove Scope Resolution Issue
     try{
@@ -94,15 +94,15 @@ const makeUserID = async(res) => {
         return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
     }
     else{
-        newID = newID+adminUserID;
+        newID = newID+adminUserId;
         let machineCode = IP_Address_Code;
         let identityCode = customerCounter._id+machineCode;
         let idNumber = String(newID);
-        const userID = identityCode+idNumber;
-        return userID;
+        const userId = identityCode+idNumber;
+        return userId;
     }
 }
 
 module.exports = {
-    makeUserID: makeUserID,
+    makeUserId,
 }
