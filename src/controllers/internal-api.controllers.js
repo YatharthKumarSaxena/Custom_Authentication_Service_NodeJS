@@ -1,13 +1,13 @@
 // controllers/internal-api.controllers.js
 
 const { logWithTime } = require("../utils/time-stamps.util");
-const { setRefreshTokenCookie } = require("../utils/cookie-manager.utils");
+const { setRefreshTokenCookie } = require("../utils/cookie-manager.util");
 const { throwInternalServerError, errorMessage, throwInvalidResourceError, throwResourceNotFoundError, getLogIdentifiers } =  require("../configs/error-handler.configs");
 const { emailRegex, countryCodeRegex, numberRegex} = require("../configs/regex.config");
-const { logAuthEvent } = require("../utils/auth-log-utils");
+const { logAuthEvent } = require("../utils/auth-log-util");
 const { OK } = require("../configs/http-status.config");
-const { validateLength, isValidRegex } = require("../utils/field-validators");
-const { createFullPhoneNumber,  checkAndAbortIfUserExists } = require("../utils/auth.utils");
+const { validateLength, isValidRegex } = require("../utils/field-validators.util");
+const { createFullPhoneNumber,  checkAndAbortIfUserExists } = require("../utils/auth.util");
 const { emailLength, countryCodeLength, phoneNumberLength} = require("../configs/fields-length.config");
 const UserModel = require("../models/user.model");
 

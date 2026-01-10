@@ -12,58 +12,17 @@ const UserModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs")
 const { throwInvalidResourceError, errorMessage, throwInternalServerError, getLogIdentifiers, throwResourceNotFoundError } = require("../configs/error-handler.configs");
 const { logWithTime } = require("../utils/time-stamps.util");
-const { makeTokenWithMongoID } = require("../utils/issue-token.utils");
-const { checkPasswordIsValid, createFullPhoneNumber,  checkAndAbortIfUserExists } = require("../utils/auth.utils");
+const { makeTokenWithMongoID } = require("../utils/issue-token.util");
+const { checkPasswordIsValid, createFullPhoneNumber,  checkAndAbortIfUserExists } = require("../utils/auth.util");
 const { signInWithToken } = require("../services/token.service");
-const { makeUserID } = require("../services/userID.service");
-const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceLimit } = require("../utils/device.utils");
-const { setAccessTokenHeaders } = require("../utils/token-headers.utils");
-const { logAuthEvent } =require("../utils/auth-log-utils");
-const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.utils");
+const { makeUserID } = require("../services/userId.service");
+const { createDeviceField, getDeviceByID, checkDeviceThreshold, checkUserDeviceLimit } = require("../utils/device.util");
+const { setAccessTokenHeaders } = require("../utils/token-headers.util");
+const { logAuthEvent } =require("../utils/auth-log-util");
+const { setRefreshTokenCookie, clearRefreshTokenCookie } = require("../utils/cookie-manager.util");
 const { CREATED, BAD_REQUEST, INSUFFICIENT_STORAGE, INTERNAL_ERROR, OK } = require("../configs/http-status.config");
 
-const loginTheUser = async (user, refreshToken, device, res) => {
-    try {
-        user.refreshToken = refreshToken;
-        user.isVerified = true;
-        user.lastLogin = Date.now();
-        user.loginCount += 1;
-        user.devices.info.push(device);
-        await user.save();
-        return true;
-    } catch (err) {
-        logWithTime(`❌ Internal Error occurred while logging in user (${user.userID})`);
-        errorMessage(err);
-        throwInternalServerError(res);
-        return false;
-    }
-};
 
-// 🧠 auth.controller.js or auth.service.js
-const logoutUserCompletely = async (user, res, req, context = "general") => {
-    try {
-        user.refreshToken = null;
-        user.isVerified = false;
-        user.devices.info = [];
-        user.jwtTokenIssuedAt = null;
-        user.lastLogout = Date.now();
-
-        const isCookieCleared = clearRefreshTokenCookie(res);
-        if (!isCookieCleared) {
-            logWithTime(`❌ Cookie clear failed for user (${user.userID}) during ${context}. Device ID: (${req.deviceID})`);
-            return false;
-        }
-
-        await user.save();
-        logWithTime(`👋 User (${user.userID}) logged out successfully from all devices during ${context}. Device ID: (${req.deviceID})`);
-        return true;
-    } catch (err) {
-        logWithTime(`❌ Error while logging out user (${user.userID}) during ${context}. Device ID: (${req.deviceID})`);
-        errorMessage(err);
-        throwInternalServerError(res);
-        return false;
-    }
-};
 
 // DRY Principle followed by this Code
 const checkUserIsNotVerified = async(req,res) => {
@@ -472,33 +431,7 @@ const deactivateUserAccount = async(req,res) => {
     }
 }
 
-const changePassword = async(req,res) => {
-    try{
-        const user = req.user;
-        const password = req.body.newPassword;
-        let isPasswordValid = await checkPasswordIsValid(req,user);
-        if(!isPasswordValid){
-            return throwInvalidResourceError(res,"Password");
-        }
-        user.password = await bcryptjs.hash(password, SALT); // Password is Encrypted
-        user.passwordChangedAt = Date.now();
-        await user.save();
-        const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from all device request")
-        if(!isUserLoggedOut)return;
-        logWithTime(`✅ User Password with userID: (${user.userID}) is changed Succesfully from device id: (${req.deviceID})`);
-        // Update data into auth.logs
-        logAuthEvent(req, "CHANGE_PASSWORD", null);  
-        return res.status(OK).json({
-            success: true,
-            message: "Your password has been changed successfully."
-        });
-    }catch(err){
-        const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ Internal Error occurred while changing the password of User ${getIdentifiers}`);
-        errorMessage(err);
-        return throwInternalServerError(res);
-    }
-}
+
 
 const getMyActiveDevices = async (req, res) => {
   try {
