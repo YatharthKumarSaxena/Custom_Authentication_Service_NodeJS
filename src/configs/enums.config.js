@@ -16,9 +16,24 @@ const DeviceTypes = Object.freeze({
     LAPTOP: "LAPTOP"
 });
 
+const LinkPurpose = Object.freeze({
+  EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
+  PHONE_VERIFICATION: "PHONE_VERIFICATION",
+  FORGOT_PASSWORD: "FORGOT_PASSWORD",
+  DEVICE_VERIFICATION: "DEVICE_VERIFICATION"
+});
+
+const OTP_Purpose = Object.freeze({
+  FORGOT_PASSWORD: "FORGOT_PASSWORD",
+  EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
+  PHONE_VERIFICATION: "PHONE_VERIFICATION",
+  DEVICE_VERIFICATION: "DEVICE_VERIFICATION"
+});
+
 module.exports = {
     AuthModes,
     UserTypes,
     DeviceTypes,
-    immutableFields
+    LinkPurpose,
+    OTP_Purpose
 }
