@@ -5,7 +5,7 @@ const { UserModel } = require("@models/user.model"); // Mongoose User model
 const { logWithTime } = require("./time-stamps.util");
 const { errorMessage } = require("./error-handler.configs");
 const authLogEvents = require("./auth-log-events.config");
-const { adminAuthLogForSetUp } = require("../utils/auth-log-utils");
+const { adminAuthLogForSetUp } = require("./auth-log-util");
 const { adminID } = require("./admin-id.config");
 
 async function bootstrapSuperAdmin() {

@@ -7,7 +7,7 @@ const { FORBIDDEN } = require("../configs/http-status.config");
 // 📦 Utility to get a device from user's devices.info array by deviceID
 const getDeviceByID = async (user, deviceID) => {
     // 🛠 Re-fetch fresh user from DB to ensure up-to-date device list
-    user = await UserModel.findOne({ userID: user.userID });
+    user = await UserModel.findOne({ userId: user.userId });
     // 🔍 Check if devices.info array exists and is not empty
     if (!user?.devices?.info?.length) return null;
     // 🔎 Find device by deviceID inside devices.info
@@ -18,7 +18,7 @@ const checkUserDeviceLimit = (req,res) => {
     const user = req.user || req.foundUser;
     const thresholdLimit = (user.userType === "ADMIN")?deviceThreshold.ADMIN:deviceThreshold.CUSTOMERS;
     if (user.devices.info.length >= thresholdLimit) {
-        logWithTime(`Login Request Denied as User (${user.userID}) has crossed threshold limit of device sessions. Request is made from deviceID: (${req.deviceID})`);
+        logWithTime(`Login Request Denied as User (${user.userId}) has crossed threshold limit of device sessions. Request is made from deviceID: (${req.deviceID})`);
         res.status(FORBIDDEN).json({ 
             success: false,
             message: "❌ Device threshold exceeded. Please logout from another device." 
@@ -34,7 +34,7 @@ const checkDeviceThreshold = async (deviceID, res) => {
 
         const usersUsingDevice = await UserModel.find({
             "devices.info.deviceID": deviceID
-        }).select("userID"); // Select minimal fields for performance
+        }).select("userId"); // Select minimal fields for performance
 
         if (usersUsingDevice.length >= thresholdLimit) {
             logWithTime(`🛑 Device Threshold Exceeded: Device (${deviceID}) is already linked with ${usersUsingDevice.length} users.`);
@@ -63,7 +63,7 @@ const createDeviceField = (req,res) => {
         if(req.deviceType)device.deviceType = req.deviceType;
         return device;
     }catch(err){
-        logWithTime(`🛑 An Error Occured in making the Device Field during SignUp/SignIn for user having userID: (${req.body.userID})`)
+        logWithTime(`🛑 An Error Occured in making the Device Field during SignUp/SignIn for user having userId: (${req.body.userId})`)
         errorMessage(err);
         throwInternalServerError(res);
         return null;

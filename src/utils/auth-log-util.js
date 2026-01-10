@@ -8,10 +8,10 @@ const { errorMessage } = require("../configs/error-handler.configs");
 const logAuthEvent = (req, eventType, logOptions = {}) => {
     (async () => {
         try {
-            const userID = req.user?.userID || req.foundUser?.userID || null;
+            const userId = req.user?.userId || req.foundUser?.userId || null;
             
             const baseLog = {
-                userID: userID,
+                userId: userId,
                 eventType: eventType,
                 deviceID: req.deviceID
             };
@@ -21,7 +21,7 @@ const logAuthEvent = (req, eventType, logOptions = {}) => {
 
             const result = new AuthLogModel(baseLog);
             await result.save();
-            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${userID} | device: ${req.deviceID}`);
+            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${userId} | device: ${req.deviceID}`);
         } catch (err) {
             logWithTime(`❌ Internal Error saving AuthLog for event: ${eventType}`);
             errorMessage(err);
@@ -35,7 +35,7 @@ const adminAuthLogForSetUp = (user, eventType) => {
         try{
             const deviceID = user.devices?.info[0]?.deviceID || process.env.DEVICE_UUID;
             const baseLog = {
-                userID: user.userID,
+                userId: user.userId,
                 eventType: eventType,
                 deviceID: deviceID
             };
@@ -45,7 +45,7 @@ const adminAuthLogForSetUp = (user, eventType) => {
 
             const result = new AuthLogModel(baseLog);
             await result.save();
-            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${user.userID} | device ID: ${deviceID}`);
+            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${user.userId} | device ID: ${deviceID}`);
         }catch(err){
             logWithTime(`❌ Internal Error saving AuthLog for Admin event: ${eventType} at set up phase`);
             errorMessage(err);
