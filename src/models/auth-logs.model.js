@@ -34,7 +34,7 @@ const authLogSchema = new mongoose.Schema({
     required: true
   },
 
-  deviceID: {
+  deviceId: {
     type: String,
     match: UUID_V4_REGEX,
     required: true

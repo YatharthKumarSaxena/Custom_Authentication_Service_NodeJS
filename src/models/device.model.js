@@ -4,7 +4,7 @@ const { UUID_V4_REGEX } = require("@configs/regex.config");
 const { deviceNameLength } = require("@configs/fields-length.config");
 
 const deviceSchema = new mongoose.Schema({
-    deviceID: { type: String, match: UUID_V4_REGEX, required: true, unique: true },
+    deviceId: { type: String, match: UUID_V4_REGEX, required: true, unique: true },
     deviceName: { type: String, minlength: deviceNameLength.min, maxlength: deviceNameLength.max, required: false },
     deviceType: { type: String, enum: Object.values(DeviceTypes), default: null },
     addedAt: { type: Date, default: Date.now },

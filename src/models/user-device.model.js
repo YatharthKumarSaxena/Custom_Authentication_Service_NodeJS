@@ -9,6 +9,10 @@ const userDeviceSchema = new mongoose.Schema({
   lastLogoutAt: { type: Date, default: null },
   // lastSeenAt: { type: Date, default: null },
   loginCount: { type: Number, default: 0 },
+  twoFactorKey: { type: String, default: null, select: false },
+  twoFactorKeyIssuedAt: { type: Date, default: null },
+  failed2FAAttempts: { type: Number, default: 0 },
+  twoFactorVerifiedAt: { type: Date, default: null },
   refreshToken: { type: String, default: null, select: false },
   jwtTokenIssuedAt: { type: Date, default: null }
 }, { timestamps: true, versionKey: false });

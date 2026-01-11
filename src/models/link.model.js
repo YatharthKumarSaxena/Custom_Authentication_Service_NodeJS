@@ -34,6 +34,12 @@ const verificationLinkSchema = new mongoose.Schema({
     select: false
   },
 
+  salt: {
+    type: String,
+    required: true,
+    select: false
+  },
+
   expiresAt: {
     type: Date,
     required: true

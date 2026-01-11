@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
-const { OTP_Purpose } = require("@configs/enums.config");
+const { OTP_Purpose, ContactModes } = require("@configs/enums.config");
 
 const otpSchema = new mongoose.Schema({
   userId: {
@@ -18,8 +18,9 @@ const otpSchema = new mongoose.Schema({
   },
 
   contact: {
-    type: String, // email or fullPhoneNumber
+    type: String,
     required: true,
+    enum: Object.values(ContactModes),
     index: true
   },
 
@@ -30,6 +31,12 @@ const otpSchema = new mongoose.Schema({
   },
 
   otpHash: {
+    type: String,
+    required: true,
+    select: false
+  },
+
+  salt: {
     type: String,
     required: true,
     select: false

@@ -1,16 +1,21 @@
 const mongoose = require("mongoose");
 const { UserTypes } = require("@configs/enums.config");
 const { AuthModes } = require("@configs/enums.config");
+const { authMode } = require("@configs/security.config");
 const {
-    fullPhoneNumberLength,
+    localNumberLength,
     emailLength,
-    nameLength
+    nameLength,
+    countryCodeLength,
+    phoneNumberLength
 } = require("@configs/fields-length.config");
 const {
     emailRegex,
-    fullPhoneNumberRegex,
+    phoneRegex,
     userIdRegex,
-    nameRegex
+    nameRegex,
+    numberRegex,
+    countryCodeRegex
 } = require("@configs/regex.config");
 
 /* ------------------ 👤 User Schema ------------------ */
@@ -24,7 +29,7 @@ const userSchema = new mongoose.Schema({
         match: userIdRegex
     },
 
-    name: {
+    firstName: {
         type: String,
         trim: true,
         minlength: nameLength.min,
@@ -46,12 +51,30 @@ const userSchema = new mongoose.Schema({
         index: true
     },
 
-    fullPhoneNumber: {
+    countryCode: {
+        type: String,
+        minlength: countryCodeLength.min,
+        maxlength: countryCodeLength.max,
+        default: null,
+        match: countryCodeRegex,
+        sparse: true
+    },                 // e.g. "91"
+
+    localNumber: {
+        type: String,
+        default: null,
+        minlength: localNumberLength.min,
+        maxlength: localNumberLength.max,
+        match: numberRegex,
+        sparse: true
+    },
+
+    phone: {
         type: String,
         trim: true,
-        minlength: fullPhoneNumberLength.min,
-        maxlength: fullPhoneNumberLength.max,
-        match: fullPhoneNumberRegex,
+        minlength: phoneNumberLength.min,
+        maxlength: phoneLength.max,
+        match: phoneRegex,
         default: null,
         unique: true,
         sparse: true,
@@ -103,17 +126,33 @@ const userSchema = new mongoose.Schema({
     lastDeactivatedAt: {
         type: Date,
         default: null
-    }
+    },
+
+    security: {
+        changePassword: {
+            failedAttempts: {
+                type: Number,
+                default: 0
+            },
+            lastAttemptAt: {
+                type: Date,
+                default: null
+            }
+        }
+    },
+
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorEnabledAt: { type: Date, default: null },
 
 }, { timestamps: true, versionKey: false });
 
 /* ------------------ 🔐 Centralized AUTH_MODE Validation ------------------ */
 
 userSchema.pre("validate", function (next) {
-    const mode = process.env.AUTH_MODE;
+    const mode = authMode;
 
     const hasEmail = !!this.email;
-    const hasPhone = !!this.fullPhoneNumber;
+    const hasPhone = !!this.phone && !!this.localNumber && !!this.countryCode;
 
     if (mode === AuthModes.EMAIL && !hasEmail) {
         return next(new Error("Email is required in EMAIL auth mode."));

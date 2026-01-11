@@ -9,11 +9,11 @@ module.exports = {
     min: 1,
     max: 3
   },
-  phoneNumberLength: {
+  localNumberLength: {
     min: 9,
     max: 12
   },
-  fullPhoneNumberLength: {
+  phoneNumberLength: {
     min: 11,
     max: 16 // E.164 max with '+' sign
   },

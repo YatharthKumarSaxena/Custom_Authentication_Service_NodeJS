@@ -16,18 +16,27 @@ const DeviceTypes = Object.freeze({
     LAPTOP: "LAPTOP"
 });
 
-const LinkPurpose = Object.freeze({
+const ContactModes = Object.freeze({
+    EMAIL: "EMAIL",
+    PHONE: "PHONE",
+    BOTH: "BOTH"
+});
+
+const VerifyMode = Object.freeze({
+  LINK: "LINK",
+  OTP: "OTP"
+});
+
+const VerificationPurpose = Object.freeze({
   EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
   PHONE_VERIFICATION: "PHONE_VERIFICATION",
   FORGOT_PASSWORD: "FORGOT_PASSWORD",
   DEVICE_VERIFICATION: "DEVICE_VERIFICATION"
 });
 
-const OTP_Purpose = Object.freeze({
-  FORGOT_PASSWORD: "FORGOT_PASSWORD",
-  EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
-  PHONE_VERIFICATION: "PHONE_VERIFICATION",
-  DEVICE_VERIFICATION: "DEVICE_VERIFICATION"
+const Token = Object.freeze({
+    ACCESS: "ACCESS",
+    REFRESH: "REFRESH"
 });
 
 module.exports = {
@@ -35,5 +44,9 @@ module.exports = {
     UserTypes,
     DeviceTypes,
     LinkPurpose,
-    OTP_Purpose
+    OTP_Purpose,
+    ContactModes,
+    Token,
+    VerificationPurpose,
+    VerifyMode
 }

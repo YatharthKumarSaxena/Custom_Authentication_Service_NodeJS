@@ -154,6 +154,15 @@ const throwInternalServerError = (res,error) => {
     });
 }
 
+const throwSpecificInternalServerError = (res, customMessage) => {
+    logWithTime(`💥 Internal Server Error: ${customMessage}`);
+    return res.status(INTERNAL_ERROR).json({
+        success: false,
+        response: "An internal server error occurred while processing your request.",
+        message: customMessage
+    });
+}
+
 module.exports = {
     errorMessage,
     throwMissingFieldsError,
@@ -166,5 +175,6 @@ module.exports = {
     throwDBResourceNotFoundError,
     throwSessionExpiredError,
     throwBadRequestError,
-    throwValidationError
+    throwValidationError,
+    throwSpecificInternalServerError
 }
