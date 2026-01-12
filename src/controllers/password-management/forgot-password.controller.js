@@ -3,8 +3,8 @@ const { throwInternalServerError } = require("@/utils/error-handler.util");
 const { getUserContacts } = require("@utils/get-user-contacts.util");
 const { generateVerificationForUser } = require("@utils/generate-verification.util");
 
-/** 🔐 Handle Forget Password Request */
-const handleForgetPassword = async (req, res) => {
+/** 🔐 Handle Forgot Password Request */
+const forgotPassword = async (req, res) => {
     try {
         const foundUser = req.foundUser;
 
@@ -32,5 +32,5 @@ const handleForgetPassword = async (req, res) => {
 };
 
 module.exports = {
-    handleForgetPassword
+    forgotPassword
 };
