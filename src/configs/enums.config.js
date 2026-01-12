@@ -27,6 +27,11 @@ const VerifyMode = Object.freeze({
   OTP: "OTP"
 });
 
+const AuthErrorTypes = {
+    LOCKED: "AUTH_LOCKED",
+    INVALID_PASSWORD: "AUTH_INVALID_PASSWORD"
+};
+
 const VerificationPurpose = Object.freeze({
   EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
   PHONE_VERIFICATION: "PHONE_VERIFICATION",
@@ -48,5 +53,6 @@ module.exports = {
     ContactModes,
     Token,
     VerificationPurpose,
-    VerifyMode
+    VerifyMode,
+    AuthErrorTypes
 }

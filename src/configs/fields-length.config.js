@@ -29,7 +29,7 @@ module.exports = {
     min: 6,
     max: 6
   },
-  nameLength: {
+  firstNameLength: {
     min: 2,
     max: 50
   }

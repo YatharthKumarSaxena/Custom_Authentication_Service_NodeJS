@@ -16,5 +16,9 @@ module.exports = {
     algorithm: "sha256",
     encoding: "hex",
     saltLength: 16
+  },
+  passwordSecurity: {
+    MAX_ATTEMPTS: 5,           // 5 baar galat password allow hai
+    LOCKOUT_TIME_MINUTES: 15   // Uske baad 15 minute ka ban
   }
 };
