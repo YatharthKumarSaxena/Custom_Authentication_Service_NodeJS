@@ -1,23 +1,41 @@
 const { createRedisDeviceRateLimiter } = require("./create-redis-device.rate-limiter");
-const { config } = require("@configs/rate-limit.config");
+const { perDevice } = require("../configs/rate-limit.config")
 
-const malformedAndWrongRequestRateLimiter = createRedisDeviceRateLimiter({
-  maxRequests: config.malformedRequest.maxRequests,
-  windowMs: config.malformedRequest.windowMs,
-  prefix: "malformedRequest",
-  reason: "Malformed request",
-  message: "Too many malformed requests. Please fix your payload and try again later."
-});
+// ✅ middlewares/rateLimit_malformedAndWrongRequest.js
+const malformedAndWrongRequestRateLimiter = createRedisDeviceRateLimiter(perDevice.malformedRequest);
 
-const unknownRouteLimiter = createRedisDeviceRateLimiter({
-  maxRequests: config.unknownRoute.maxRequests,
-  windowMs: config.unknownRoute.windowMs,
-  prefix: "unknownRoute",
-  reason: "Unknown route access",
-  message: "Too many invalid or unauthorized requests. Please slow down."
-});
+// ✅ middlewares/rateLimit_unknownRoute.js
+const unknownRouteLimiter = createRedisDeviceRateLimiter(perDevice.unknownRoute);
+
+// ✅ middlewares/rateLimit_signup.js
+const signUpRateLimiter = createRedisDeviceRateLimiter(perDevice.signup)
+
+// ✅ middlewares/rateLimit_signin.js
+const signInRateLimiter = createRedisDeviceRateLimiter(perDevice.signin);
+
+// ✅ middlewares/rateLimit_activateAccount.js
+const activateAccountRateLimiter = createRedisDeviceRateLimiter(perDevice.activateMyAccount);
+
+// ✅ middlewares/rateLimit_forgetPassword.js
+const forgetPasswordRateLimiter = createRedisDeviceRateLimiter(perDevice.forgotPassword);
+
+// ✅ middlewares/rateLimit_resetPassword.js
+const resetPasswordRateLimiter = createRedisDeviceRateLimiter(perDevice.resetPassword);
+
+// ✅ middlewares/rateLimit_resendVerificationLink.js
+const resendVerificationLinkRateLimiter = createRedisDeviceRateLimiter(perDevice.resendVerificationLink);
+
+// ✅ middlewares/rateLimit_resendVerificationOTPs.js
+const resendVerificationOTPsRateLimiter = createRedisDeviceRateLimiter(perDevice.resendVerificationOTPs);
 
 module.exports = {
   malformedAndWrongRequestRateLimiter,
-  unknownRouteLimiter
+  unknownRouteLimiter,
+  signUpRateLimiter,
+  signInRateLimiter,
+  activateAccountRateLimiter,
+  forgetPasswordRateLimiter,
+  resetPasswordRateLimiter,
+  resendVerificationLinkRateLimiter,
+  resendVerificationOTPsRateLimiter
 };

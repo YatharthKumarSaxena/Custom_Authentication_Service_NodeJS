@@ -21,7 +21,7 @@ const createRedisDeviceRateLimiter = ({ maxRequests, windowMs, prefix, reason, m
       sendCommand: (...args) => redisClient.call(...args)
     }),
     keyGenerator: (req) => {
-      const deviceId = req.headers["x-device-uuid"] || req.deviceId || "UNKNOWN_DEVICE";
+      const deviceId = req.headers[DEVICE_HEADERS.DEVICE_UUID] || req.deviceId || "UNKNOWN_DEVICE";
       return `${prefix}:${deviceId}`;
     },
     windowMs,
@@ -34,7 +34,7 @@ const createRedisDeviceRateLimiter = ({ maxRequests, windowMs, prefix, reason, m
     legacyHeaders: false,
     handler: (req, res, next, options) => {
       try {
-        const deviceId = req.headers["x-device-uuid"] || req.deviceId || "UNKNOWN_DEVICE";
+        const deviceId = req.headers[DEVICE_HEADERS.DEVICE_UUID] || req.deviceId || "UNKNOWN_DEVICE";
         const resetTime = req.rateLimit?.resetTime;
         const retryAfterSeconds = resetTime
           ? Math.ceil((resetTime.getTime() - Date.now()) / 1000)
