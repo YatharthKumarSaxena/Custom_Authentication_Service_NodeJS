@@ -3,6 +3,7 @@ const { AUTH_LOG_EVENTS }  = require("@configs/auth-log-events.config");
 const { DeviceTypes } = require("@configs/enums.config");
 const { UUID_V4_REGEX, userIdRegex } = require("@configs/regex.config");
 const { deviceNameLength } = require("@configs/fields-length.config");
+const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 const authLogSchema = new mongoose.Schema({
   userId: {
@@ -14,7 +15,6 @@ const authLogSchema = new mongoose.Schema({
 
   description: { 
     type: String, 
-    default: null, 
     required: true 
   },
 
@@ -56,5 +56,5 @@ const authLogSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false });
 
 module.exports = {
-  AuthLogModel: mongoose.model("AuthLog", authLogSchema)
+  AuthLogModel: mongoose.model(DB_COLLECTIONS.AUTH_LOG, authLogSchema)
 };

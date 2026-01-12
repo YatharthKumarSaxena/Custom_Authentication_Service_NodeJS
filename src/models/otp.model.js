@@ -1,19 +1,19 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
-const { OTP_Purpose, ContactModes } = require("@configs/enums.config");
+const { VerificationPurpose, ContactModes } = require("@configs/enums.config");
+const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 const otpSchema = new mongoose.Schema({
   userId: {
     type: ObjectId,
-    ref: "User",
+    ref: DB_COLLECTIONS.USER,
     default: null,
     index: true
   },
 
   deviceId: {
     type: ObjectId,
-    ref: "Device",
-    default: null,
+    ref: DB_COLLECTIONS.DEVICE,
     index: true
   },
 
@@ -26,7 +26,7 @@ const otpSchema = new mongoose.Schema({
 
   purpose: {
     type: String,
-    enum: Object.values(OTP_Purpose),
+    enum: Object.values(VerificationPurpose),
     required: true
   },
 
@@ -68,5 +68,5 @@ const otpSchema = new mongoose.Schema({
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = {
-    OTPModel: mongoose.model("OTP", otpSchema)
+    OTPModel: mongoose.model(DB_COLLECTIONS.OTP, otpSchema)
 };

@@ -1,5 +1,6 @@
 // Extracting the Required Modules for the working of this file
 const mongoose = require("mongoose");
+const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 /* Making the Counter Collection in ecommerce_db, this Colection is Responsible for 
 Unique ID Generation for Orders, Registration, Payments etc. */
@@ -19,5 +20,5 @@ const counterSchema = mongoose.Schema({
 
 // Defined Collection Counter in ecommerce_db Database
 module.exports = {
-    CounterModel: mongoose.model("Counters",counterSchema)
+    CounterModel: mongoose.model(DB_COLLECTIONS.COUNTER,counterSchema)
 };

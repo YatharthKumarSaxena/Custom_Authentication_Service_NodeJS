@@ -5,18 +5,19 @@ const { authMode } = require("@configs/security.config");
 const {
     localNumberLength,
     emailLength,
-    nameLength,
+    firstNameLength,
     countryCodeLength,
     phoneNumberLength
 } = require("@configs/fields-length.config");
 const {
     emailRegex,
-    phoneRegex,
+    phoneNumberRegex,
     userIdRegex,
-    nameRegex,
-    numberRegex,
+    firstNameRegex,
+    localNumberRegex,
     countryCodeRegex
 } = require("@configs/regex.config");
+const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 /* ------------------ 👤 User Schema ------------------ */
 
@@ -32,9 +33,9 @@ const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
         trim: true,
-        minlength: nameLength.min,
-        maxlength: nameLength.max,
-        match: nameRegex,
+        minlength: firstNameLength.min,
+        maxlength: firstNameLength.max,
+        match: firstNameRegex,
         required: true
     },
 
@@ -65,7 +66,7 @@ const userSchema = new mongoose.Schema({
         default: null,
         minlength: localNumberLength.min,
         maxlength: localNumberLength.max,
-        match: numberRegex,
+        match: localNumberRegex,
         sparse: true
     },
 
@@ -73,8 +74,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true,
         minlength: phoneNumberLength.min,
-        maxlength: phoneLength.max,
-        match: phoneRegex,
+        maxlength: phoneNumberLength.max,
+        match: phoneNumberRegex,
         default: null,
         unique: true,
         sparse: true,
@@ -143,6 +144,7 @@ const userSchema = new mongoose.Schema({
 
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorEnabledAt: { type: Date, default: null },
+    twoFactorDisabledAt: { type: Date, default: null }
 
 }, { timestamps: true, versionKey: false });
 
@@ -181,5 +183,5 @@ userSchema.pre("validate", function (next) {
 /* ------------------ 📦 Export ------------------ */
 
 module.exports = {
-    UserModel: mongoose.model("User", userSchema)
+    UserModel: mongoose.model(DB_COLLECTIONS.USER, userSchema)
 };

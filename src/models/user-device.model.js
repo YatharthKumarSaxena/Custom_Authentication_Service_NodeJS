@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
+const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 const userDeviceSchema = new mongoose.Schema({
   userId: { type: ObjectId, ref: "User", required: true, index: true },
@@ -21,5 +22,5 @@ const userDeviceSchema = new mongoose.Schema({
 userDeviceSchema.index({ userId: 1, deviceId: 1 }, { unique: true });
 
 module.exports = {
-  UserDeviceModel: mongoose.model("UserDevice", userDeviceSchema)
+  UserDeviceModel: mongoose.model(DB_COLLECTIONS.USER_DEVICE, userDeviceSchema)
 };
