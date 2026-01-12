@@ -1,66 +1,71 @@
-// middlewares/factories/createRateLimiter.js
 const rateLimit = require("express-rate-limit");
 const { RedisStore } = require("rate-limit-redis");
 const { redisClient } = require("@utils/redis-client.util");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage, throwTooManyRequestsError } = require("@utils/error-handler.util");
 
 /**
  * Redis-backed Admin & Device-based rate limiter
  * @param {Object} options
  * @param {number} options.maxRequests - Maximum requests allowed
  * @param {number} options.windowMs - Time window in milliseconds
+ * @param {string} options.message - Optional custom message
  */
 
-const createRateLimiter = ({ maxRequests, windowMs }) => {
+const createRateLimiter = ({ maxRequests, windowMs, message }) => {
   return rateLimit({
     store: new RedisStore({
       sendCommand: (...args) => redisClient.call(...args)
     }),
+    
     keyGenerator: (req) => {
-      const adminId = req.admin?.adminId; // optional chaining
-      const deviceId = req.deviceId;     // required
+      const adminId = req.admin?.adminId; 
+      const deviceId = req.deviceId;     
       const path = req.originalUrl || req.url;
 
+      // Note: Make sure this middleware runs AFTER auth/device middleware
       if (!adminId || !deviceId) {
+        // Log warning but prevent crash by returning a fallback key or throwing explicit error
         throw new Error("Admin ID or Device ID missing for rate limiter key generation");
       }
 
       return `${adminId}:${deviceId}:${path}`;
     },
+
     windowMs,
     max: maxRequests,
+    
+    // Standard message object
     message: {
-      code: "RATE_LIMIT_EXCEEDED",
-      message: "Too many requests. Please try again after some time."
+      message: message || "Too many requests. Please try again after some time."
     },
+
     standardHeaders: true,
     legacyHeaders: false,
+
+    // 👇 UPDATED HANDLER
     handler: (req, res, next, options) => {
       try {
-        const ip = req.ip || req.headers["x-forwarded-for"] || "UNKNOWN_IP";
-        const path = req.originalUrl || req.url;
-        const adminId = req.admin?.adminId || "UNKNOWN_ADMIN";
-        const deviceId = req.deviceId || "UNKNOWN_DEVICE";
+        // 1. Calculate Retry Time
         const resetTime = req.rateLimit?.resetTime;
         const retryAfterSeconds = resetTime
           ? Math.ceil((resetTime.getTime() - Date.now()) / 1000)
           : null;
 
-        logWithTime("🚫 Rate Limit Triggered:");
-        logWithTime(`IP: ${ip} | Path: ${path} | Admin: ${adminId} | Device: ${deviceId}`);
-        errorMessage(new Error("Rate limit exceeded"));
+        // 2. Optional: Detailed Internal Logging (Development/Debug ke liye)
+        const ip = req.ip || req.headers["x-forwarded-for"] || "UNKNOWN_IP";
+        const path = req.originalUrl || req.url;
+        logWithTime(`🚫 Rate Limit Triggered | IP: ${ip} | Path: ${path}`);
 
-        const responsePayload = {
-          code: "RATE_LIMIT_EXCEEDED",
-          message: "Too many requests. Please try again after some time.",
-          ...(retryAfterSeconds && { retryAfterSeconds })
-        };
+        // 3. 🔥 Use Standard Error Handler
+        return throwTooManyRequestsError(res, options.message.message, retryAfterSeconds);
 
-        return res.status(options.statusCode).json(responsePayload);
       } catch (err) {
         errorMessage(err);
-        return res.status(500).json({ code: "INTERNAL_SERVER_ERROR", message: "Something went wrong" });
+        return res.status(500).json({ 
+            success: false, 
+            message: "Internal Server Error in Rate Limiter" 
+        });
       }
     }
   });
