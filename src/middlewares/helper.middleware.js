@@ -20,8 +20,8 @@ const fetchUser = async(req,res) =>{
                 verifyWith = verifyWith+"EMAIL";
             }
         }
-        else if (req?.query?.fullPhoneNumber){
-            user = await UserModel.findOne({fullPhoneNumber: req.query.fullPhoneNumber.trim()});
+        else if (req?.query?.phone){
+            user = await UserModel.findOne({phone: req.query.phone.trim()});
             if(user){
                 verifyWith = verifyWith+"PHONE";
             }
@@ -36,8 +36,8 @@ const fetchUser = async(req,res) =>{
             if(user){
                 verifyWith = verifyWith+"EMAIL";
             }
-        }else if(req?.body?.fullPhoneNumber){
-            user = await UserModel.findOne({fullPhoneNumber: req.body.fullPhoneNumber.trim()});
+        }else if(req?.body?.phone){
+            user = await UserModel.findOne({phone: req.body.phone.trim()});
             if(user){
                 verifyWith = verifyWith+"PHONE";
             }

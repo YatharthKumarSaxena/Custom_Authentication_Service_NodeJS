@@ -1,12 +1,12 @@
 const { throwInternalServerError, logMiddlewareError, throwMissingFieldsError, throwBadRequestError, throwValidationError } = require("@utils/error-handler.util");
 const { isValidRegex, validateLength } = require("@utils/validators-factory.util")
 const { AuthModes } = require("@configs/enums.config");
-const { emailRegex, fullPhoneNumberRegex } = require("@configs/regex.config");
-const { fullPhoneNumberLength, emailLength } = require("@configs/fields-length.config");
+const { emailRegex, phoneNumberRegex } = require("@configs/regex.config");
+const { phoneNumberLength, emailLength } = require("@configs/fields-length.config");
 
 const authModeValidator = async (req, res, next) => {
     try {
-        const { email, fullPhoneNumber } = req.body;
+        const { email, phone } = req.body;
         const authMode = process.env.AUTH_MODE;
 
         let error = [];
@@ -34,31 +34,31 @@ const authModeValidator = async (req, res, next) => {
             }
 
             // Remove Full Phone Number if Provided Additionally
-            if (fullPhoneNumber) {
-                delete req.body.fullPhoneNumber;
+            if (phone) {
+                delete req.body.phone;
             }
         }
 
         else if (authMode === AuthModes.PHONE) {
-            // Step 1: Check if fullPhoneNumber field is provided
-            if (!fullPhoneNumber) {
-                logMiddlewareError("authModeValidator", "Missing fullPhoneNumber field", req);
-                return throwMissingFieldsError(res, "fullPhoneNumber");
+            // Step 1: Check if phone field is provided
+            if (!phone) {
+                logMiddlewareError("authModeValidator", "Missing phone field", req);
+                return throwMissingFieldsError(res, "phone");
             }
 
             // Step 2: Validate phone format + length
-            if (!validateLength(fullPhoneNumber, fullPhoneNumberLength.min, fullPhoneNumberLength.max)) {
-                error.push("Check fullPhoneNumber Length");
-                logMiddlewareError("authModeValidator", "Invalid fullPhoneNumber provided", req);
+            if (!validateLength(phone, phoneNumberLength.min, phoneNumberLength.max)) {
+                error.push("Check phone Length");
+                logMiddlewareError("authModeValidator", "Invalid phone provided", req);
             }
 
-            if (!isValidRegex(fullPhoneNumber, fullPhoneNumberRegex)) {
-                error.push("Check fullPhoneNumber Format");
-                logMiddlewareError("authModeValidator", "Invalid fullPhoneNumber format", req);
+            if (!isValidRegex(phone, phoneNumberRegex)) {
+                error.push("Check phone Format");
+                logMiddlewareError("authModeValidator", "Invalid phone format", req);
             }
 
             if(error.length > 0){
-                return throwValidationError(res, "Invalid fullPhoneNumber provided", error.join(" | "));
+                return throwValidationError(res, "Invalid phone provided", error.join(" | "));
             }
 
             // Remove Email if Provided Additionally
@@ -68,9 +68,9 @@ const authModeValidator = async (req, res, next) => {
         }
 
         else if (authMode === AuthModes.BOTH) {
-            if(!email || !fullPhoneNumber){
+            if(!email || !phone){
                 logMiddlewareError("authModeValidator", "Full Phone Number and Email are required fields", req);
-                return throwMissingFieldsError(res, "email or fullPhoneNumber");
+                return throwMissingFieldsError(res, "email or phone");
             }
 
             // Validate Email if Provided
@@ -80,9 +80,9 @@ const authModeValidator = async (req, res, next) => {
             }
 
             // Validate Phone if Provided
-            if((!validateLength(fullPhoneNumber, fullPhoneNumberLength.min, fullPhoneNumberLength.max) || !isValidRegex(fullPhoneNumber, fullPhoneNumberRegex))){
-                logMiddlewareError("authModeValidator", "Invalid fullPhoneNumber provided", req);
-                error.push("Check fullPhoneNumber Length/Format");
+            if((!validateLength(phone, phoneNumberLength.min, phoneNumberLength.max) || !isValidRegex(phone, phoneNumberRegex))){
+                logMiddlewareError("authModeValidator", "Invalid phone provided", req);
+                error.push("Check phone Length/Format");
             }
 
             if(error.length > 0){
@@ -92,13 +92,13 @@ const authModeValidator = async (req, res, next) => {
         }
 
         else{
-            if(!email && !fullPhoneNumber){
+            if(!email && !phone){
                 logMiddlewareError("authModeValidator", "Exactly one identifier (Email or Full Phone Number) is required", req);
-                return throwMissingFieldsError(res, "email or fullPhoneNumber");
+                return throwMissingFieldsError(res, "email or phone");
             }
-            if(email && fullPhoneNumber){
+            if(email && phone){
                 logMiddlewareError("authModeValidator", "Only one identifier (Email or Full Phone Number) should be provided", req);
-                return throwBadRequestError(res, "Provide either email or fullPhoneNumber, not both.");
+                return throwBadRequestError(res, "Provide either email or phone, not both.");
             }
             // Validate Email if Provided
             if(email && (!validateLength(email,emailLength.min,emailLength.max) || !isValidRegex(email, emailRegex))){
@@ -106,9 +106,9 @@ const authModeValidator = async (req, res, next) => {
                 return throwValidationError(res, "Invalid email provided");
             }
             // Validate Phone if Provided
-            if(fullPhoneNumber && (!validateLength(fullPhoneNumber, fullPhoneNumberLength.min, fullPhoneNumberLength.max) || !isValidRegex(fullPhoneNumber, fullPhoneNumberRegex))){
-                logMiddlewareError("authModeValidator", "Invalid fullPhoneNumber provided", req);
-                return throwValidationError(res, "Invalid fullPhoneNumber provided");
+            if(phone && (!validateLength(phone, phoneNumberLength.min, phoneNumberLength.max) || !isValidRegex(phone, phoneNumberRegex))){
+                logMiddlewareError("authModeValidator", "Invalid phone provided", req);
+                return throwValidationError(res, "Invalid phone provided");
             }
         }
 

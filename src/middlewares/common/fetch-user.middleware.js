@@ -5,7 +5,7 @@ const { fetchUser } = require("@utils/fetch-user.util");
  * 🔍 Fetch User Middleware
  * 
  * Strict validation: Validates identifiers based on AuthMode and fetches user from database
- * - Rejects if both email and fullPhoneNumber are sent (except in BOTH mode)
+ * - Rejects if both email and phone are sent (except in BOTH mode)
  * - Rejects if extra identifiers are sent
  * - Validates according to DEFAULT_AUTH_MODE
  * - Attaches foundUser to req.foundUser

@@ -24,7 +24,7 @@ const {
 const fetchEntityFactory = (fetchFunction, entityName) => {
   return async (req, res, next) => {
     try {
-      const { email, fullPhoneNumber, userId } = req.body;
+      const { email, phone, userId } = req.body;
       const authMode = process.env.AUTH_MODE || AuthModes.BOTH;
 
       let finalEmail = null;
@@ -34,12 +34,12 @@ const fetchEntityFactory = (fetchFunction, entityName) => {
       // 🆔 Priority 1: Check for userId
       // Agar userId hai to email/phone ignore karo
       if (userId) {
-        if (email || fullPhoneNumber) {
+        if (email || phone) {
           logMiddlewareError("fetchEntity", "Cannot send userId with email or phone", req);
           return throwBadRequestError(
             res,
             "Cannot send userId with email or phone",
-            "When using userId, do not provide email or fullPhoneNumber"
+            "When using userId, do not provide email or phone"
           );
         }
         finalUserId = userId;
@@ -51,12 +51,12 @@ const fetchEntityFactory = (fetchFunction, entityName) => {
 
       // 📧 EMAIL Mode: ONLY email allowed, phone REJECT
       if (authMode === AuthModes.EMAIL) {
-        if (fullPhoneNumber) {
+        if (phone) {
           logMiddlewareError("fetchEntity", "Phone number not allowed in EMAIL auth mode", req);
           return throwBadRequestError(
             res, 
             "Phone number not allowed in EMAIL auth mode",
-            "Remove fullPhoneNumber from request. Only email is accepted."
+            "Remove phone from request. Only email is accepted."
           );
         }
         if (!email) {
@@ -78,56 +78,56 @@ const fetchEntityFactory = (fetchFunction, entityName) => {
           return throwBadRequestError(
             res, 
             "Email not allowed in PHONE auth mode",
-            "Remove email from request. Only fullPhoneNumber is accepted."
+            "Remove email from request. Only phone is accepted."
           );
         }
-        if (!fullPhoneNumber) {
+        if (!phone) {
           logMiddlewareError("fetchEntity", "Phone number is required for PHONE auth mode", req);
           return throwBadRequestError(
             res, 
             "Phone number is required for PHONE auth mode",
-            "Please provide fullPhoneNumber"
+            "Please provide phone"
           );
         }
-        finalPhone = fullPhoneNumber;
+        finalPhone = phone;
         // finalEmail remains null
       }
 
       // 🔀 BOTH Mode: Dono chahiye exactly
       else if (authMode === AuthModes.BOTH) {
-        if (!email || !fullPhoneNumber) {
-          logMiddlewareError("fetchEntity", "Both email and fullPhoneNumber are required for BOTH auth mode", req);
+        if (!email || !phone) {
+          logMiddlewareError("fetchEntity", "Both email and phone are required for BOTH auth mode", req);
           return throwBadRequestError(
             res, 
-            "Both email and fullPhoneNumber are required for BOTH auth mode",
+            "Both email and phone are required for BOTH auth mode",
             "Please provide both identifiers"
           );
         }
         finalEmail = email;
-        finalPhone = fullPhoneNumber;
+        finalPhone = phone;
       }
 
       // ⚡ EITHER Mode: Koi ek chahiye (dono nahi, koi ek bhi nahi)
       else if (authMode === AuthModes.EITHER) {
-        if (email && fullPhoneNumber) {
+        if (email && phone) {
           logMiddlewareError("fetchEntity", "Send only one identifier in EITHER auth mode", req);
           return throwBadRequestError(
             res,
             "Send only one identifier in EITHER auth mode",
-            "Provide either email OR fullPhoneNumber, not both"
+            "Provide either email OR phone, not both"
           );
         }
-        if (!email && !fullPhoneNumber) {
-          logMiddlewareError("fetchEntity", "Either email or fullPhoneNumber is required", req);
+        if (!email && !phone) {
+          logMiddlewareError("fetchEntity", "Either email or phone is required", req);
           return throwBadRequestError(
             res, 
             "Missing identifier", 
-            "Either email or fullPhoneNumber is required"
+            "Either email or phone is required"
           );
         }
         // Preference email ko
         finalEmail = email || null;
-        finalPhone = fullPhoneNumber || null;
+        finalPhone = phone || null;
       }
       }
 

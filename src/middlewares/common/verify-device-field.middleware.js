@@ -4,12 +4,13 @@ const { DeviceTypeHelper } = require("@utils/enum-validators.util");
 const { deviceNameLength } = require("@configs/fields-length.config");
 const { DeviceModel } = require("@models/device.model");
 const { logWithTime } = require("@utils/time-stamps.util");
+const { DEVICE_HEADERS } = require("@configs/device-headers.config");
 
 const verifyDeviceField = async (req, res, next) => {
     try {
-        const deviceId = req.headers["x-device-uuid"];
-        let deviceName = req.headers["x-device-name"]; // Optional
-        const deviceType = req.headers["x-device-type"]; // Optional
+        const deviceId = req.headers[DEVICE_HEADERS.DEVICE_UUID];
+        let deviceName = req.headers[DEVICE_HEADERS.DEVICE_NAME]; // Optional
+        const deviceType = req.headers[DEVICE_HEADERS.DEVICE_TYPE]; // Optional
 
         // Device ID is mandatory
         if (!deviceId || deviceId.trim() === "") {
