@@ -1,8 +1,8 @@
-const { deviceThreshold, usersPerDevice } = require("../configs/user-id.config");
+const { deviceThreshold, usersPerDevice } = require("@configs/security.config");
 const { logWithTime } = require("./time-stamps.util");
-const { errorMessage,throwInternalServerError } = require("../configs/error-handler.configs");
-const UserModel = require("../models/user.model");
-const { FORBIDDEN } = require("../configs/http-status.config");
+const { errorMessage,throwInternalServerError } = require("./error-handler.util");
+const { UserModel } = require("@models/user.model");
+const { FORBIDDEN } = require("@configs/http-status.config");
 
 // 📦 Utility to get a device from user's devices.info array by deviceId
 const getDeviceById = async (user, deviceId) => {

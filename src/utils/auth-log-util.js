@@ -5,7 +5,7 @@ const { errorMessage } = require("@utils/error-handler.util");
 /**
  * 🔐 Logs an authentication event (fire-and-forget)
  */
-const logAuthEvent = (req, eventType, logOptions = {}) => {
+const logAuthEvent = (req, eventType, description, logOptions = {}) => {
     (async () => {
         try {
             const userId = req.user?.userId || req.foundUser?.userId || null;
@@ -13,6 +13,7 @@ const logAuthEvent = (req, eventType, logOptions = {}) => {
             const baseLog = {
                 userId: userId,
                 eventType: eventType,
+                description: description,
                 deviceId: req.deviceId
             };
 

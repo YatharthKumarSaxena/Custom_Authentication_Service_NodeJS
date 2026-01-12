@@ -10,18 +10,18 @@ const { errorMessage, throwInternalServerError } = require("@utils/error-handler
  * @param {String} entityName - "User" or "Admin"
  */
 
-const checkEntityExists = async (Model, identifiers, email, fullPhoneNumber, res, entityName) => {
+const checkEntityExists = async (Model, identifiers, email, phone, res, entityName) => {
   try {
     let reason = "";
     const [phoneEntity, emailEntity] = await Promise.all([
-      Model.findOne({ [identifiers.phoneKey]: fullPhoneNumber }),
+      Model.findOne({ [identifiers.phoneKey]: phone }),
       Model.findOne({ [identifiers.emailKey]: email })
     ]);
 
     if (phoneEntity && emailEntity) {
-      reason = `Phone Number: ${fullPhoneNumber} and Email ID: ${email}`;
+      reason = `Phone Number: ${phone} and Email ID: ${email}`;
     } else if (phoneEntity) {
-      reason = `Phone Number: ${fullPhoneNumber}`;
+      reason = `Phone Number: ${phone}`;
     } else if (emailEntity) {
       reason = `Email ID: ${email}`;
     }
@@ -36,8 +36,8 @@ const checkEntityExists = async (Model, identifiers, email, fullPhoneNumber, res
   }
 };
 
-const checkAndAbortIfEntityExists = async (Model, identifiers, email, fullPhoneNumber, res, entityName) => {
-  const existReason = await checkEntityExists(Model, identifiers, email, fullPhoneNumber, res, entityName);
+const checkAndAbortIfEntityExists = async (Model, identifiers, email, phone, res, entityName) => {
+  const existReason = await checkEntityExists(Model, identifiers, email, phone, res, entityName);
   if (existReason !== "") {
     logWithTime(`⛔ Conflict Detected: ${existReason}`);
     if (!res.headersSent) {

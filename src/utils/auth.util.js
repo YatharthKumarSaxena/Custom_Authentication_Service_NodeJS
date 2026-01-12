@@ -16,12 +16,16 @@ const checkPasswordIsValid = async (userId, providedPassword) => {
     return await bcryptjs.compare(providedPassword, user.password);
 };
 
+const hashPassword = async (plainPassword) => {
+    return await bcryptjs.hash(plainPassword, SALT);
+};
+
 const isAdminId = (userId) =>
     typeof userId === "string" &&
     isValidRegex(userId, userIdRegex) &&
     userId.startsWith(adminIdPrefix);
 
-const createphone = (countryCode, number) => {
+const createPhoneNumber = (countryCode, number) => {
     const newNumber = "+" + countryCode + number;
     if (!validateLength(newNumber, phoneNumberLength.min, phoneNumberLength.max)) {
         return null;
@@ -33,7 +37,8 @@ const createphone = (countryCode, number) => {
 };
 
 module.exports = {
-    createphone: createphone,
-    checkPasswordIsValid: checkPasswordIsValid,
-    isAdminId: isAdminId
+    createPhoneNumber,
+    checkPasswordIsValid,
+    hashPassword,
+    isAdminId
 }

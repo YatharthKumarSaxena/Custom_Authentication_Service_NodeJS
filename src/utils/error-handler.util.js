@@ -8,7 +8,7 @@
 
 // Extracts file that include timeStamp function
 const {logWithTime} = require("./time-stamps.util");
-const { BAD_REQUEST, INTERNAL_ERROR, UNAUTHORIZED, FORBIDDEN, CONFLICT, UNPROCESSABLE_ENTITY, NOT_FOUND } = require("@configs/http-status.config");
+const { BAD_REQUEST, INTERNAL_ERROR, UNAUTHORIZED, FORBIDDEN, CONFLICT, UNPROCESSABLE_ENTITY, NOT_FOUND, TOO_MANY_REQUESTS } = require("@configs/http-status.config");
 
 const errorMessage = (err) => {
     logWithTime("🛑 Error occurred:");
@@ -163,6 +163,16 @@ const throwSpecificInternalServerError = (res, customMessage) => {
     });
 }
 
+const throwTooManyRequestsError = (res, message) => {
+    logWithTime(`⏳ Too Many Requests: ${message}`);
+    return res.status(TOO_MANY_REQUESTS).json({
+        success: false,
+        type: "TooManyRequests",
+        warning: "Rate Limit Exceeded",
+        message: message || "You have exceeded the maximum number of requests. Please try again later."
+    });
+};
+
 module.exports = {
     errorMessage,
     throwMissingFieldsError,
@@ -176,5 +186,6 @@ module.exports = {
     throwSessionExpiredError,
     throwBadRequestError,
     throwValidationError,
-    throwSpecificInternalServerError
+    throwSpecificInternalServerError,
+    throwTooManyRequestsError
 }

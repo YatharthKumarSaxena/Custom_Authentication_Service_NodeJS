@@ -9,7 +9,7 @@ const { errorMessage } = require("./error-handler.util");
  * 
  * @param {Object} Model - Mongoose model (AdminModel or UserModel)
  * @param {string|null} email - Entity's email address
- * @param {string|null} fullPhoneNumber - Entity's full phone number
+ * @param {string|null} phone - Entity's full phone number
  * @param {string|null} userId - Entity's custom userId
  * @param {string} entityType - Type of entity ("Admin" or "User") for logging
  * @param {string} userIdField - Field name for userId in model (e.g., "adminId" or "userId")
@@ -19,7 +19,7 @@ const { errorMessage } = require("./error-handler.util");
 const fetchEntity = async (
   Model, 
   email = null, 
-  fullPhoneNumber = null, 
+  phone = null, 
   userId = null, 
   entityType = "Entity",
   userIdField = "userId"
@@ -46,8 +46,8 @@ const fetchEntity = async (
       conditions.push({ email });
     }
     
-    if (fullPhoneNumber) {
-      conditions.push({ fullPhoneNumber });
+    if (phone) {
+      conditions.push({ phone });
     }
 
     // Agar koi condition nahi, return null
@@ -61,7 +61,7 @@ const fetchEntity = async (
     const entity = await Model.findOne(query).lean();
 
     if (entity) {
-      logWithTime(`✅ ${entityType} found: ${entity[userIdField] || entity.email || entity.fullPhoneNumber}`);
+      logWithTime(`✅ ${entityType} found: ${entity[userIdField] || entity.email || entity.phone}`);
     } else {
       logWithTime(`❌ ${entityType} not found with query: ${JSON.stringify(query)}`);
     }

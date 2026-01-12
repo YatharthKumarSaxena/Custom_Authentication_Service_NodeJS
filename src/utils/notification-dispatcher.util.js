@@ -13,7 +13,7 @@ const { logWithTime } = require("@utils/time-stamps.util");
 
 /**
  * 📤 Send notification based on auth mode (NEW FACTORY APPROACH)
- * @param {Object} recipient - {email, fullPhoneNumber, adminId, adminType}
+ * @param {Object} recipient - {email, phone, adminId, adminType}
  * @param {String} templateName - Name of template in adminTemplate/smsTemplate
  * @param {Object} emailData - Data object for email template
  * @param {Array} smsArgs - Arguments array for SMS template function
@@ -26,7 +26,7 @@ const sendNotificationFactory = (recipient, templateName, emailData = {}, smsArg
   }
 
   const authMode = process.env.DEFAULT_AUTH_MODE || AuthModes.BOTH;
-  const { email, fullPhoneNumber, adminId, adminType } = recipient;
+  const { email, phone, adminId, adminType } = recipient;
 
   try {
     switch (authMode) {
@@ -41,8 +41,8 @@ const sendNotificationFactory = (recipient, templateName, emailData = {}, smsArg
 
       case AuthModes.PHONE:
         // Only SMS
-        if (fullPhoneNumber) {
-          sendSMSNotification(fullPhoneNumber, templateName, smsArgs);
+        if (phone) {
+          sendSMSNotification(phone, templateName, smsArgs);
         } else {
           logWithTime(`⚠️ Phone number not available for ${adminId}`);
         }
@@ -53,10 +53,10 @@ const sendNotificationFactory = (recipient, templateName, emailData = {}, smsArg
         if (email) {
           sendEmailNotification(email, templateName, emailData, adminType || 'Admin');
         }
-        if (fullPhoneNumber) {
-          sendSMSNotification(fullPhoneNumber, templateName, smsArgs);
+        if (phone) {
+          sendSMSNotification(phone, templateName, smsArgs);
         }
-        if (!email && !fullPhoneNumber) {
+        if (!email && !phone) {
           logWithTime(`⚠️ Neither email nor phone available for ${adminId}`);
         }
         break;
@@ -65,8 +65,8 @@ const sendNotificationFactory = (recipient, templateName, emailData = {}, smsArg
         // Send to whichever exists (priority: email)
         if (email) {
           sendEmailNotification(email, templateName, emailData, adminType || 'Admin');
-        } else if (fullPhoneNumber) {
-          sendSMSNotification(fullPhoneNumber, templateName, smsArgs);
+        } else if (phone) {
+          sendSMSNotification(phone, templateName, smsArgs);
         } else {
           logWithTime(`⚠️ Neither email nor phone available for ${adminId}`);
         }
@@ -252,7 +252,7 @@ const notifyAdmin = (admin, emailFunction, smsFunction, eventType) => {
   dispatchNotification({
     authMode,
     email: admin.email,
-    phone: admin.fullPhoneNumber,
+    phone: admin.phone,
     emailFunction,
     smsFunction,
     eventType
@@ -278,7 +278,7 @@ const notifyUser = (user, emailFunction, smsFunction, eventType) => {
   dispatchNotification({
     authMode,
     email: user.email,
-    phone: user.fullPhoneNumber,
+    phone: user.phone,
     emailFunction,
     smsFunction,
     eventType

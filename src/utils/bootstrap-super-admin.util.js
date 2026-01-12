@@ -20,7 +20,7 @@ async function bootstrapSuperAdmin() {
     // Prepare new admin data
     const newAdmin = {
       name: process.env.ADMIN_NAME,
-      fullPhoneNumber: process.env.ADMIN_FULL_PHONE_NUMBER,
+      phone: process.env.ADMIN_FULL_PHONE_NUMBER,
       password: await bcryptjs.hash(process.env.ADMIN_PASSWORD, SALT),
       email: process.env.ADMIN_EMAIL_ID,
       userType: "ADMIN",

@@ -1,5 +1,5 @@
 const { AuthModes, ContactModes } = require("@configs/enums.config");
-const { createFullPhoneNumber } = require("./auth.util");
+const { createPhoneNumber } = require("./auth.util");
 const { authMode } = require("@configs/security.config");
 
 /**
@@ -22,23 +22,24 @@ const getUserContacts = (user) => {
             email = userEmail;
         } else if (userCountryCode && userLocalNumber) {
             finalContactMode = ContactModes.PHONE;
-            phone = createFullPhoneNumber(userCountryCode, userLocalNumber);
+            phone = createPhoneNumber(userCountryCode, userLocalNumber);
         }
     } else if (authMode === AuthModes.BOTH) {
         finalContactMode = ContactModes.BOTH;
         email = userEmail;
-        phone = createFullPhoneNumber(userCountryCode, userLocalNumber);
+        phone = createPhoneNumber(userCountryCode, userLocalNumber);
     } else if (authMode === AuthModes.EMAIL) {
         finalContactMode = ContactModes.EMAIL;
         email = userEmail;
     } else if (authMode === AuthModes.PHONE) {
         finalContactMode = ContactModes.PHONE;
-        phone = createFullPhoneNumber(userCountryCode, userLocalNumber);
+        phone = createPhoneNumber(userCountryCode, userLocalNumber);
     }
 
     return {
         email,
-        phone
+        phone,
+        contactMode: finalContactMode
     };
 };
 
