@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const { VerificationPurpose } = require("@configs/enums.config");
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
+const { ContactModes } = require("@configs/enums.config");
 
 const verificationLinkSchema = new mongoose.Schema({
   userId: {
@@ -17,8 +18,9 @@ const verificationLinkSchema = new mongoose.Schema({
   },
 
   contact: {
-    type: String, // email or phone
+    type: String,
     required: true,
+    enum: Object.values(ContactModes),
     index: true
   },
 
