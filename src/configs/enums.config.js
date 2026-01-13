@@ -39,6 +39,13 @@ const VerificationPurpose = Object.freeze({
   DEVICE_VERIFICATION: "DEVICE_VERIFICATION"
 });
 
+const RequestLocation = Object.freeze({
+    BODY: "body",
+    QUERY: "query",
+    PARAMS: "params",
+    HEADERS: "headers" // Future safety ke liye
+});
+
 const Token = Object.freeze({
     ACCESS: "ACCESS",
     REFRESH: "REFRESH"
@@ -54,5 +61,6 @@ module.exports = {
     Token,
     VerificationPurpose,
     VerifyMode,
-    AuthErrorTypes
+    AuthErrorTypes,
+    RequestLocation
 }

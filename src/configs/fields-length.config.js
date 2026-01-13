@@ -32,5 +32,9 @@ module.exports = {
   firstNameLength: {
     min: 2,
     max: 50
+  },
+  uuidLength: {
+    min: 36,
+    max: 36
   }
 };
