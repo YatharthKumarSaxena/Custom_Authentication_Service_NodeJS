@@ -1,18 +1,22 @@
 // utils/url.helper.js
 
-const getFrontendUrl = (path, queryParams = {}) => {
-    // Default to localhost if env is missing
+const getFrontendUrl = (routePath, queryParams = {}) => {
+    // 1. Base URL uthao
     const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     
-    // URL construct karo
-    const url = new URL(path, baseUrl);
+    // 2. URL Object banao (Ye automatic slash / handling karta hai)
+    // Example: Base(http://localhost:3000) + Path(/reset-password)
+    const url = new URL(routePath, baseUrl);
     
-    // Params add karo (jaise ?token=xyz)
+    // 3. Query Params Loop karke add karo
+    // Isse '?token=abc' manually likhne ki zaroorat nahi
     Object.keys(queryParams).forEach(key => {
-        url.searchParams.append(key, queryParams[key]);
+        if (queryParams[key]) {
+            url.searchParams.append(key, queryParams[key]);
+        }
     });
 
     return url.toString();
 };
 
-module.exports = { getFrontendUrl }; 
+module.exports = { getFrontendUrl };
