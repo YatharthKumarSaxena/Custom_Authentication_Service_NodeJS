@@ -163,14 +163,23 @@ const throwSpecificInternalServerError = (res, customMessage) => {
     });
 }
 
-const throwTooManyRequestsError = (res, message) => {
+const throwTooManyRequestsError = (res, message, retryAfter = null) => {
     logWithTime(`⏳ Too Many Requests: ${message}`);
-    return res.status(TOO_MANY_REQUESTS).json({
+    
+    // Response object banate hain
+    const response = {
         success: false,
         type: "TooManyRequests",
         warning: "Rate Limit Exceeded",
         message: message || "You have exceeded the maximum number of requests. Please try again later."
-    });
+    };
+
+    // Agar retryAfter value aayi hai, to usse add kar do
+    if (retryAfter) {
+        response.retryAfterSeconds = retryAfter;
+    }
+
+    return res.status(TOO_MANY_REQUESTS).json(response);
 };
 
 module.exports = {

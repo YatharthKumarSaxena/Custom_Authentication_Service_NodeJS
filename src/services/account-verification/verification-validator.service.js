@@ -99,7 +99,7 @@ const verifyUserLink = async ({ userId, purpose, inputToken }) => {
     return { success: true, message: "Link Verified Successfully" };
 };
 
-const verifyVerification = async (userId, purpose, code, type, contactMode) => {
+const verifyVerification = async (userId, purpose, code, contactMode) => {
     
     const checkVerifyType = (
         verificationMode === VerifyMode.LINK && 

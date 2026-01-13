@@ -1,11 +1,11 @@
 const { VerifyMode, ContactModes } = require("@configs/enums.config");
 const { verificationMode } = require("@configs/security.config");
-const { generateLinkToken, hashLinkToken } = require("../utils/link.util");
-const { generateOTP, hashOTP } = require("../utils/otp.util");
-const { logWithTime } = require("../utils/time-stamps.util");
+const { generateLinkToken, hashLinkToken } = require("../../utils/link.util");
+const { generateOTP, hashOTP } = require("../../utils/otp.util");
+const { logWithTime } = require("../../utils/time-stamps.util");
 const { VerificationLinkModel } = require("@models/link.model");
 const { OTPModel } = require("@models/otp.model");
-const { errorMessage } = require("../utils/error-handler.util");
+const { errorMessage } = require("../../utils/error-handler.util");
 
 /**
  * 🔒 INTERNAL: Sirf Link Generate aur Save karega

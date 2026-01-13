@@ -8,6 +8,7 @@ const { authMode } = require("@configs/security.config");
  * @param {string} authMode - Auth mode from config
  * @returns {Object} - { email: string|null, phone: string|null, mode: string }
  */
+
 const getUserContacts = (user) => {
     let finalContactMode;
     let email = null;
