@@ -1,108 +1,49 @@
-const CounterModel = require("../models/id-generator.model");
-const { IP_Address_Code,userRegistrationCapacity,adminUserId } = require("../configs/user-id.config");
-const { customerIdPrefix } = require("../configs/id-prefixes.config");
-const { errorMessage,throwInternalServerError } = require("@utils/error-handler.util");
-const { logWithTime } = require("../utils/time-stamps.util");
+const { CounterModel } = require("@models/counter.model");
+const { userRegistrationCapacity } = require("@configs/app-limits.config");
+const { IP_Address_Code } = require("@configs/ip-address.config");
+const { customerIdPrefix } = require("@configs/id-prefixes.config");
+const { errorMessage } = require("@utils/error-handler.util");
+const { logWithTime } = require("@utils/time-stamps.util");
 
-/*
-  ✅ Single Responsibility Principle (SRP): 
-  This function only handles the responsibility of incrementing the user counter.
-  ✅ Singleton Pattern:
-  Operates on a single MongoDB document (id = "CUS"), treating it as a unique entity.
-*/
-
-// Increases the value of seq field in Customer Counter Document to generate unique ID for the new user
-
-const increaseCustomerCounter = async (res) => {
+const makeUserId = async () => {
     try {
-        const customerCounter = await CounterModel.findOneAndUpdate(
+        // Step 1: Atomic Update (Find & Increment OR Create & Set 1)
+        // Upsert ensures document exists, new:true returns updated val
+        const counter = await CounterModel.findOneAndUpdate(
             { _id: customerIdPrefix },
             { $inc: { seq: 1 } },
-            { new: true }
+            { new: true, upsert: true, setDefaultsOnInsert: true }
         );
-        return customerCounter.seq;
-    } catch (err) {
-        logWithTime("🛑 Error in increasing customer counter");
-        errorMessage(err);
-        throwInternalServerError(res);
-        return null;
-    }
-};
 
-/*
-  ✅ SRP: This function only creates the customer counter if it doesn't exist.
-  ✅ Singleton Pattern:
-  Ensures only one counter document exists with ID "CUS" — maintaining global user count.
-*/
+        if (!counter) {
+            logWithTime("🛑 Critical: Failed to generate or retrieve user counter.");
+            return ""; 
+        }
 
-// Creates Customer Counter whose seq value starts with 1 initially
+        const currentSeq = counter.seq;
 
-const createCustomerCounter = async (res) => {
-    try {
-        return await CounterModel.create({
-            _id: customerIDPrefix,
-            seq: 1
-        });
-    } catch (err) {
-        logWithTime("⚠️ Error creating customer counter");
-        errorMessage(err);
-        throwInternalServerError(res);
-        return null;
-    }
-};
+        // Step 2: Check Capacity
+        if (currentSeq > userRegistrationCapacity) {
+            logWithTime("⚠️ Machine Capacity to Store User Data is full.");
+            return "0"; 
+        }
 
-// User ID Creation
+        // Step 3: ID Construction
+        // Logic: Offset ID by Adding Capacity (e.g., 10000 + 1 = 10001) for fixed length
+        const numericId = userRegistrationCapacity + currentSeq; 
+        
+        const identityCode = `${customerIdPrefix}${IP_Address_Code}`;
+        const userId = `${identityCode}${numericId}`;
 
-/*
-  ✅ Factory Pattern:
-  This function encapsulates the logic to "create" a new userId based on machine code and total customers.
-  The logic varies dynamically depending on counter state but the output structure is consistent — like a factory.
-  
-  ✅ Open-Closed Principle (OCP):
-  The function is closed for modification but open for extension.
-  In future, more logic can be added to generate userIds differently for different user types without modifying this logic directly.
-  
-  ✅ SRP:
-  It only deals with userId creation and nothing else — clean separation.
-*/
-
-// User ID Creation
-const makeUserId = async(res) => {
-    let totalCustomers = 1; // By default as Admin User Already Exists 
-    let customerCounter; // To remove Scope Resolution Issue
-    try{
-        customerCounter = await CounterModel.findOne({_id: customerIDPrefix});
-    }catch(err){
-        logWithTime("⚠️ An Error Occured while accessing the Customer Counter Document");
-        errorMessage(err);
-        throwInternalServerError(res);
-        return "";
-    }
-    if(customerCounter){ // Means Customer Counter Exist so Just increase Counter
-        totalCustomers = await increaseCustomerCounter(res);
-        if(!totalCustomers)return "";
-    }
-    else{ // Means Customer Counter does not exist 
-        customerCounter = await createCustomerCounter(res); // returns object
-        if(!customerCounter)return "";
-        totalCustomers = customerCounter.seq; // extract 'seq' field 
-    }
-    let newID = totalCustomers;
-    if(newID>=userRegistrationCapacity){
-        logWithTime("⚠️ Machine Capacity to Store User Data is completely full");
-        logWithTime("So User cannot be Registered");
-        return ""; // Returning an Empty String that indicate Now no more new user data can be registered on this machine
-    }
-    else{
-        newID = newID+adminUserId;
-        let machineCode = IP_Address_Code;
-        let identityCode = customerCounter._id+machineCode;
-        let idNumber = String(newID);
-        const userId = identityCode+idNumber;
         return userId;
+
+    } catch (err) {
+        logWithTime("🛑 Error in makeUserId process");
+        errorMessage(err);    
+        return ""; 
     }
-}
+};
 
 module.exports = {
-    makeUserId,
-}
+    makeUserId
+};
