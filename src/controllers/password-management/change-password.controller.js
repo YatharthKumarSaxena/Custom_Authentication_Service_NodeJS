@@ -37,7 +37,6 @@ const changePassword = async (req, res) => {
         // 3. Service Call: Update Password (User's Preferred Method: return false) 🔥
         const isUpdated = await updatePassword(user, newPassword);
 
-        // ⚠️ MANUAL CHECK: Jaisa aapne kaha, hum check kar rahe hain ki update hua ya nahi
         if (!isUpdated) {
             logWithTime(`❌ Password Update Service failed for User ${getLogIdentifiers(req)}`);
             return throwSpecificInternalServerError(res, "Failed to update password. Please try again.");
@@ -52,7 +51,6 @@ const changePassword = async (req, res) => {
         logAuthEvent(req, AUTH_LOG_EVENTS.CHANGE_PASSWORD,
             `User changed their password. Previous retry attempts reset.`, null);
 
-        // Agar logout fail hua par password change ho gaya
         if (!isUserLoggedOut) {
             return res.status(OK).json({
                 success: true,
