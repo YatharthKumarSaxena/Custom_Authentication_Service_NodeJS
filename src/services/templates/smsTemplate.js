@@ -92,6 +92,11 @@ const userSmsTemplate = {
     emailChangeAlert: {
         message: "Alert: The email for your [App Name] account was changed. If you did not authorize this, contact support.",
         dlt_template_id: "1007XXXXXXX"
+    },
+
+    deviceVerification: {
+        message: "Code: {{otp}} is your verification code to authorize a new device on [App Name]. Valid for 10 minutes.",
+        dlt_template_id: "1007XXXXXXX"
     }
 };
 

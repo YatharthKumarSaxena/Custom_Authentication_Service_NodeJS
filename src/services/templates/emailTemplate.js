@@ -232,6 +232,28 @@ const userTemplate = {
         notes: "If you authorized this change, you can safely ignore this email. If not, click the button above immediately to lock your account.",
         details: {} // Time, IP, New Email
     },
+    // ==========================================
+    // 🛡️ DEVICE & MFA VERIFICATION
+    // ==========================================
+
+    // 🔹 Device Verification (New Device Authorization)
+    deviceVerification: {
+        ...defaultConfig,
+        subject: "💻 Authorize New Device",
+        event_name: "Device Authorization",
+        action: "Verify Device",
+        status: "Pending", // 🟡 Yellow Badge
+        message_intro: "You are trying to log in from a new device or browser. Please authorize this device to continue.",
+
+        // Dono options rakhte hain: Button for Link, OTP for manual entry
+        actionbutton_text: "Authorize This Device",
+        actionlink: "<LINK>/verify-device?token={{token}}",
+        fallback_note: "Or enter this Device Authorization Code: {{otp}}",
+
+        notes: "This authorization request will expire in 10 minutes. If this wasn't you, someone might have your password. Please change it immediately.",
+
+        details: {} // Browser, OS, Location, IP Address
+    }
 };
 
 module.exports = {

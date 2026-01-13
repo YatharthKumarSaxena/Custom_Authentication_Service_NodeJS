@@ -21,8 +21,22 @@ module.exports = {
     MAX_ATTEMPTS: 5,           // 5 baar galat password allow hai
     LOCKOUT_TIME_MINUTES: 15   // Uske baad 15 minute ka ban
   },
-  forgotPasswordSecurity: {
-    MAX_ATTEMPTS: 5,
-    LINK_EXPIRY_MINUTES: 10
+  verificationSecurity: {
+    [VerificationPurpose.FORGOT_PASSWORD]: {
+      MAX_ATTEMPTS: 5,
+      LINK_EXPIRY_MINUTES: 10
+    },
+    [VerificationPurpose.EMAIL_VERIFICATION]: {
+      MAX_ATTEMPTS: 3,
+      LINK_EXPIRY_MINUTES: 30
+    },
+    [VerificationPurpose.PHONE_VERIFICATION]: {
+      MAX_ATTEMPTS: 3,
+      LINK_EXPIRY_MINUTES: 5
+    },
+    [VerificationPurpose.DEVICE_VERIFICATION]: {
+      MAX_ATTEMPTS: 2,
+      LINK_EXPIRY_MINUTES: 15
+    }
   }
 };

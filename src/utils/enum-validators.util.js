@@ -5,7 +5,8 @@ const { logWithTime } = require("./time-stamps.util");
 const {
   UserTypes,
   AuthModes,
-  DeviceTypes
+  DeviceTypes,
+  VerificationPurpose
 } = require("@configs/enums.config");
 
 /**
@@ -38,9 +39,11 @@ const createEnumHelper = (enumObj, name) => ({
 const DeviceTypeHelper = createEnumHelper(DeviceTypes, "DeviceType");
 const UserTypeHelper = createEnumHelper(UserTypes, "UserType");
 const AuthModesHelper = createEnumHelper(AuthModes, "AuthModes");
+const VerificationPurposeHelper = createEnumHelper(VerificationPurpose, "VerificationPurpose");
 
 module.exports = {
     DeviceTypeHelper,
     UserTypeHelper,
-    AuthModesHelper
+    AuthModesHelper,
+    VerificationPurposeHelper
 };
