@@ -2,10 +2,18 @@ const { UserDeviceModel } = require("@models/user-device.model");
 const { logWithTime } = require("./time-stamps.util");
 const { errorMessage } = require("@utils/error-handler.util");
 
-const loginTheUserCore = async (user, deviceId, refreshToken) => {
+/**
+ * Updates the User-Device mapping with the new Refresh Token.
+ * NOTE: Caller MUST pass deviceObjectId (MongoDB _id), NOT deviceUUID.
+ */
+const loginTheUserCore = async (user, deviceObjectId, refreshToken, options = {}) => {
     try {
-        const device = await UserDeviceModel.findOneAndUpdate(
-            { userId: user._id, deviceId },
+        const { session } = options;
+
+        // ✅ FIX: Using 'upsert' here ensures record exists with Token.
+        // We use deviceObjectId (Mongo ID) because Schema links to Device Collection.
+        const deviceMapping = await UserDeviceModel.findOneAndUpdate(
+            { userId: user._id, deviceId: deviceObjectId },
             {
                 $set: {
                     refreshToken,
@@ -15,66 +23,75 @@ const loginTheUserCore = async (user, deviceId, refreshToken) => {
                 $inc: { loginCount: 1 },
                 $setOnInsert: { firstSeenAt: new Date() }
             },
-            { upsert: true, new: true, rawResult: true }
+            { upsert: true, new: true, rawResult: true, session: session } // ✅ Session Passed
         );
 
-        if (!device.lastErrorObject.updatedExisting) {
-            // 🟢 FIRST TIME DEVICE
-            logWithTime(`🆕 New device registered for user (${user.userId})`);
+        if (!deviceMapping.lastErrorObject.updatedExisting) {
+            logWithTime(`🆕 First-time login recorded for user (${user.userId}) on this device.`);
         } else {
-            // 🟡 EXISTING DEVICE LOGIN
-            logWithTime(`🔁 Login from existing device for user (${user.userId})`);
+            logWithTime(`🔁 Token refreshed for user (${user.userId}) on existing device.`);
         }
-        return device.value;
+        
+        return deviceMapping.value;
+
     } catch (err) {
-        logWithTime(`❌ Internal Error occurred while logging in the User (${user.userId}) on device (${deviceId})`);
+        logWithTime(`❌ Error inside loginTheUserCore for User (${user.userId})`);
         errorMessage(err);
-        return null;
+        // Throw error to trigger Transaction Rollback in parent
+        throw err; 
     }
 };
 
-const logoutUserCompletelyCore = async (user) => {
+/**
+ * Logs out user from ALL devices and clears User flags.
+ * Atomic Transaction Safe.
+ */
+const logoutUserCompletelyCore = async (user, options = {}) => {
     try {
-        // Step 1: Fetch all active devices for this user
-        const devices = await UserDeviceModel.find({ userId: user._id, refreshToken: { $ne: null } });
+        const { session } = options;
 
-        let allDevicesLoggedOut = true;
+        // ✅ Step 1: Bulk Update (Much faster & safer than for-loop)
+        // Sare devices jahan token null nahi hai, unhe null kar do
+        const updateResult = await UserDeviceModel.updateMany(
+            { userId: user._id, refreshToken: { $ne: null } },
+            { 
+                $set: { 
+                    refreshToken: null, 
+                    jwtTokenIssuedAt: null, 
+                    lastLogoutAt: new Date() 
+                } 
+            },
+            { session: session } // ✅ Session Passed
+        );
 
-        for (const device of devices) {
-            try {
-                device.refreshToken = null;
-                device.jwtTokenIssuedAt = null;
-                device.lastLogoutAt = new Date();
-                await device.save();
-            } catch (err) {
-                allDevicesLoggedOut = false;
-                logWithTime(`⚠️ Failed to logout device (${device._id}) for user (${user.userId})`);
-            }
-        }
+        logWithTime(`ℹ️ Cleared tokens for ${updateResult.modifiedCount} devices.`);
 
-        if (!allDevicesLoggedOut) {
-            logWithTime(`⚠️ Some devices for user (${user.userId}) could not be logged out.`);
-            return false; // avoid updating core flags if not all devices logged out
-        }
-
-        // Step 2: Update user core flags only after all devices are logged out
+        // ✅ Step 2: Update User Core Flags
         user.refreshToken = null;
         user.jwtTokenIssuedAt = null;
-        user.isVerified = false;
-        if (user.devices && user.devices.info) user.devices.info = [];
-        await user.save();
+        user.isVerified = false; // Logic retained as per your request
+        
+        if (user.devices && user.devices.info) {
+            user.devices.info = [];
+        }
 
-        logWithTime(`✅ User (${user.userId}) logged out from all devices successfully.`);
+        // ✅ Save User with Session
+        await user.save({ session });
+
+        logWithTime(`✅ User (${user.userId}) core flags reset successfully.`);
         return true;
 
     } catch (err) {
-        logWithTime(`❌ Internal error while logging out user (${user.userId}) from all devices`);
+        logWithTime(`❌ Error inside logoutUserCompletelyCore for User (${user.userId})`);
         errorMessage(err);
-        return false;
+        // Return false or Throw error based on preference. 
+        // Returning false causes manual rollback in parent. Throwing handles it automatically.
+        // Here we return false to match your existing flow check.
+        return false; 
     }
 };
 
 module.exports = {
     logoutUserCompletelyCore,
     loginTheUserCore
-}
+};

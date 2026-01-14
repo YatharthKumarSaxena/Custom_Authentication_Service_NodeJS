@@ -84,9 +84,9 @@ const throwBadRequestError = (res, reason = "Bad Request", details = null) => {
 };
 
 const logMiddlewareError = (middlewareName, reason, req) => {
-  const adminId = req?.admin?.adminId || req?.admin?.userId || "UNKNOWN_admin";
-  const deviceId = req?.deviceId || "UNKNOWN_device";
-  logWithTime(`❌ [${middlewareName}Middleware] Error: ${reason} | admin: (${adminId}) | device: (${deviceId})`);
+  const userId = req?.user?.userId || "UNKNOWN_USER";
+  const deviceUUID = req?.device?.deviceUUID || "UNKNOWN_DEVICE";
+  logWithTime(`❌ [${middlewareName}Middleware] Error: ${reason} | user: (${userId}) | device: (${deviceUUID})`);
 };
 
 
@@ -100,8 +100,9 @@ const throwConflictError = (res, message, suggestion) => {
 };
 
 const getLogIdentifiers = (req) => {
-    const adminId = req?.foundAdmin?.adminId || req?.admin?.adminId || req?.admin?.userId || "UNKNOWN_admin";
-    return `with admin ID: (${adminId}). Request is made from device ID: (${req.deviceId})`;
+    const userId = req?.founduser?.userId || req?.user?.userId || "UNKNOWN_USER";
+    const deviceUUID = req?.device?.deviceUUID || "UNKNOWN_DEVICE";
+    return `with user ID: (${userId}). Request is made from device ID: (${deviceUUID})`;
 };
 
 const throwDBResourceNotFoundError = (res, resource) => {

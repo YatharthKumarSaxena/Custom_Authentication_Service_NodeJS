@@ -26,7 +26,7 @@ const createToken = (userId, expiryTime, deviceId) => {
     const category = getTokenCategory(expiryTime);
     logWithTime(`✅ ${category} created for ${userId}, device: ${deviceId}`);
 
-    return { token, category };
+    return token;
 };
 
 module.exports = {
