@@ -11,7 +11,7 @@ const isDeviceBlocked = async (req, res, next) => {
                 "Your Device is currently blocked. Please contact support for assistance if you believe this is an error."
             );
         }
-        logWithTime(`✅ Device (${device.deviceId}) is not blocked`);
+        logWithTime(`✅ Device (${device.deviceUUID}) is not blocked`);
 
         return next();
     } catch (err) {
