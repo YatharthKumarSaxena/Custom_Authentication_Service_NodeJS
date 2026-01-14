@@ -3,7 +3,14 @@ const { AuthErrorTypes } = require("@configs/enums.config");
 const { OK } = require("@configs/http-status.config");
 const { logoutUserCompletely } = require("@/services/auth/auth-session.service");
 const { logAuthEvent } = require("@/utils/auth-log-util");
-const { throwBadRequestError, throwInvalidResourceError, throwInternalServerError, getLogIdentifiers, throwSpecificInternalServerError, throwTooManyRequestsError } = require("@utils/error-handler.util");
+const { 
+    throwBadRequestError, 
+    throwInvalidResourceError, 
+    throwInternalServerError, 
+    getLogIdentifiers, 
+    throwSpecificInternalServerError, 
+    throwTooManyRequestsError 
+} = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { updatePassword } = require("@services/password-management/change-password.service");
@@ -11,65 +18,76 @@ const { updatePassword } = require("@services/password-management/change-passwor
 const changePassword = async (req, res) => {
     try {
         const user = req.user;
+        const device = req.device; // Middleware se lo
         const { newPassword, confirmPassword, password } = req.body;
 
-        // 1. Validation: Confirm Password Check
+        // ---------------------------------------------------------
+        // 1. Validation
+        // ---------------------------------------------------------
         if (newPassword !== confirmPassword) {
-            logWithTime(`❌ Confirm Password does not match with New Password for User ${getLogIdentifiers(req)}`);
             return throwBadRequestError(res, "Confirm Password does not match with New Password");
         }
 
-        // 2. Service Call: Verify Old Password
+        // ---------------------------------------------------------
+        // 2. Verify Old Password (with Rate Limit)
+        // ---------------------------------------------------------
         try {
             await verifyPasswordWithRateLimit(user, password);
         } catch (error) {
-            // Handle specific verification errors
-            if (error.type === AuthErrorTypes.LOCKED) {
+            if (error.type === AuthErrorTypes.LOCKED){
+                logWithTime(`❌ Change Password locked due to too many failed attempts for User ${user.userId}`);
                 return throwTooManyRequestsError(res, error.message);
-            }
-            if (error.type === AuthErrorTypes.INVALID_PASSWORD) {
+            } 
+            if (error.type === AuthErrorTypes.INVALID_PASSWORD){
+                logWithTime(`❌ Change Password failed due to invalid current password for User ${user.userId}`);
                 return throwInvalidResourceError(res, "Password", error.message);
             }
-            // Unknown errors go to main catch
-            throw error;
+            throw error; // Internal errors bubble up
         }
 
-        // 3. Service Call: Update Password (User's Preferred Method: return false) 🔥
+        // ---------------------------------------------------------
+        // 3. Update Password (CRITICAL)
+        // ---------------------------------------------------------
         const isUpdated = await updatePassword(user, newPassword);
 
         if (!isUpdated) {
-            logWithTime(`❌ Password Update Service failed for User ${getLogIdentifiers(req)}`);
+            logWithTime(`❌ Password Update Service failed for User ${user.userId}`);
             return throwSpecificInternalServerError(res, "Failed to update password. Please try again.");
         }
 
-        // 4. Service Call: Logout from all devices
-        const isUserLoggedOut = await logoutUserCompletely(user, req, res, "log out from all device request due to Password Change");
-
-        // 5. Logging & Response
-        logWithTime(`✅ User Password with userId: (${user.userId}) is changed Succesfully from device id: (${req.deviceId})`);
+        // ---------------------------------------------------------
+        // 4. Force Logout (NON-CRITICAL / FAIL-SAFE)
+        // ---------------------------------------------------------
+        // Password change ho gaya hai, agar logout fail bhi hua to bhi success hi return karenge
+        let logoutStatusMsg = "You have been logged out from all devices.";
         
-        logAuthEvent(req, AUTH_LOG_EVENTS.CHANGE_PASSWORD,
-            `User changed their password. Previous retry attempts reset.`, null);
-
-        if (!isUserLoggedOut) {
-            return res.status(OK).json({
-                success: true,
-                message: "Password updated successfully. However, logout from all devices failed. Please ensure to log out from other sessions manually."
-            });
+        try {
+            // Note: logoutUserCompletely(req, res, context) standard signature use karo
+            await logoutUserCompletely(req, res, "Password Change Request");
+        } catch (logoutError) {
+            logWithTime(`⚠️ Warning: Password changed but logout failed for User ${user.userId}`);
+            logoutStatusMsg = "Password changed, but automatic logout failed. Please logout manually.";
+            // Error swallow kar lo
         }
+
+        // ---------------------------------------------------------
+        // 5. Response & Logs
+        // ---------------------------------------------------------
+        logWithTime(`✅ Password changed for User (${user.userId}) from device (${device.deviceUUID})`);
+        
+        logAuthEvent(user, device, AUTH_LOG_EVENTS.CHANGE_PASSWORD, `User changed password.`, null);
 
         return res.status(OK).json({
             success: true,
-            message: "Your password has been changed successfully. You have been logged out from all devices. Please log in again with your new password."
+            message: "Password changed successfully.",
+            notice: logoutStatusMsg
         });
 
     } catch (err) {
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ Internal Error occurred while changing the password of User ${getIdentifiers}`);
+        logWithTime(`❌ Internal Error while changing password for ${getIdentifiers}: ${err.message}`);
         return throwInternalServerError(res, err);
     }
 }
 
-module.exports = {
-    changePassword
-}
+module.exports = { changePassword };
