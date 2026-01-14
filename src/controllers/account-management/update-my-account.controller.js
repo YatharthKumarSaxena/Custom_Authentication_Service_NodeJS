@@ -1,105 +1,72 @@
-// controllers/internal-api.controllers.js
-
-const { logWithTime } = require("@utils/time-stamps.util");
-const { throwInternalServerError, throwInvalidResourceError, getLogIdentifiers } = require("@utils/error-handler.util");
-const { emailRegex, countryCodeRegex, localNumberRegex } = require("@configs/regex.config");
-const { logAuthEvent } = require("@utils/auth-log-util");
+// Modules & Configs
 const { OK } = require("@configs/http-status.config");
-const { validateLength, isValidRegex } = require("@utils/field-validators.util");
-const { createPhoneNumber, checkAndAbortIfUserExists } = require("@utils/auth.util");
-const { emailLength, countryCodeLength, localNumberLength } = require("@configs/fields-length.config");
+const { updateAccountService } = require("@services/account-management/update-account.service");
+const { AuthErrorTypes } = require("@configs/enums.config");
+
+// Error Handlers
+const { 
+    throwInternalServerError, 
+    throwBadRequestError, 
+    throwInvalidResourceError, 
+    throwConflictError, // Resource Exists ke liye (409)
+    getLogIdentifiers
+} = require("@utils/error-handler.util");
+const { logWithTime } = require("@utils/time-stamps.util");
 
 const updateMyAccount = async (req, res) => {
-  try {
-    const user = req.user;
-    const updatedFields = [];
+    try {
+        const user = req.user;
+        const device = req.device;
+        
+        // Data Extraction
+        const updatePayload = {
+            firstName: req.body.firstName,
+            email: req.body.email,           // Standardize to 'email'
+            countryCode: req.body.countryCode,
+            localNumber: req.body.localNumber
+        };
 
-    // ------------------ Email Update ------------------
-    if (req.body.emailID && req.body.emailID.trim().toLowerCase() !== user.emailID?.trim().toLowerCase()) {
-      const emailID = req.body.emailID.trim().toLowerCase();
+        // 1. Service Call
+        const result = await updateAccountService(user, device, updatePayload);
 
-      if (!validateLength(emailID, emailLength.min, emailLength.max)) {
-        return throwInvalidResourceError(res, `Email ID must be between ${emailLength.min}-${emailLength.max} characters.`);
-      }
-      if (!isValidRegex(emailID, emailRegex)) {
-        return throwInvalidResourceError(res, "Invalid Email format.");
-      }
+        logWithTime(`✅ Update My Account successful for User ${user.userId}`);
+        // 2. No Changes Case
+        if (!result.success) {
+            return res.status(OK).json({
+                success: true,
+                message: result.message
+            });
+        }
 
-      const exists = await checkAndAbortIfUserExists(emailID, user.phone, res);
-      if (exists) return;
+        // 3. Success Response
+        return res.status(OK).json({
+            success: true,
+            message: result.message,
+            updatedFields: result.updatedFields
+        });
 
-      user.emailID = emailID;
-      updatedFields.push("Email ID");
+    } catch (err) {
+        // ---------------------------------------------------------
+        // ERROR HANDLING
+        // ---------------------------------------------------------
+        
+        // 1. Validation Errors (Length, Regex)
+        if (err.type === AuthErrorTypes.INVALID_INPUT) {
+            logWithTime(`❌ Update failed due to invalid input for User ${req.user.userId}: ${err.message}`);
+            return throwInvalidResourceError(res, "Input Validation", err.message);
+        }
+
+        // 2. Duplicate Data (Email/Phone already taken)
+        if (err.type === AuthErrorTypes.RESOURCE_EXISTS) {
+            logWithTime(`❌ Update failed due to existing resource for User ${req.user.userId}: ${err.message}`);
+            return throwConflictError ? throwConflictError(res, err.message) : throwBadRequestError(res, err.message);
+        }
+
+        // 3. Internal Errors
+        const getIdentifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error while updating profile ${getIdentifiers}: ${err.message}`);
+        return throwInternalServerError(res, err);
     }
+}
 
-    // ------------------ Phone Update ------------------
-    const phonePayload = req.body.localNumber;
-    if (phonePayload && (phonePayload.number !== user.phoneNumber?.number || phonePayload.countryCode !== user.phoneNumber?.countryCode)) {
-      let { countryCode, number } = phonePayload;
-
-      // Country Code Validation
-      if (countryCode && countryCode.trim() !== user.phoneNumber?.countryCode) {
-        countryCode = countryCode.trim();
-        if (!validateLength(countryCode, countryCodeLength.min, countryCodeLength.max)) {
-          return throwInvalidResourceError(res, `Country Code must be ${countryCodeLength.min}-${countryCodeLength.max} digits.`);
-        }
-        if (!isValidRegex(countryCode, countryCodeRegex)) {
-          return throwInvalidResourceError(res, "Invalid Country Code format.");
-        }
-        user.phoneNumber = { ...user.phoneNumber, countryCode };
-        updatedFields.push("Country Code");
-      }
-
-      // Local Number Validation
-      if (number && number.trim() !== user.phoneNumber?.number) {
-        number = number.trim();
-        if (!validateLength(number, localNumberLength.min, localNumberLength.max)) {
-          return throwInvalidResourceError(res, `Phone Number must be ${localNumberLength.min}-${localNumberLength.max} digits.`);
-        }
-        if (!isValidRegex(number, localNumberRegex)) {
-          return throwInvalidResourceError(res, "Invalid Phone Number format.");
-        }
-        user.phoneNumber = { ...user.phoneNumber, number };
-        updatedFields.push("Phone Number");
-      }
-
-      // Create unified phone
-      if (number || countryCode) {
-        const newPhone = createPhoneNumber(req, res);
-        if (!newPhone) return;
-
-        const exists = await checkAndAbortIfUserExists(user.emailID, newPhone, res);
-        if (exists) return;
-
-        user.phone = newPhone;
-      }
-    }
-
-    // ------------------ No Changes ------------------
-    if (updatedFields.length === 0) {
-      logWithTime(`❌ No changes detected for User ID: (${user.userID}) from device: (${req.deviceID})`);
-      return res.status(OK).json({ message: "No changes detected. Your profile remains the same." });
-    }
-
-    await user.save();
-
-    // ------------------ Logging ------------------
-    logAuthEvent(req, "UPDATE_ACCOUNT_DETAILS", null);
-    logWithTime(`✅ User (${user.userID}) updated fields: [${updatedFields.join(", ")}] from device: (${req.deviceID})`);
-
-    return res.status(OK).json({
-      success: true,
-      message: "Profile updated successfully.",
-      updatedFields
-    });
-  } catch (err) {
-    const identifiers = getLogIdentifiers(req);
-    logWithTime(`❌ Internal Error while updating User Profile ${identifiers}`);
-    console.error(err);
-    return throwInternalServerError(res);
-  }
-};
-
-module.exports = {
-  updateMyAccount
-};
+module.exports = { updateMyAccount };

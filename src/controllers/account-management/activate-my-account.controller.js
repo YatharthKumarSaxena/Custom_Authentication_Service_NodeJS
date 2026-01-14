@@ -1,35 +1,59 @@
-// Extracting the required modules
-const { throwInvalidResourceError, errorMessage, throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
-const { logWithTime } = require("@utils/time-stamps.util");
-const { checkPasswordIsValid } = require("@utils/auth.util");
-const { logAuthEvent } =require("@utils/auth-log-util");
+// Modules & Configs
 const { OK } = require("@configs/http-status.config");
+const { activateAccountService } = require("@services/account-management/account-activation.service");
+const { AuthErrorTypes } = require("@configs/enums.config");
 
-// Logic to activate user account
-const activateMyAccount = async(req,res) => {
-    try{
-        const user = req.foundUser;
-        let isPasswordValid = await checkPasswordIsValid(req,user);
-        if(!isPasswordValid){
-            return throwInvalidResourceError(res,"Password");
+// Error Handlers
+const { 
+    throwInternalServerError, 
+    throwBadRequestError, 
+    getLogIdentifiers,
+    throwInvalidResourceError,
+    throwConflictError
+} = require("@utils/error-handler.util");
+const { logWithTime } = require("@utils/time-stamps.util");
+
+const activateMyAccount = async (req, res) => {
+    try {
+        const user = req.foundUser; // Middleware se mila user
+        const device = req.device;  // Middleware se mila device
+        const { password } = req.body;
+
+        // 1. Call Service
+        const result = await activateAccountService(user, device, password);
+
+        if (!result.success) {
+            logWithTime(`❌ Account is already active for User ID: ${user.userId} - ${result.message}`);
+            throwConflictError(res, result.message);
         }
-        user.isActive = true;
-        user.lastActivatedAt = Date.now();
-        await user.save();
-        // Activation success log
-        logWithTime(`✅ Account activated for UserID: ${user.userID} from device ID: (${req.deviceID})`);
-        // Update data into auth.logs
-        logAuthEvent(req, "ACTIVATE", null);
+
+        // 2. Send Response
         return res.status(OK).json({
             success: true,
-            message: "Account activated successfully.",
+            message: result.message,
             suggestion: "Please login to continue."
         });
-    }catch(err){
+
+    } catch (err) {
+        // ---------------------------------------------------------
+        // ERROR HANDLING
+        // ---------------------------------------------------------
+
+        // 1. Invalid Password (400/422)
+        if (err.type === AuthErrorTypes.INVALID_PASSWORD) {
+            // Note: Hum InvalidResourceError bhi use kar sakte hain, ya Validation Error
+            return throwInvalidResourceError(res, "Password");
+        }
+
+        // 2. User Locked (Rate Limit Hit)
+        if (err.type === AuthErrorTypes.LOCKED) {
+            return throwBadRequestError(res, err.message);
+        }
+
+        // 3. Internal Server Error
         const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ Internal Error occurred while activating the User Account ${getIdentifiers}`);
-        errorMessage(err)
-        return throwInternalServerError(res);
+        logWithTime(`❌ Internal Error while activating account ${getIdentifiers}: ${err.message}`);
+        return throwInternalServerError(res, err);
     }
 }
 
