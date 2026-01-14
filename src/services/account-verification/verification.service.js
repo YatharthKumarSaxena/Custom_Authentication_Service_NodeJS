@@ -1,0 +1,86 @@
+const { verifyVerification } = require("@services/account-verification/verification-validator.service");
+const { loginUserOnDevice } = require("../auth/auth-session.service");
+const { createToken } = require("@utils/issue-token.util");
+const { logAuthEvent } = require("@utils/auth-log-util");
+const { logWithTime } = require("@utils/time-stamps.util");
+const { authMode, AUTO_LOGIN_AFTER_VERIFICATION } = require("@/configs/security.config");
+const { AuthModes, VerificationPurpose } = require("@/configs/enums.config");
+const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
+const { expiryTimeOfRefreshToken } = require("@/configs/token.config");
+
+/**
+ * 🔒 PRIVATE HELPER (NOT EXPORTED)
+ * Generic verification logic factory
+ */
+
+const performVerificationCore = async (req, res, code, contactMode, config) => {
+    const { 
+        purpose, updateField, logEvent, authModeType, otherVerifiedField, type 
+    } = config;
+
+    const user = req.foundUser;
+    const device = req.device;
+
+    // 1️⃣ Validate Token
+    const validation = await verifyVerification(user._id, purpose, code, contactMode);
+    if (!validation.success) throw new Error(validation.message);
+
+    // 2️⃣ Update User Status
+    user[updateField] = true; 
+    await user.save();
+
+    logAuthEvent(user, device, logEvent, `User ID ${user.userId} verified ${type} via ${contactMode}.`, null);
+
+    // 3️⃣ Auto Login Logic
+    let autoLoggedIn = false;
+    if (AUTO_LOGIN_AFTER_VERIFICATION) {
+        
+        const canLogin = 
+            authMode === AuthModes.EITHER || 
+            authMode === authModeType || 
+            (authMode === AuthModes.BOTH && user[otherVerifiedField]);
+
+        if (canLogin) {
+            logWithTime(`🔄 Auto-login triggered for User (${user.userId}) after ${type} Verification.`);
+            
+            // 🛡️ CRITICAL FIX: Ensure req.user is set for loginUserOnDevice
+            req.user = user; 
+
+            const refreshTokenString = createToken(user.userId, expiryTimeOfRefreshToken, device.deviceUUID);
+            if (!refreshTokenString) throw new Error("Token generation failed");
+
+            const loginSuccess = await loginUserOnDevice(req, res, refreshTokenString, `Auto-Login (${type} Verified)`);
+            if (loginSuccess) autoLoggedIn = true;
+        }
+    }
+
+    return { success: true, autoLoggedIn };
+};
+
+// ==========================================
+// 🚀 PUBLIC EXPORTS (Wrappers)
+// ==========================================
+
+const verifyEmailService = async (req, res, code, contactMode) => {
+    return await performVerificationCore(req, res, code, contactMode, {
+        purpose: VerificationPurpose.EMAIL_VERIFICATION,
+        updateField: 'isEmailVerified',
+        logEvent: AUTH_LOG_EVENTS.VERIFY_EMAIL,
+        authModeType: AuthModes.EMAIL,
+        otherVerifiedField: 'isPhoneVerified',
+        type: "Email" // ✅ Added Type
+    });
+};
+
+const verifyPhoneService = async (req, res, code, contactMode) => {
+    return await performVerificationCore(req, res, code, contactMode, {
+        purpose: VerificationPurpose.PHONE_VERIFICATION,
+        updateField: 'isPhoneVerified',
+        logEvent: AUTH_LOG_EVENTS.VERIFY_PHONE,
+        authModeType: AuthModes.PHONE,
+        otherVerifiedField: 'isEmailVerified',
+        type: "Phone" // ✅ Added Type
+    });
+};
+
+module.exports = { verifyEmailService, verifyPhoneService };
