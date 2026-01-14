@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mongo-rs:
+    image: mongo:6.0  # MongoDB version 6
+    container_name: mongo-local-rs
+    restart: always
+    ports:
+      - "27017:27017" # Localhost ka port 27017 connect karega
+    # Ye command bahut zaroori hai Replica Set banane ke liye:
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - ./mongo-data:/data/db # Data yahan save hoga taaki restart par ude nahi
