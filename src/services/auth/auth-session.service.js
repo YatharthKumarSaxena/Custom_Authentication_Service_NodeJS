@@ -3,51 +3,127 @@ const { clearRefreshTokenCookie, setRefreshTokenCookie } = require("./auth-cooki
 const { logWithTime } = require("@utils/time-stamps.util");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
+const { syncDeviceData, syncUserDeviceMapping } = require("./device.service");
+const { errorMessage } = require("@utils/error-handler.util");
+const mongoose = require("mongoose");
 
-// auth-session.service.js
-const logoutUserCompletely = async (user, req, res, context = "general sign out all devices") => {
-    const coreLoggedOut = await logoutUserCompletelyCore(user);
-    if (!coreLoggedOut) return false;
+const logoutUserCompletely = async (req, res, context = "general sign out all devices") => {
+    const user = req.user;
+    
+    // Safety: Device exist karta hai ya nahi check kar lo
+    const device = req.device; 
+    const deviceUUID = device.deviceUUID;
 
-    const cookieCleared = clearRefreshTokenCookie(res);
-    if (!cookieCleared) {
-        logWithTime(
-            `⚠️ Cookie clear failed for user (${user.userId}) during ${context}. Device ID: (${req.deviceId})`
+    // 1. Start Session
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        // 2. Core Logout Logic (Database Operations)
+        const coreLoggedOut = await logoutUserCompletelyCore(user, { session });
+        
+        if (!coreLoggedOut) {
+            throw new Error("Core logout operation failed");
+        }
+
+        // 3. Clear Cookie (Response Operation)
+        // Ye DB se related nahi hai, par agar upar fail hua to ye run nahi karega (jo sahi hai)
+        const cookieCleared = clearRefreshTokenCookie(res);
+        if (!cookieCleared) {
+            logWithTime(`⚠️ Cookie clear failed during logout. User: ${user.userId}`);
+            // Note: Cookie clear fail hone par hum transaction abort nahi karte usually, 
+            // kyunki server side session kill karna zyada zaroori hai.
+        }
+
+        // 4. ✅ COMMIT TRANSACTION
+        await session.commitTransaction();
+        session.endSession();
+
+        logWithTime(`👋 User (${user.userId}) fully logged out from ALL devices via ${deviceUUID}.`);
+
+        // 5. 🚀 FIRE LOGS (After Commit)
+        // "Logout All" ek bada event hai, isliye await karna safe hai
+        logAuthEvent(
+            user, 
+            device, // Pura object pass kar do, log util handle kar lega
+            AUTH_LOG_EVENTS.LOGOUT_ALL_DEVICE, 
+            `User ID ${user.userId} logged out completely during ${context}.`, 
+            null
         );
+        
+        return true;
+
+    } catch (error) {
+        // Rollback
+        await session.abortTransaction();
+        session.endSession();
+
+        logWithTime(`❌ Error in logoutUserCompletely for user (${user.userId})`);
+        errorMessage(error);
         return false;
     }
-
-    logAuthEvent(req, AUTH_LOG_EVENTS.LOGOUT_ALL_DEVICE, `User ID ${user.userId} logged out completely during ${context}.`, null);
-    
-    logWithTime(
-        `👋 User (${user.userId}) fully logged out during ${context}. Device ID: (${req.deviceId})`
-    );
-    return true;
 };
 
-const loginUserOnDevice = async (user, req, res, refreshToken) => {
-    const coreLoggedIn = await loginTheUserCore(user, req.deviceId, refreshToken);
-    if (!coreLoggedIn) {
-        logWithTime(
-            `❌ Login failed for user (${user.userId}) on device (${req.deviceId})`
-        );
+const loginUserOnDevice = async (req, res, refreshToken, context = "standard login") => {
+    const user = req.user;
+    const device = req.device;
+
+    // 1. Start Session
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    // Logs collect karne ke liye array
+    const logsToFire = [];
+
+    try {
+        // 2. Device Sync (Get Data + Audit Payload)
+        const { deviceDoc, auditLogPayload: deviceLog } = await syncDeviceData( device, { session });
+        if (deviceLog) logsToFire.push({ user, device: deviceDoc, ...deviceLog });
+
+        // 3. Core Login
+        const coreLoggedIn = await loginTheUserCore(user, deviceDoc._id, refreshToken, { session });
+        if (!coreLoggedIn) throw new Error("Core login failed");
+
+        // 4. Mapping Sync (Get Data + Audit Payload)
+        const { mappingDoc, auditLogPayload: mappingLog } = await syncUserDeviceMapping(user, deviceDoc, { session });
+        if (mappingLog) logsToFire.push({ user, device: deviceDoc, ...mappingLog });
+
+        // 5. Cookie Set
+        const cookieSet = setRefreshTokenCookie(res, refreshToken);
+        if (!cookieSet) throw new Error("Cookie setting failed");
+
+        // 6. ✅ COMMIT TRANSACTION (Data Safe Now)
+        await session.commitTransaction();
+        session.endSession(); // Close session immediately
+        
+        logWithTime(`✅ Transaction committed successfully for user ${user.userId}`);
+
+        // 7. 🚀 FIRE LOGS (After Commit - Safe Zone)
+        // Ab DB rollback ka dar nahi, aur logs async chalenge
+        
+        // A. Pending Audit Logs (Device/Mapping changes)
+        for (const log of logsToFire) {
+            // Await lagana hai lagao, nahi to background me chhod do (User requirement ke hisab se)
+            // Main recommend karunga 'await' taaki sequence maintain rahe
+            logAuthEvent(log.user, log.device, log.event, log.message, log.metadata);
+        }
+
+        // B. Final Login Success Log
+        logAuthEvent(user, deviceDoc, AUTH_LOG_EVENTS.LOGIN, `Login via ${context}`, null);
+
+        return true;
+
+    } catch (error) {
+        // Rollback
+        await session.abortTransaction();
+        session.endSession();
+        
+        logWithTime(`❌ Transaction aborted: ${error.message}`);
+        errorMessage(error);
+        
+        // Optional: Fail hone ka log alag se record kar sakte ho (without transaction)
         return false;
     }
-
-    const cookieSet = setRefreshTokenCookie(res, refreshToken);
-    if (!cookieSet) {
-        logWithTime(
-            `⚠️ Cookie set failed for user (${user.userId}) on device (${req.deviceId})`
-        );
-        return false;
-    }
-
-    logAuthEvent(req, AUTH_LOG_EVENTS.LOGIN, `User ID ${user.userId} logged in on device (${req.deviceId}).`, null);
-    
-    logWithTime(
-        `✅ User (${user.userId}) logged in successfully on device (${req.deviceId})`
-    );
-    return true;
 };
 
 module.exports = {
