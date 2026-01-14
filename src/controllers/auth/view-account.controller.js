@@ -1,43 +1,36 @@
-const { errorMessage, throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
-const { logWithTime } = require("@utils/time-stamps.util");
-const { logAuthEvent } =require("@utils/auth-log-util");
 const { OK } = require("@configs/http-status.config");
+const { getAccountDetailsService } = require("@services/auth/account-details.service");
+const {
+    throwInternalServerError,
+    throwSpecificInternalServerError,
+    getLogIdentifiers
+} = require("@utils/error-handler.util");
+const { logWithTime } = require("@utils/time-stamps.util");
 
-const getMyAccount = async(req,res) => {
-    try{
-        const user = req.user; 
-        if(!user){
-            return throwResourceNotFoundError(res,"User");
+const getMyAccount = async (req, res) => {
+    try {
+        const user = req.user;
+
+        // 1. Service Call
+        const userAccountDetails = await getAccountDetailsService(user);
+
+        if (!userAccountDetails) {
+            logWithTime(`❌ Failed to fetch account details for User ${user.userId} from device ${device.deviceUUID}`);
+            throwSpecificInternalServerError(res, "Failed to fetch account details. Please try again later.");
         }
-        const User_Account_Details = {
-            "Customer ID": user.userID,
-            "Phone Number": user.phoneNumber,
-            "Email ID": user.emailID,
-            "Verified": user.isVerified,
-            "Last Login Time": user.lastLogin,
-            "Account Status": user.isActive ? "Activated" : "Deactivated",
-            "Blocked Account": user.isBlocked ? "Yes" : "No"
-        }
-        if(user.passwordChangedAt)User_Account_Details["Password Changed At"] = user.passwordChangedAt;
-        if(user.activatedAt)User_Account_Details["Activated Account At"] = user.lastActivatedAt;
-        if(user.deactivatedAt)User_Account_Details["Deactivated Account At"] = user.lastDeactivatedAt;
-        if(user.lastLogout)User_Account_Details["Last Logout At"] = user.lastLogout;
-        // Update data into auth.logs
-        logAuthEvent(req, "PROVIDE_MY_ACCOUNT_DETAILS", null);
-        logWithTime(`✅ User Account Details with User ID: (${user.userID}) is provided Successfully to User from device ID: (${req.deviceID})`);
+
+        // 2. Response
         return res.status(OK).json({
             success: true,
-            message: "Here is User Account Details",
-            User_Account_Details
+            message: "Account details fetched successfully.",
+            data: userAccountDetails
         });
-    }catch(err){
-        const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ An Internal Error Occurred while fetching the User Profile ${getIdentifiers}`);
-        errorMessage(err);
-        return throwInternalServerError(res);
-    }
-}
 
-module.exports = { 
-    getMyAccount 
+    } catch (err) {
+        const identifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Error fetching account details for ${identifiers}`);
+        return throwInternalServerError(res, err);
+    }
 };
+
+module.exports = { getMyAccount };

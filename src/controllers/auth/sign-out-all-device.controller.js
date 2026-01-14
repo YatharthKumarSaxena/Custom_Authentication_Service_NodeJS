@@ -1,35 +1,38 @@
 // Extracting the required modules
-const { throwInvalidResourceError, errorMessage, throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
+const { throwSpecificInternalServerError, throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { logAuthEvent } =require("@utils/auth-log-util");
 const { OK } = require("@configs/http-status.config");
+const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 
-const signOutAllDevices = async (req,res) => {
-    try{
-        let user = req.user;
-        if(!user){
-            return throwInvalidResourceError(res,"UserID");
+const signOutAllDevices = async (req, res) => {
+    try {
+        const user = req.user;
+
+        // 1. Service Call
+        const isUserLoggedOut = await logoutUserCompletely(req, res);
+
+        // 2. Handle Failure 
+        if (!isUserLoggedOut) {
+            return throwSpecificInternalServerError(res, "Failed to process logout request, please try again later.");
         }
-        const isUserLoggedOut = await logoutUserCompletely(user,res,req,"log out from all device request")
-        if(!isUserLoggedOut)return;
-        // Update data into auth.logs
-        logAuthEvent(req, "LOGOUT_ALL_DEVICE", null);    
-        if (user.isBlocked) {
-            logWithTime(`⚠️ Blocked user ${user.userID} attempted to logout from all devices from (${req.deviceID}).`);
-            return throwBlockedAccountError(res); // ✅ Don't proceed if blocked
-        }
-        else logWithTime(`🔓 User with (${user.userID}) is Successfully logged out from all devices. User used device having device ID: (${req.deviceID})`);
-        const praiseBy = user.name || user.userID;
+
+        // 3. Extract correct identifiers 
+        const deviceUUID = req.device.deviceUUID;
+        const userId = user.userId; 
+
+        logWithTime(`🔓 User (${userId}) successfully logged out from all devices via request from (${deviceUUID})`);
+        
+        const praiseBy = user.firstName || "User";
+        
         return res.status(OK).json({
             success: true,
-            message: praiseBy+", You are successfully logged out from all devices",
-            userID: user.userID,
-        })
-    }catch(err){
+            message: `${praiseBy}, you are successfully logged out from all devices.`
+        });
+
+    } catch (err) {
         const getIdentifiers = getLogIdentifiers(req);
         logWithTime(`❌ Internal Error occurred while logging out the User ${getIdentifiers}`);
-        errorMessage(err);
-        return throwInternalServerError(res);
+        return throwInternalServerError(res, err);
     }
 }
 

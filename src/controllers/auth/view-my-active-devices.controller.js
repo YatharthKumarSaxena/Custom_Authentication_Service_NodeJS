@@ -1,45 +1,34 @@
-const { errorMessage, throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
-const { logWithTime } = require("@utils/time-stamps.util");
-const { logAuthEvent } =require("@utils/auth-log-util");
 const { OK } = require("@configs/http-status.config");
+const { getActiveSessionsService } = require("@services/auth/active-sessions.service");
+const { logWithTime } = require("@utils/time-stamps.util");
+const { throwInternalServerError, throwSpecificInternalServerError } = require("@utils/error-handler.util");
 
-const getMyActiveDevices = async (req, res) => {
-  try {
-    const user = req.user;
+/**
+ * Controller to get all active sessions for a user
+ */
+const getMyActiveSessions = async (req, res) => {
+    try {
+        const user = req.user; // From auth middleware
+        const currentDeviceId = req.device.deviceUUID; // Current device from middleware
 
-    if (!Array.isArray(user.devices?.info) || user.devices.info.length === 0) {
-      logWithTime(`📭 No active devices found for User (${user.userID})`);
-      return res.status(OK).json({
-        success: true,
-        message: "No active devices found.",
-        total: 0,
-        devices: []
-      });
+        // 1. Call service
+        const activeSessions = await getActiveSessionsService(user, currentDeviceId);
+
+        if (activeSessions === null) {
+            logWithTime(`❌ Failed to fetch active sessions for User ${user.userId} on Device ${currentDeviceId}`);
+            return throwSpecificInternalServerError(res, { message: "Failed to fetch active sessions. Please try again later." });
+        }
+        // 2. Respond
+        return res.status(OK).json({
+            success: true,
+            message: "Active sessions fetched successfully.",
+            activeSessions
+        });
+
+    } catch (err) {
+        logWithTime(`❌ Error fetching active sessions for user ${req.user.userId}`);
+        return throwInternalServerError(res, err);
     }
-
-    const publicDevices = user.devices.info.map(({ lastUsedAt, deviceType }) => ({
-      lastUsedAt,
-      deviceType: deviceType || "Unknown"
-    })).sort((a, b) => new Date(b.lastUsedAt) - new Date(a.lastUsedAt));
-
-    // Update data into auth.logs
-    logAuthEvent(req, "GET_MY_ACTIVE_DEVICES", null);
-
-    logWithTime(`🙋‍♂️ User (${user.userID}) fetched public view of their active devices.`);
-    return res.status(OK).json({
-      success: true,
-      message: "Your active sessions fetched successfully.",
-      total: publicDevices.length,
-      devices: publicDevices
-    });
-  } catch (err) {
-    const getIdentifiers = getLogIdentifiers(req);
-    logWithTime(`❌ An Internal Error Occurred while fetching the User Active Device Sessions ${getIdentifiers}`);
-    errorMessage(err);
-    return throwInternalServerError(res);
-  }
 };
 
-module.exports = { 
-    getMyActiveDevices 
-};
+module.exports = { getMyActiveSessions };

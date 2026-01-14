@@ -1,37 +1,39 @@
-const { expiryTimeOfRefreshToken } = require("@configs/token.config");
-const { errorMessage, throwInternalServerError } = require("@utils/error-handler.util");
-const { logWithTime } = require("../utils/time-stamps.util");
+const { OK } = require("@configs/http-status.config");
+const { getAuthLogService } = require("@services/auth/auth-log.service");
+const { throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
+const { logWithTime } = require("@utils/time-stamps.util");
 
-// DRY Principle followed by this Code
-const checkUserIsNotVerified = async(req,res) => {
-    try{
-        const user = req.user || req.foundUser;
-        if(user.isVerified === false)return true; // SignOut Introduces this Feature
-        if (!user.jwtTokenIssuedAt) {
-            logWithTime(`⚠️ Missing jwtTokenIssuedAt for user (${user.userID}). Logging out as precaution.`);
-            const isUserLoggedOut = await logoutUserCompletely(user, res, req, "missing jwtTokenIssuedAt in checkUserIsNotVerified");
-            if (isUserLoggedOut) return true;
-            return false;
-        }
-        const tokenIssueTime = new Date(user.jwtTokenIssuedAt).getTime(); // In milli second current time is return
-        const currentTime = Date.now(); // In milli second current time is return
-        if(currentTime > tokenIssueTime + expiryTimeOfRefreshToken*1000){ // expiryTimeOfJWTtoken is in second multiplying by 1000 convert it in milliseconds
-            const isUserLoggedOut = await logoutUserCompletely(user,res,req,"in check user is not verfied function")
-            if(isUserLoggedOut)return true;
-            return false; // 🧠 session expired, response already sent
-        }
-        return false; // ✅ token valid, continue execution
-    }catch(err){
-        logWithTime(`❌ An Internal Error Occurred while verifying the User Request`);
-        errorMessage(err);
-        throwInternalServerError(res);
-        return true;
+const getMyAuthLogs = async (req, res) => {
+    try {
+        const user = req.user; // Full user object from middleware
+
+        // 1. Sanitize Pagination Params
+        let page = Math.max(1, parseInt(req.query.page) || 1);
+        let limit = Math.min(50, parseInt(req.query.limit) || 10); // Limit max 50 for safety
+
+        // 2. Service Call
+        const result = await getAuthLogService(user, page, limit);
+
+        // 3. Response with Meta-Data
+        logWithTime(`✅ Auth logs fetched for user ${user.userId} (Page: ${page})`);
+
+        return res.status(OK).json({
+            success: true,
+            message: "Activity logs retrieved successfully.",
+            meta: {
+                totalLogs: result.totalCount,
+                currentPage: page,
+                totalPages: result.totalPages,
+                limit
+            },
+            logs: result.logs
+        });
+
+    } catch (err) {
+        const identifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Error in getAuthLog for ${identifiers}`);
+        return throwInternalServerError(res, err);
     }
-}
+};
 
-const viewMyAuthLogs = async(req,res) => {
-}
-
-module.exports = { 
-    viewMyAuthLogs 
-}
+module.exports = { getMyAuthLogs };
