@@ -37,6 +37,12 @@ module.exports = {
     [VerificationPurpose.DEVICE_VERIFICATION]: {
       MAX_ATTEMPTS: 2,
       LINK_EXPIRY_MINUTES: 15
+    },
+    [VerificationPurpose.REGISTRATION]: {
+      MAX_ATTEMPTS: 3,
+      LINK_EXPIRY_MINUTES: 30
     }
-  }
+  },
+  AUTO_LOGIN_AFTER_VERIFICATION: process.env.AUTO_LOGIN_AFTER_VERIFICATION === 'true',
+  IS_TWO_FA_FEATURE_ENABLED: process.env.IS_TWO_FA_FEATURE_ENABLED === 'true'
 };
