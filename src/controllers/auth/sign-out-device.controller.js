@@ -1,5 +1,5 @@
 // Modules & Configs
-const { OK, BAD_REQUEST } = require("@configs/http-status.config");
+const { OK } = require("@configs/http-status.config");
 const { signOutService } = require("@services/auth/sign-out.service");
 const { clearRefreshTokenCookie } = require("@services/auth/auth-cookie-service");
 
@@ -14,9 +14,10 @@ const signOut = async (req, res) => {
     try {
         const user = req.user;
         const device = req.device;
+        const userDevice = req.userDevice; 
         
         // 1. Service Call
-        const result = await signOutService(user, device);
+        const result = await signOutService(user, device, userDevice);
 
         // Case: User pehle se logout tha
         if (result.alreadyLoggedOut) {
@@ -24,10 +25,9 @@ const signOut = async (req, res) => {
             clearRefreshTokenCookie(res); 
             
             logWithTime(`🚫 Logout Request Denied: User (${user.userId}) already logged out.`);
-            return res.status(BAD_REQUEST).json({
-                success: false,
-                message: result.message,
-                suggestion: "Please login first."
+            return res.status(OK).json({
+                success: true,
+                message: result.message
             });
         }
 
