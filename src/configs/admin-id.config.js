@@ -1,11 +1,9 @@
 const { adminIDPrefix } = require("./id-prefixes.config");
 const { IP_Address_Code } = require("./ip-address.config");
+const { userRegistrationCapacity } = require("./app-limits.config");
 
-const adminUserID = Number(process.env.ADMIN_USER_ID);
-const adminID = `${adminIDPrefix}${IP_Address_Code}${adminUserID}`;
+const adminID = `${adminIDPrefix}${IP_Address_Code}${userRegistrationCapacity}`;
 
 module.exports = {
-    adminUserID,
-    adminID,
-    IP_Address_Code
+    adminID
 };

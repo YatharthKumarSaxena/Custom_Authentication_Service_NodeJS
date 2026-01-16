@@ -33,7 +33,9 @@ const AuthErrorTypes = Object.freeze({
     ALREADY_LOGGED_IN: "AUTH_ALREADY_LOGGED_IN",
     SERVER_LIMIT_REACHED: "AUTH_SERVER_LIMIT_REACHED",
     SERVER_ERROR: "AUTH_SERVER_ERROR",
-    RESOURCE_EXISTS: "AUTH_RESOURCE_EXISTS"
+    RESOURCE_EXISTS: "AUTH_RESOURCE_EXISTS",
+    RESOURCE_NOT_FOUND: "AUTH_RESOURCE_NOT_FOUND",
+    FORBIDDEN: "AUTH_FORBIDDEN"
 });
 
 const VerificationPurpose = Object.freeze({
@@ -49,6 +51,12 @@ const RequestLocation = Object.freeze({
     QUERY: "query",
     PARAMS: "params",
     HEADERS: "headers" // Future safety ke liye
+});
+
+const FirstNameFieldSetting = Object.freeze({
+    OPTIONAL: "Optional",
+    MANDATORY: "Mandatory",
+    DISABLED: "Disabled"
 });
 
 const Token = Object.freeze({
@@ -67,5 +75,6 @@ module.exports = {
     VerificationPurpose,
     VerifyMode,
     AuthErrorTypes,
-    RequestLocation
+    RequestLocation,
+    FirstNameFieldSetting
 }
