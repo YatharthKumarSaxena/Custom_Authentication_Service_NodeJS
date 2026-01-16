@@ -1,17 +1,16 @@
-const mongoose = require("mongoose");
-const bcryptjs = require("bcryptjs");
-const { SALT } = require("@configs/security.config");
 const { UserModel } = require("@models/user.model"); // Mongoose User model
 const { logWithTime } = require("./time-stamps.util");
 const { errorMessage } = require("./error-handler.configs");
 const authLogEvents = require("./auth-log-events.config");
 const { adminAuthLogForSetUp } = require("./auth-log-util");
-const { adminID } = require("./admin-id.config");
+const { adminID } = require("@cconfigs/admin-id.config"); // Ensure this config exists
+const { UserTypes } = require("@/configs/enums.config");
+const { hashPassword } = require("./auth.util");
 
 async function bootstrapSuperAdmin() {
   try {
     // Check if any admin already exists
-    const existingAdmin = await UserModel.findOne({ userType: "ADMIN" }).exec();
+    const existingAdmin = await UserModel.findOne({ userType: UserTypes.ADMIN }).exec();
     if (existingAdmin) {
       logWithTime("🟢 Admin User already exists.");
       return null;
@@ -21,9 +20,9 @@ async function bootstrapSuperAdmin() {
     const newAdmin = {
       name: process.env.ADMIN_NAME,
       phone: process.env.ADMIN_FULL_PHONE_NUMBER,
-      password: await bcryptjs.hash(process.env.ADMIN_PASSWORD, SALT),
+      password: await hashPassword(process.env.ADMIN_PASSWORD),
       email: process.env.ADMIN_EMAIL_ID,
-      userType: "ADMIN",
+      userType: UserTypes.ADMIN,
       userId: adminID,
       isEmailVerified: true,
       isPhoneVerified: true,

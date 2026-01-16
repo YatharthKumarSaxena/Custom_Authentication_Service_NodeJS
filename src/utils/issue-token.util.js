@@ -8,7 +8,7 @@ const getTokenCategory = (expiryTimeOfToken) => {
     return (expiryTimeOfToken === expiryTimeOfRefreshToken) ? Token.REFRESH : Token.ACCESS;
 }
 
-const createToken = (userId, expiryTime, deviceId) => {
+const createToken = (userId, expiryTime, deviceUUID) => {
     const secret =
         expiryTime === expiryTimeOfRefreshToken
             ? secretCodeOfRefreshToken
@@ -17,14 +17,14 @@ const createToken = (userId, expiryTime, deviceId) => {
     const token = jwt.sign(
         {
             uid: userId,          // user identity
-            did: deviceId,   // device identity
+            did: deviceUUID,   // device identity
         },
         secret,
         { expiresIn: expiryTime }
     );
 
     const category = getTokenCategory(expiryTime);
-    logWithTime(`✅ ${category} created for ${userId}, device: ${deviceId}`);
+    logWithTime(`✅ ${category} created for ${userId}, device: ${deviceUUID}`);
 
     return token;
 };
