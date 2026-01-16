@@ -2,18 +2,22 @@ const { fetchEntityFactory } = require("@middlewares/factory/fetch-entity.middle
 const { fetchUser } = require("@utils/fetch-user.util");
 
 /**
- * 🔍 Fetch User Middleware
- * 
- * Strict validation: Validates identifiers based on AuthMode and fetches user from database
- * - Rejects if both email and phone are sent (except in BOTH mode)
- * - Rejects if extra identifiers are sent
- * - Validates according to DEFAULT_AUTH_MODE
- * - Attaches foundUser to req.foundUser
- * 
- * @example
- * router.post('/some-route', fetchUserMiddleware, controller)
- * // Controller mein: req.foundUser available hoga
+ * ✅ CASE 1: LOGIN / GET DETAILS
+ * Ye check karega ki User EXIST karta hai.
+ * Agar nahi mila -> 404 Error throw karega.
+ * Use: Login, Forgot Password, Get Profile
  */
-const fetchUserMiddleware = fetchEntityFactory(fetchUser, "User");
+const ensureUserExists = fetchEntityFactory(fetchUser, "User", true);
 
-module.exports = { fetchUserMiddleware };
+/**
+ * ✅ CASE 2: REGISTRATION
+ * Ye check karega ki User EXIST NAHI karta.
+ * Agar mil gaya -> 409 Conflict Error throw karega.
+ * Use: Sign Up, Create User
+ */
+const ensureUserNew = fetchEntityFactory(fetchUser, "User", false);
+
+module.exports = { 
+    ensureUserExists, 
+    ensureUserNew 
+};
