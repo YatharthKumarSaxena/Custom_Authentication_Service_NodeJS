@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
-const { UserTypes } = require("@configs/enums.config");
-const { AuthModes } = require("@configs/enums.config");
-const { authMode } = require("@configs/security.config");
+const { UserTypes, AuthModes, FirstNameFieldSetting } = require("@configs/enums.config");
+const { authMode, FIRST_NAME_SETTING } = require("@configs/security.config");
 const {
     localNumberLength,
     emailLength,
@@ -36,7 +35,7 @@ const userSchema = new mongoose.Schema({
         minlength: firstNameLength.min,
         maxlength: firstNameLength.max,
         match: firstNameRegex,
-        required: true
+        default: null
     },
 
     email: {
@@ -176,6 +175,29 @@ userSchema.pre("validate", function (next) {
             return next(new Error("Provide only one identifier (email OR phone) in EITHER auth mode."));
         }
     }
+
+    next();
+});
+
+userSchema.pre("validate", function (next) {
+    
+    // 1. Handle DISABLED Case
+    if (FIRST_NAME_SETTING === FirstNameFieldSetting.DISABLED) {
+        // Agar disabled hai, toh value ko undefined kar do (Mongoose save nahi karega)
+        this.firstName = undefined;
+    }
+    
+    // 2. Handle MANDATORY Case
+    else if (FIRST_NAME_SETTING === FirstNameFieldSetting.MANDATORY) {
+        // Check if value exists and is not empty
+        if (!this.firstName || (typeof this.firstName === 'string' && this.firstName.trim().length === 0)) {
+            // Manually trigger Mongoose validation error
+            this.invalidate("firstName", "First Name is required as per configuration.");
+        }
+    }
+    
+    // 3. Handle OPTIONAL Case
+    // Do nothing, as firstName is already optional by schema definition
 
     next();
 });

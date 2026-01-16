@@ -10,8 +10,7 @@ const deviceSchema = new mongoose.Schema({
     deviceType: { type: String, enum: Object.values(DeviceTypes), default: null },
     addedAt: { type: Date, default: Date.now },
     // lastUsedAt: { type: Date, default: null },
-    isBlocked: { type: Boolean, default: false },
-    isTrusted: { type: Boolean, default: false }, // For Special Devices Like Admins
+    isBlocked: { type: Boolean, default: false }
 }, { timestamps: true, versionKey: false });
 
 module.exports = {
