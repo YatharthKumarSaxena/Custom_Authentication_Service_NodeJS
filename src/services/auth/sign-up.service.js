@@ -16,28 +16,10 @@ const { hashPassword } = require("@/utils/auth.util");
  */
 
 const signUpService = async (deviceInput, userPayload) => {
-    const { firstName, email, countryCode, localNumber, password } = userPayload;;
-
-    const query = [];
-    let phone = null;
-    if (email) query.push({ email: email });
-    if (countryCode && localNumber){
-        phone = createPhoneNumber(countryCode, localNumber);
-        query.push({ phone: phone });
-    }
-
-    if (query.length > 0) {
-        const existingUser = await UserModel.findOne({ $or: query });
-        if (existingUser) {
-            throw { 
-                type: AuthErrorTypes.RESOURCE_EXISTS, 
-                message: "User with this Email or Phone already exists. Please login." 
-            };
-        }
-    }
+    const { firstName, email, phone, password } = userPayload;;
 
     // ---------------------------------------------------------
-    // 3. GENERATE USER ID & HASH PASSWORD
+    // 1. GENERATE USER ID & HASH PASSWORD
     // ---------------------------------------------------------
     const generatedUserID = await makeUserId(); 
 
@@ -50,7 +32,7 @@ const signUpService = async (deviceInput, userPayload) => {
     const hashedPassword = hashPassword(password);
 
     // ---------------------------------------------------------
-    // 4. CREATE USER (DB Insert)
+    // 2. CREATE USER (DB Insert)
     // ---------------------------------------------------------
     const newUser = await UserModel.create({
         userId: generatedUserID,
@@ -70,7 +52,7 @@ const signUpService = async (deviceInput, userPayload) => {
     logWithTime(`🟢 User Created: ${newUser.userId} from device Id : ${deviceInput.deviceUUID}`);
     
     // ---------------------------------------------------------
-    // 5. DEVICE HANDLING (Ensure Device Exists)
+    // 3. DEVICE HANDLING (Ensure Device Exists)
     // ---------------------------------------------------------
     // Verification ke liye Device ID chahiye hoti hai
     const deviceDoc = await DeviceModel.findOneAndUpdate(
@@ -83,7 +65,7 @@ const signUpService = async (deviceInput, userPayload) => {
     );
 
     // ---------------------------------------------------------
-    // 6. GENERATE VERIFICATION (OTP/Link) 🔥
+    // 4. GENERATE VERIFICATION (OTP/Link) 🔥
     // ---------------------------------------------------------
     // Pata lagao contact mode kya hai (Email/Phone/Both)
     const { contactMode } = getUserContacts(newUser);
@@ -100,7 +82,7 @@ const signUpService = async (deviceInput, userPayload) => {
     );
 
     // ---------------------------------------------------------
-    // 7. LOG EVENT
+    // 5. LOG EVENT
     // ---------------------------------------------------------
     logAuthEvent(newUser, deviceDoc, AUTH_LOG_EVENTS.REGISTER, `User with ID ${newUser.userId} Registered on device Id : ${deviceInput.deviceUUID}`, null);
 
