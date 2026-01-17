@@ -1,3 +1,28 @@
+const { logWithTime } = require("@utils/time-stamps.util");
+const { defaultConfig, masterEmailTemplate } = require("@configs/email.config");
+
+/**
+ * 🎨 Helper: Get color based on status
+ */
+const getStatusColor = (status) => {
+    const { ui } = defaultConfig;
+    
+    // Check success categories
+    if (ui.status_categories.success.includes(status)) {
+        return ui.colors.success;
+    }
+    // Check warning categories
+    if (ui.status_categories.warning.includes(status)) {
+        return ui.colors.warning;
+    }
+    // Check danger categories
+    if (ui.status_categories.danger.includes(status)) {
+        return ui.colors.danger;
+    }
+    // Default to primary color
+    return ui.colors.primary;
+};
+
 /**
  * 📧 Generator Function (Updated for OTP Support)
  */
@@ -97,3 +122,5 @@ const generateEmailHtml = (templateConfig, data = {}) => {
         html: finalHtml
     };
 };
+
+module.exports = { generateEmailHtml };

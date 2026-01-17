@@ -5,8 +5,11 @@ const { adminID } = require("@configs/admin-id.config");
 const { UserTypes, AuthModes, FirstNameFieldSetting } = require("@configs/enums.config");
 const { hashPassword, createPhoneNumber } = require("@utils/auth.util");
 const { logBootstrapEvent } = require("@utils/system-log.util");
-
-const { authMode, FIRST_NAME_SETTING, ADMIN, DEVICE } = require("@configs/security.config");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { authMode, FIRST_NAME_SETTING, ADMIN } = require("@configs/security.config");
+const { sendNotification } = require("@/utils/notification-dispatcher.util");
 
 async function bootstrapSuperAdmin() {
   try {
@@ -86,25 +89,22 @@ async function bootstrapSuperAdmin() {
     const createdAdmin = await UserModel.create(newAdminPayload);
 
     logWithTime("👑 Super Admin User Created Successfully");
-
-    // ---------------------------------------------------------
-    // 5. SYSTEM DEVICE & LOGGING
-    // ---------------------------------------------------------
     
-    // ✅ FIX: Use DEVICE config from .env (UUID v4)
-    // This ensures your Activity Logs are linked to the configured system UUID
-    const systemDevice = { 
-        deviceUUID: DEVICE.DEVICE_UUID, 
-        deviceName: DEVICE.DEVICE_NAME,
-        deviceType: DEVICE.DEVICE_TYPE
-    };
-    
-    // System Log (fire-and-forget)
+    // 5. System Log (fire-and-forget)
     logBootstrapEvent(
         "ADMIN_CREATED",
         `Super Admin created successfully via bootstrap (Auth Mode: ${authMode})`,
         createdAdmin.userId
     );
+
+    // 6. Send Notification
+    const contactInfo = getUserContacts(createdAdmin);
+    sendNotification({
+      contactInfo,
+      emailTemplate: userTemplate.welcome_super_admin,
+      smsTemplate: userSmsTemplate.welcome_super_admin,
+      data: { name: createdAdmin.firstName || "Super Admin" }
+    });
 
     return createdAdmin;
 

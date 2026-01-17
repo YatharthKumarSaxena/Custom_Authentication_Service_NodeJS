@@ -26,6 +26,22 @@ const userTemplate = {
         details: {} // OTP, Expiry
     },
 
+    // 🔹 Welcome Super Admin (Used during Bootstrap or Manual Creation)
+    welcome_super_admin: {
+        ...defaultConfig,
+        subject: "👑 Welcome, Super Admin - Access Granted",
+        event_name: "System Initialization",
+        action: "Privileged Access",
+        status: "Authorized", // 🔴 Red or 🔵 Blue Badge (Unique for Admin)
+        message_intro: "You have been granted Super Admin privileges. Your master control center is ready.",
+        actionbutton_text: "Access Admin Console", // Dashboard ki jagah Console better word hai
+        actionlink: "<LINK>/admin/dashboard", // Admin specific route
+        fallback_note: "Manage the system here:",
+        action_link: "<LINK>/admin/dashboard",
+        notes: "⚠️ SECURITY ALERT: Since this is a privileged account, please change your password immediately after your first login.",
+        details: {} // Pass: Email, Generated Time
+    },
+    
     // 🔹 Welcome Email (After Successful Verification)
     welcome: {
         ...defaultConfig,

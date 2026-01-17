@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "test:all-templates": "node testing/test-all-templates.js",
+    "test:email": "node testing/test-email-templates.js",
+    "test:sms": "node testing/test-sms-templates.js",
+    "test:verification": "node testing/test-all-templates.js verification",
+    "test:security": "node testing/test-all-templates.js --category security",
+    "test:2fa": "node testing/test-all-templates.js --category twoFactor",
+    "test:help": "node testing/test-all-templates.js --help"
+  }
+}

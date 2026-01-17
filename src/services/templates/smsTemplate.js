@@ -13,6 +13,11 @@ const userSmsTemplate = {
         dlt_template_id: "1007XXXXXXX"
     },
 
+    welcome_super_admin: {
+        message: "👑 Super Admin Access Granted for [App Name]. Your account is active. Please login and secure your account immediately.",
+        dlt_template_id: "1007XXXXXXX" // Note: Admin templates usually require separate DLT approval
+    },
+    
     welcome: {
         message: "Welcome to [App Name]! Your account is now active. Log in to start exploring.",
         dlt_template_id: "1007XXXXXXX"
