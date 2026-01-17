@@ -1,9 +1,9 @@
 const cron = require("node-cron");
-const UserModel = require("../models/user.model");
-const { logWithTime } = require("../utils/time-stamps.util");
-const { userCleanup } = require("../configs/cron.config");
-const { errorMessage } = require("../configs/error-handler.configs");
-const { logAuthEvent } = require("../utils/auth-log-util");
+const { UserModel } = require("@models/user.model");
+const { logWithTime } = require("@utils/time-stamps.util");
+const { userCleanup } = require("@configs/cron.config");
+const { errorMessage } = require("@utils/error-handler.util");
+const { logCronExecution, logCronFailure } = require("@utils/system-log.util");
 
 const deleteDeactivatedUsers = async () => {
   try {
@@ -19,22 +19,24 @@ const deleteDeactivatedUsers = async () => {
       lastDeactivatedAt: { $lt: cutoffDate },
       userType: "CUSTOMER"
     });
-    await logAuthEvent({
-      user: { userID: "SYSTEM_BATCH_CRON", userType: "SYSTEM" },
-      deviceID: process.env.DEVICE_UUID,
-      deviceName: process.env.DEVICE_NAME,
-      deviceType: process.env.DEVICE_TYPE
-    }, "CLEAN_UP_DEACTIVATED_USER", {
-    reason: `Deleted ${result.deletedCount} inactive users (> ${userCleanup.deactivatedRetentionDays} days)`
-    });
+
     if(result.deletedCount === 0){
       logWithTime(`📭 No users eligible for deletion (deactivated more than ${userCleanup.deactivatedRetentionDays} days).`);
     }else {
       logWithTime(`🗑️ Account Deletion Job: ${result.deletedCount} users hard deleted (inactive > ${userCleanup.deactivatedRetentionDays} days).`);
     }
+    
+    // System Log (fire-and-forget)
+    logCronExecution(
+      "CLEANUP_DEACTIVATED_USERS",
+      { deletedCount: result.deletedCount, retentionDays: userCleanup.deactivatedRetentionDays },
+      `Deleted ${result.deletedCount} deactivated users older than ${userCleanup.deactivatedRetentionDays} days`
+    );
+    
   } catch (err) {
     logWithTime("❌ Internal Error in deleting old deactivated users.");
     errorMessage(err);
+    logCronFailure("CLEANUP_DEACTIVATED_USERS", err);
   }
 };
 
