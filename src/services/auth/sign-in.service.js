@@ -1,6 +1,5 @@
 const { UserDeviceModel } = require("@/models/user-device.model");
 const { DeviceModel } = require("@/models/device.model");
-const { verifyPasswordWithRateLimit } = require("./password.service"); // Password Service
 const { loginUserOnDevice } = require("./auth-session.service"); // Login Service
 const { createToken } = require("@utils/issue-token.util");
 const { AuthErrorTypes, VerificationPurpose } = require("@configs/enums.config");
@@ -10,6 +9,7 @@ const { generateVerificationForUser } = require("@services/account-verification/
 const ms = require("ms");
 const { getUserContacts } = require("@/utils/contact-selector.util");
 const { verificationSecurity, IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
+const { verifyPasswordWithRateLimit } = require("../password-management/password-verification.service");
 
 /*
  * Main Orchestrator for Sign In

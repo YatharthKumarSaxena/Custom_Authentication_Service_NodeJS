@@ -43,6 +43,8 @@ const logSystemEvent = async (logData) => {
             metadata
         });
 
+        logWithTime(`✅ System Log Created: [${eventType}] ${action} - ${status}`);
+        
     } catch (err) {
         // Silent fail - don't break application flow
         logWithTime("⚠️ Failed to create system log entry");

@@ -1,3 +1,5 @@
+const { VerificationPurpose } = require("./enums.config");
+
 module.exports = {
   SALT: Number(process.env.SALT),
   usersPerDevice: 5,

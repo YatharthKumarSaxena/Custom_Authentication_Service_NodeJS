@@ -1,10 +1,10 @@
 const { UserModel } = require("@models/user.model");
 const bcryptjs = require("bcryptjs");
-const { isValidRegex, validateLength } = require("./field-validators.util");
+const { isValidRegex, validateLength } = require("./validators-factory.util");
 const { phoneNumberRegex, userIdRegex } = require("../configs/regex.config");
 const { phoneNumberLength } = require("../configs/fields-length.config");
 const { adminIdPrefix } = require("@/configs/id-prefixes.config");
-
+const { SALT } = require("@/configs/security.config");
 
 const checkPasswordIsValid = async (userId, providedPassword) => {
     const user = await UserModel

@@ -1,4 +1,4 @@
-const { CounterModel } = require("@models/counter.model");
+const { CounterModel } = require("@models/id-generator.model");
 const { userRegistrationCapacity } = require("@configs/app-limits.config");
 const { IP_Address_Code } = require("@configs/ip-address.config");
 const { customerIdPrefix } = require("@configs/id-prefixes.config");

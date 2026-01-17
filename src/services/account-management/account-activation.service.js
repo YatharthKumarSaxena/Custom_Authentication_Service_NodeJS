@@ -1,4 +1,3 @@
-const { verifyPasswordWithRateLimit } = require("../auth/password.service"); // Reusing your robust password service
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
@@ -6,6 +5,7 @@ const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { verifyPasswordWithRateLimit } = require("../password-management/password-verification.service");
 
 /**
  * Service to activate user account

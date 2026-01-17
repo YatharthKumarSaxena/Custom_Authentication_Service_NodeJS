@@ -1,14 +1,14 @@
-const { commonMiddleware } = require("@middlewares/common/index");
+const { commonMiddlewares } = require("@middlewares/common/index");
 
 const baseMiddlewares = [
-    commonMiddleware.verifyDeviceField,
-    commonMiddleware.isDeviceBlocked
+    commonMiddlewares.verifyDeviceField,
+    commonMiddlewares.isDeviceBlocked
 ];
 const baseAuthMiddlewares = [
     ...baseMiddlewares,
-    commonMiddleware.verifyTokenMiddleware,
-    commonMiddleware.isUserAccountBlocked,
-    commonMiddleware.isUserAccountActive
+    commonMiddlewares.verifyTokenMiddleware,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive
 ];
 
 module.exports = { baseAuthMiddlewares, baseMiddlewares };

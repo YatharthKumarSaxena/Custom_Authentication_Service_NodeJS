@@ -1,5 +1,4 @@
 const cron = require("node-cron");
-const OTPModel = require("@models/otp.model");
 const { VerificationLinkModel, OTPModel } = require("@models/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { verificationCleanup } = require("@configs/cron.config");

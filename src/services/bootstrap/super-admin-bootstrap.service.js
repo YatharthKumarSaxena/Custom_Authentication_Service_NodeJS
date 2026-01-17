@@ -1,8 +1,6 @@
 const { UserModel } = require("@models/user.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage } = require("@utils/error-handler.util");
-const { logAuthEvent } = require("@utils/auth-log-util");
-const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { adminID } = require("@configs/admin-id.config");
 const { UserTypes, AuthModes, FirstNameFieldSetting } = require("@configs/enums.config");
 const { hashPassword, createPhoneNumber } = require("@utils/auth.util");
@@ -39,11 +37,7 @@ async function bootstrapSuperAdmin() {
     // ---------------------------------------------------------
     const existingAdmin = await UserModel.findOne({ userType: UserTypes.ADMIN }).lean();
     if (existingAdmin) {
-        logBootstrapEvent(
-            "ADMIN_ALREADY_EXISTS",
-            "Super Admin already exists in database, skipping bootstrap",
-            existingAdmin.userId
-        );
+        logWithTime("ℹ️  Admin Bootstrap Skipped: Super Admin User already exists in the system.");
         return null;
     }
 
@@ -104,16 +98,6 @@ async function bootstrapSuperAdmin() {
         deviceName: DEVICE.DEVICE_NAME,
         deviceType: DEVICE.DEVICE_TYPE
     };
-
-    // Note: Assuming logAuthEvent can handle a plain object for device
-    
-    logAuthEvent(
-        createdAdmin, 
-        systemDevice, 
-        AUTH_LOG_EVENTS.REGISTER, 
-        `Super Admin Auto-Created via System Bootstrap (${authMode} Mode)`, 
-        null
-    );
     
     // System Log (fire-and-forget)
     logBootstrapEvent(

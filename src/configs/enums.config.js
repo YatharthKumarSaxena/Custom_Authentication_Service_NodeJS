@@ -68,8 +68,6 @@ module.exports = {
     AuthModes,
     UserTypes,
     DeviceTypes,
-    LinkPurpose,
-    OTP_Purpose,
     ContactModes,
     Token,
     VerificationPurpose,

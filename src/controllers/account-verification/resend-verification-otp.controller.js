@@ -1,7 +1,7 @@
 const { OK } = require("@/configs/http-status.config");
 const { logWithTime } = require("@/utils/time-stamps.util");
 const { throwInternalServerError, throwBadRequestError } = require("@utils/error-handler.util");
-const { resendVerificationService } = require("@services/password-management/resend-verification.service");
+const { resendVerificationService } = require("@services/account-verification/resend-verification.service");
 
 /**
  * 📱 Resend OTP Controller

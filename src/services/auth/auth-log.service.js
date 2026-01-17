@@ -1,4 +1,4 @@
-const { AuthLogModel } = require("@models/auth-log.model");
+const { AuthLogModel } = require("@models/auth-logs.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 /**

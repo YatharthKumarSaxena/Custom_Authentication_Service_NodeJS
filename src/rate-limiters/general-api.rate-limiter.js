@@ -1,34 +1,34 @@
-const { createRateLimiter } = require("./create-rate-limiter");
+const { createRedisDeviceRateLimiter } = require("./create-redis-device.rate-limiter");
 const { perUserAndDevice } = require("../configs/rate-limit.config");
 
 /* Factory Design Pattern is used here to create these same logic Rate Limiters */
 
 // ✅ middlewares/rateLimit_signout.js
-const signOutRateLimiter = createRateLimiter(perUserAndDevice.signout);
+const signOutRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.signout);
 
-const signOutDeviceRateLimiter = createRateLimiter(perUserAndDevice.signOutDevice);
+const signOutDeviceRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.signOutDevice);
 
 // ✅ middlewares/rateLimit_deactivateAccount.js
-const deactivateAccountRateLimiter = createRateLimiter(perUserAndDevice.deactivateMyAccount);
+const deactivateAccountRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.deactivateMyAccount);
 
 // ✅ middlewares/rateLimit_changePassword.js
-const changePasswordRateLimiter = createRateLimiter(perUserAndDevice.changePassword);
+const changePasswordRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.changePassword);
 
 // ✅ middlewares/rateLimit_getActiveDevices.js
-const getMyActiveDevicesRateLimiter = createRateLimiter(perUserAndDevice.getMyActiveDevices);
+const getMyActiveDevicesRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.getMyActiveDevices);
 
 // ✅ middlewares/rateLimit_getUserAuthLogs.js
-const getUserAuthLogsRateLimiter = createRateLimiter(perUserAndDevice.getMyAuthLogs);
+const getUserAuthLogsRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.getMyAuthLogs);
 
 // ✅ middlewares/rateLimit_updateUserAccount.js
-const updateMyAccountRateLimiter = createRateLimiter(perUserAndDevice.updateMyAccount);
+const updateMyAccountRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.updateMyAccount);
 
 // ✅ middlewares/rateLimit_checkMyAccountDetails.js
-const getMyAccountRateLimiter = createRateLimiter(perUserAndDevice.getMyAccount);
+const getMyAccountRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.getMyAccount);
 
-const enable2FARateLimiter = createRateLimiter(perUserAndDevice.enable2FA);
+const enable2FARateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.enable2FA);
 
-const disable2FARateLimiter = createRateLimiter(perUserAndDevice.disable2FA);
+const disable2FARateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.disable2FA);
 
 const userAndDeviceBasedRateLimiters = {
     signOutRateLimiter,

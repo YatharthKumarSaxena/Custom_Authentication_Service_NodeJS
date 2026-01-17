@@ -9,15 +9,19 @@
   "author": "Yatharth Kumar Saxena",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "mongoose": "^8.15.1",
     "node-cron": "^4.1.0",
-    "nodemailer": "^7.0.12"
+    "nodemailer": "^7.0.12",
+    "rate-limit-redis": "^4.3.1"
   },
   "_moduleAliases": {
     "@": "src",
@@ -30,6 +34,7 @@
     "@rate-limiters": "src/rate-limiters",
     "@controllers": "src/controllers",
     "@routes": "src/routers",
-    "@models": "src/models"
+    "@models": "src/models",
+    "@cron-jobs": "src/cron-jobs"
   }
 }
