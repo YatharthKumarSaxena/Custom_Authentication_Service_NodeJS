@@ -6,6 +6,7 @@ const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { adminID } = require("@configs/admin-id.config");
 const { UserTypes, AuthModes, FirstNameFieldSetting } = require("@configs/enums.config");
 const { hashPassword, createPhoneNumber } = require("@utils/auth.util");
+const { logBootstrapEvent } = require("@utils/system-log.util");
 
 const { authMode, FIRST_NAME_SETTING, ADMIN, DEVICE } = require("@configs/security.config");
 
@@ -37,7 +38,14 @@ async function bootstrapSuperAdmin() {
     // 2. CHECK EXISTENCE
     // ---------------------------------------------------------
     const existingAdmin = await UserModel.findOne({ userType: UserTypes.ADMIN }).lean();
-    if (existingAdmin) return null;
+    if (existingAdmin) {
+        logBootstrapEvent(
+            "ADMIN_ALREADY_EXISTS",
+            "Super Admin already exists in database, skipping bootstrap",
+            existingAdmin.userId
+        );
+        return null;
+    }
 
     logWithTime(`⚙️ Bootstrapping Super Admin... [Mode: ${authMode}]`);
 
@@ -105,6 +113,13 @@ async function bootstrapSuperAdmin() {
         AUTH_LOG_EVENTS.REGISTER, 
         `Super Admin Auto-Created via System Bootstrap (${authMode} Mode)`, 
         null
+    );
+    
+    // System Log (fire-and-forget)
+    logBootstrapEvent(
+        "ADMIN_CREATED",
+        `Super Admin created successfully via bootstrap (Auth Mode: ${authMode})`,
+        createdAdmin.userId
     );
 
     return createdAdmin;
