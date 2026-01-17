@@ -26,7 +26,11 @@ const updateMyAccountRateLimiter = createRateLimiter(perUserAndDevice.updateMyAc
 // ✅ middlewares/rateLimit_checkMyAccountDetails.js
 const getMyAccountRateLimiter = createRateLimiter(perUserAndDevice.getMyAccount);
 
-module.exports = {
+const enable2FARateLimiter = createRateLimiter(perUserAndDevice.enable2FA);
+
+const disable2FARateLimiter = createRateLimiter(perUserAndDevice.disable2FA);
+
+const userAndDeviceBasedRateLimiters = {
     signOutRateLimiter,
     deactivateAccountRateLimiter,
     changePasswordRateLimiter,
@@ -34,5 +38,11 @@ module.exports = {
     getUserAuthLogsRateLimiter,
     updateMyAccountRateLimiter,
     getMyAccountRateLimiter,
-    signOutDeviceRateLimiter
+    signOutDeviceRateLimiter,
+    enable2FARateLimiter,
+    disable2FARateLimiter
+};
+
+module.exports = {
+    userAndDeviceBasedRateLimiters
 }

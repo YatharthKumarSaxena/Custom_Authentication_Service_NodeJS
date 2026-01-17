@@ -28,14 +28,27 @@ const resendVerificationLinkRateLimiter = createRedisDeviceRateLimiter(perDevice
 // ✅ middlewares/rateLimit_resendVerificationOTPs.js
 const resendVerificationOTPsRateLimiter = createRedisDeviceRateLimiter(perDevice.resendVerificationOTPs);
 
+const verifyEmailRateLimiter = createRedisDeviceRateLimiter(perDevice.verifyEmail);
+
+const verifyPhoneRateLimiter = createRedisDeviceRateLimiter(perDevice.verifyPhone);
+
+const verifyDeviceRateLimiter = createRedisDeviceRateLimiter(perDevice.verifyDevice);
+
+const deviceBasedRateLimiters = {
+    malformedAndWrongRequestRateLimiter,
+    unknownRouteLimiter,
+    signUpRateLimiter,
+    signInRateLimiter,
+    activateAccountRateLimiter,
+    forgetPasswordRateLimiter,
+    resetPasswordRateLimiter,
+    resendVerificationLinkRateLimiter,
+    resendVerificationOTPsRateLimiter,
+    verifyEmailRateLimiter,
+    verifyPhoneRateLimiter,
+    verifyDeviceRateLimiter
+};
+
 module.exports = {
-  malformedAndWrongRequestRateLimiter,
-  unknownRouteLimiter,
-  signUpRateLimiter,
-  signInRateLimiter,
-  activateAccountRateLimiter,
-  forgetPasswordRateLimiter,
-  resetPasswordRateLimiter,
-  resendVerificationLinkRateLimiter,
-  resendVerificationOTPsRateLimiter
+    deviceBasedRateLimiters
 };
