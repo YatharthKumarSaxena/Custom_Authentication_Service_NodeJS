@@ -3,6 +3,10 @@ const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
  * Common Service to Toggle 2FA Status
@@ -55,6 +59,15 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
         `User ${action.toLowerCase()} 2FA security.`,
         null
     );
+
+    // 6. Send Notification
+    const contactInfo = getUserContacts(user);
+    sendNotification({
+        contactInfo,
+        emailTemplate: shouldEnable ? userTemplate.twoFactorEnabled : userTemplate.twoFactorDisabled,
+        smsTemplate: shouldEnable ? userSmsTemplate.twoFactorEnabled : userSmsTemplate.twoFactorDisabled,
+        data: { name: user.firstName || "User" }
+    });
 
     return {
         success: true,

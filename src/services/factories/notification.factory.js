@@ -48,7 +48,7 @@ const SendNotificationFactory = async(user, contactModes, token, type, emailTemp
             sms: smsMessage
         };
 
-        await sendNotification(notificationPayload);
+        sendNotification(notificationPayload);
         return true;
 
     } catch (err) {

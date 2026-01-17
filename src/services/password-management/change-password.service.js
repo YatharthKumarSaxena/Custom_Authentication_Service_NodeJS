@@ -3,6 +3,10 @@
 const { hashPassword } = require("@/utils/auth.util");
 const { errorMessage } = require("@/utils/error-handler.util");
 const { logWithTime } = require("@/utils/time-stamps.util");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
  * Updates the user's password in the database
@@ -31,6 +35,15 @@ const updatePassword = async (user, newPassword) => {
 
         // 4. Save to Database
         await user.save();
+
+        // 5. Send Notification
+        const contactInfo = getUserContacts(user);
+        sendNotification({
+            contactInfo,
+            emailTemplate: userTemplate.passwordChanged,
+            smsTemplate: userSmsTemplate.passwordChanged,
+            data: { name: user.firstName || "User" }
+        });
 
         return true;
     } catch (err) {

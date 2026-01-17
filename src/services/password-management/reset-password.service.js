@@ -3,6 +3,10 @@ const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { errorMessage } = require("@/utils/error-handler.util");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
  * Service to reset password after OTP verification
@@ -34,6 +38,15 @@ const resetPasswordService = async (user, device, newPassword) => {
             `User reset their password via forgot password flow.`,
             null
         );
+
+        // Send Notification
+        const contactInfo = getUserContacts(user);
+        sendNotification({
+            contactInfo,
+            emailTemplate: userTemplate.passwordChanged,
+            smsTemplate: userSmsTemplate.passwordChanged,
+            data: { name: user.firstName || "User" }
+        });
 
         return {
             success: true,

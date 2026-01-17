@@ -3,6 +3,10 @@ const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { AuthErrorTypes } = require("@configs/enums.config");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { 
     validateLength, 
     isValidRegex 
@@ -27,6 +31,10 @@ const {
 const updateAccountService = async (user, device, updatePayload) => {
     const { firstName, email, countryCode, localNumber } = updatePayload;
     const updatedFields = [];
+    
+    // Store old values for notification purposes
+    const oldEmail = user.email;
+    const oldPhone = user.phone;
 
     // ------------------ 1. First Name Update ------------------
     if (firstName && firstName !== user.firstName) {
@@ -120,6 +128,70 @@ const updateAccountService = async (user, device, updatePayload) => {
         `User updated profile fields: ${updatedFields.join(", ")}`,
         null
     );
+
+    // ------------------ 6. Send Notifications ------------------
+    
+    // A. If Email Changed - Alert to OLD email + Welcome to NEW email
+    if (updatedFields.includes("Email")) {
+        // Alert to OLD email (using direct sendEmail)
+        const { sendEmail } = require("@services/mail.service");
+        const { generateEmailHtml } = require("@utils/email-generator.util");
+        
+        const oldEmailAlert = generateEmailHtml(userTemplate.emailChangeAlert, {
+            name: user.firstName || "User",
+            new_email: user.email
+        });
+        
+        if (oldEmailAlert && oldEmail) {
+            sendEmail(oldEmail, oldEmailAlert.subject, oldEmailAlert.html);
+            logWithTime(`📧 Email change alert sent to old email: ${oldEmail}`);
+        }
+        
+        // Welcome to NEW email (verification will be sent separately)
+        const newEmailWelcome = generateEmailHtml(userTemplate.verifyNewEmail, {
+            name: user.firstName || "User"
+        });
+        
+        if (newEmailWelcome && user.email) {
+            sendEmail(user.email, newEmailWelcome.subject, newEmailWelcome.html);
+            logWithTime(`📧 Welcome email sent to new email: ${user.email}`);
+        }
+    }
+    
+    // B. If Phone Changed - Alert to OLD phone + Welcome to NEW phone (if SMS available)
+    if (updatedFields.includes("Phone Number")) {
+        const { sendSMS } = require("@services/sms.service");
+        const { generateSmsMessage } = require("@utils/sms-generator.util");
+        
+        // Alert to OLD phone
+        if (oldPhone && userSmsTemplate.phoneChangeAlert) {
+            const oldPhoneAlert = generateSmsMessage(userSmsTemplate.phoneChangeAlert, null);
+            if (oldPhoneAlert) {
+                sendSMS(oldPhone, oldPhoneAlert);
+                logWithTime(`📱 Phone change alert sent to old phone: ${oldPhone}`);
+            }
+        }
+        
+        // Welcome to NEW phone
+        if (user.phone && userSmsTemplate.verifyNewPhone) {
+            const newPhoneWelcome = generateSmsMessage(userSmsTemplate.verifyNewPhone, null);
+            if (newPhoneWelcome) {
+                sendSMS(user.phone, newPhoneWelcome);
+                logWithTime(`📱 Welcome SMS sent to new phone: ${user.phone}`);
+            }
+        }
+    }
+    
+    // C. For other updates (firstName only) - send to current contact
+    if (updatedFields.length > 0 && !updatedFields.includes("Email") && !updatedFields.includes("Phone Number")) {
+        const contactInfo = getUserContacts(user);
+        sendNotification({
+            contactInfo,
+            emailTemplate: userTemplate.profileUpdated,
+            smsTemplate: userSmsTemplate.profileUpdated,
+            data: { name: user.firstName || "User" }
+        });
+    }
 
     return {
         success: true,

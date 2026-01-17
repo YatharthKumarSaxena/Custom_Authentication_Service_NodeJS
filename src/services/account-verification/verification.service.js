@@ -7,6 +7,10 @@ const { authMode, AUTO_LOGIN_AFTER_VERIFICATION } = require("@/configs/security.
 const { AuthModes, VerificationPurpose } = require("@/configs/enums.config");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { expiryTimeOfRefreshToken } = require("@/configs/token.config");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
  * 🔒 PRIVATE HELPER (NOT EXPORTED)
@@ -31,7 +35,19 @@ const performVerificationCore = async (req, res, code, contactMode, config) => {
 
     logAuthEvent(user, device, logEvent, `User ID ${user.userId} verified ${type} via ${contactMode}.`, null);
 
-    // 3️⃣ Auto Login Logic
+    // 3️⃣ Send Welcome Notification (After First Verification)
+    // Check if this is initial verification (email or phone) - send welcome
+    if (purpose === VerificationPurpose.EMAIL_VERIFICATION || purpose === VerificationPurpose.PHONE_VERIFICATION) {
+        const contactInfo = getUserContacts(user);
+        sendNotification({
+            contactInfo,
+            emailTemplate: userTemplate.welcome,
+            smsTemplate: userSmsTemplate.welcome,
+            data: { name: user.firstName || "User" }
+        });
+    }
+
+    // 4️⃣ Auto Login Logic
     let autoLoggedIn = false;
     if (AUTO_LOGIN_AFTER_VERIFICATION) {
         

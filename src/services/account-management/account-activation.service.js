@@ -2,6 +2,10 @@ const { verifyPasswordWithRateLimit } = require("../auth/password.service"); // 
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
  * Service to activate user account
@@ -35,6 +39,15 @@ const activateAccountService = async (user, device, plainPassword) => {
         `User account with userId: ${user.userId} reactivated manually from device ${device.deviceUUID}.`,
         null
     );
+
+    // Send Notification
+    const contactInfo = getUserContacts(user);
+    sendNotification({
+        contactInfo,
+        emailTemplate: userTemplate.accountReactivated,
+        smsTemplate: userSmsTemplate.accountReactivated,
+        data: { name: user.firstName || "User" }
+    });
 
     return {
         success: true,

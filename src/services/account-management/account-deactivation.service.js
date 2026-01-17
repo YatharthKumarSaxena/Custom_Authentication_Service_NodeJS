@@ -2,6 +2,10 @@ const { verifyPasswordWithRateLimit } = require("@services/password-management/p
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { getUserContacts } = require("@utils/contact-selector.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
  * Service to deactivate user account
@@ -29,6 +33,15 @@ const deactivateAccountService = async (user, device, plainPassword) => {
         `User account with userId: ${user.userId} deactivated manually from device ${device.deviceUUID}.`,
         null
     );
+
+    // Send Notification
+    const contactInfo = getUserContacts(user);
+    sendNotification({
+        contactInfo,
+        emailTemplate: userTemplate.accountDeactivated,
+        smsTemplate: userSmsTemplate.accountDeactivated,
+        data: { name: user.firstName || "User" }
+    });
 
     return {
         success: true,

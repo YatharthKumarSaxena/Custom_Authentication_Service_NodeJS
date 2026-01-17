@@ -62,8 +62,8 @@ const userSmsTemplate = {
     // 4️⃣ ACCOUNT UPDATES & 2FA
     // ==========================================
 
-    verifyNewEmail: {
-        message: "Verify your new email address. Your code is {{otp}}. Do not share it.",
+    verifyNewPhone: {
+        message: "Verify your new phone number. Your code is {{otp}}. Do not share it.",
         dlt_template_id: "1007XXXXXXX"
     },
 
@@ -89,8 +89,8 @@ const userSmsTemplate = {
         dlt_template_id: "1007XXXXXXX"
     },
     
-    emailChangeAlert: {
-        message: "Alert: The email for your [App Name] account was changed. If you did not authorize this, contact support.",
+    phoneChangeAlert: {
+        message: "Alert: The phone number for your [App Name] account was changed. If you did not authorize this, contact support.",
         dlt_template_id: "1007XXXXXXX"
     },
 
