@@ -5,7 +5,8 @@ const DB_COLLECTIONS = {
   COUNTER: "counters",
   OTP: "otps",
   USER: "users",
-  LINK: "links"
+  LINK: "links",
+  SYSTEM_LOG: "system_logs"
 };
 
 module.exports = { DB_COLLECTIONS };

@@ -1,28 +1,17 @@
 const {
-    phoneNumberRegex,
-    localNumberRegex,
-    emailRegex,
-    UUID_V4_REGEX,
-    userIdRegex
+    strongPasswordRegex
 } = require("./regex.config");
 
 const {
-    emailLength,
-    passwordLength,
-    phoneNumberLength,
-    deviceNameLength,
-    countryCodeLength,
-    localNumberLength,
-    uuidLength,
-    firstNameLength,
-    otpLength
+    passwordLength
+
 } = require("./fields-length.config");
 
-const {
-
-} = require("@utils/enum-validators.util");
-
 const validationRules = {
+    password: {
+        regex: strongPasswordRegex,
+        length: passwordLength
+    }
 };
 
 module.exports = {

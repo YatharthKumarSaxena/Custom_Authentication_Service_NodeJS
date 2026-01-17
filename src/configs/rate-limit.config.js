@@ -65,8 +65,31 @@ module.exports = {
       prefix: "unknown_route",
       reason: "Unknown route access",
       message: "Too many invalid or unauthorized requests."
-    }
+    },
 
+    verifyEmail: {
+      maxRequests: 5,
+      windowMs: 10 * 60 * 1000,
+      prefix: "verify_email",
+      reason: "Verify email abuse",
+      message: "Too many verify email attempts."
+    },
+
+    verifyPhone: {
+      maxRequests: 5,
+      windowMs: 10 * 60 * 1000,
+      prefix: "verify_phone",
+      reason: "Verify phone abuse",
+      message: "Too many verify phone attempts."
+    },
+
+    verifyDevice: {
+      maxRequests: 5,
+      windowMs: 10 * 60 * 1000,
+      prefix: "verify_device",
+      reason: "Verify device abuse",
+      message: "Too many verify device attempts."
+    }
   },
 
 
@@ -133,6 +156,22 @@ module.exports = {
       prefix: "update_my_account",
       reason: "Profile update abuse",
       message: "Too many profile update attempts."
+    },
+
+    enable2FA: {
+      maxRequests: 3,
+      windowMs: 10 * 60 * 1000,
+      prefix: "enable_2fa",
+      reason: "Enable 2FA abuse",
+      message: "Too many enable 2FA attempts."
+    },
+
+    disable2FA: {
+      maxRequests: 3,
+      windowMs: 10 * 60 * 1000,
+      prefix: "disable_2fa",
+      reason: "Disable 2FA abuse",
+      message: "Too many disable 2FA attempts."
     }
   }
 };
