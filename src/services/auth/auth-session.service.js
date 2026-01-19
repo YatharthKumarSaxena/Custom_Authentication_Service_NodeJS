@@ -1,5 +1,4 @@
 const { logoutUserCompletelyCore,loginTheUserCore } = require("@utils/auth-session.util");
-const { clearRefreshTokenCookie, setRefreshTokenCookie } = require("./auth-cookie-service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
@@ -15,11 +14,9 @@ const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
-const logoutUserCompletely = async (req, res, context = "general sign out all devices") => {
-    const user = req.user;
+const logoutUserCompletely = async (user, device, context = "general sign out all devices") => {
     
     // Safety: Device exist karta hai ya nahi check kar lo
-    const device = req.device; 
     const deviceUUID = device.deviceUUID;
 
     // 1. Start Session
@@ -32,15 +29,6 @@ const logoutUserCompletely = async (req, res, context = "general sign out all de
         
         if (!coreLoggedOut) {
             throw new Error("Core logout operation failed");
-        }
-
-        // 3. Clear Cookie (Response Operation)
-        // Ye DB se related nahi hai, par agar upar fail hua to ye run nahi karega (jo sahi hai)
-        const cookieCleared = clearRefreshTokenCookie(res);
-        if (!cookieCleared) {
-            logWithTime(`⚠️ Cookie clear failed during logout. User: ${user.userId}`);
-            // Note: Cookie clear fail hone par hum transaction abort nahi karte usually, 
-            // kyunki server side session kill karna zyada zaroori hai.
         }
 
         // 4. ✅ COMMIT TRANSACTION
@@ -81,10 +69,7 @@ const logoutUserCompletely = async (req, res, context = "general sign out all de
     }
 };
 
-const loginUserOnDevice = async (req, res, refreshToken, context = "standard login") => {
-    const user = req.user;
-    const device = req.device;
-
+const loginUserOnDevice = async (user, device, refreshToken, context = "standard login") => {
     // 1. Start Session
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -147,17 +132,13 @@ const loginUserOnDevice = async (req, res, refreshToken, context = "standard log
         const { mappingDoc, auditLogPayload: mappingLog } = await syncUserDeviceMapping(user, deviceDoc, { session });
         if (mappingLog) logsToFire.push({ user, device: deviceDoc, ...mappingLog });
 
-        // 5. Cookie Set
-        const cookieSet = setRefreshTokenCookie(res, refreshToken);
-        if (!cookieSet) throw new Error("Cookie setting failed");
-
-        // 6. ✅ COMMIT TRANSACTION (Data Safe Now)
+        // 5. ✅ COMMIT TRANSACTION (Data Safe Now)
         await session.commitTransaction();
         session.endSession(); // Close session immediately
         
         logWithTime(`✅ Transaction committed successfully for user ${user.userId}`);
 
-        // 7. 🚀 FIRE LOGS (After Commit - Safe Zone)
+        // 6. 🚀 FIRE LOGS (After Commit - Safe Zone)
         // Ab DB rollback ka dar nahi, aur logs async chalenge
         
         // A. Pending Audit Logs (Device/Mapping changes)
