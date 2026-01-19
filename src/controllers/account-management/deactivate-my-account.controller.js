@@ -27,7 +27,8 @@ const deactivateMyAccount = async (req, res) => {
         // 2. NON-CRITICAL: Logout (Best Effort)
         // ---------------------------------------------------------
         try {
-            await logoutUserCompletely(req, res, "Account Deactivation Request");
+            await logoutUserCompletely(user, device, "Account Deactivation Request");
+            res.set('x-access-token', '');
         } catch (logoutError) {
             logWithTime(`⚠️ Warning: Account deactivated but logout failed for User ${user.userId} from device ${device.deviceUUID}`);
         }

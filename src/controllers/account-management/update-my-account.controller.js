@@ -12,6 +12,7 @@ const {
     getLogIdentifiers
 } = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
+const { logoutUserCompletely } = require("@/services/auth/auth-session.service");
 
 const updateMyAccount = async (req, res) => {
     try {
@@ -38,6 +39,15 @@ const updateMyAccount = async (req, res) => {
             });
         }
 
+        if(result.updatedFields.includes("email") || result.updatedFields.includes("localNumber") || result.updatedFields.includes("countryCode")) {
+            logWithTime(`✉️ User ${user.userId} updated their email or phone number. Verification may be required.`);
+            try{
+                await logoutUserCompletely(user, device, "Account Update: Email/Phone Change");
+                res.set('x-access-token', '');
+            }catch(err){
+                logWithTime(`⚠️ Warning: User ${user.userId} updated email/phone but logout failed.`);
+            }
+        }
         // 3. Success Response
         return res.status(OK).json({
             success: true,

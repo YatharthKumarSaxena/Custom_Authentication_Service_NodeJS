@@ -25,6 +25,7 @@ const changePassword = async (req, res) => {
         // 1. Validation
         // ---------------------------------------------------------
         if (newPassword !== confirmPassword) {
+            logWithTime(`❌ Change Password failed due to mismatched new and confirm passwords for User ${user.userId}`);
             return throwBadRequestError(res, "Confirm Password does not match with New Password");
         }
 
@@ -63,7 +64,8 @@ const changePassword = async (req, res) => {
         
         try {
             // Note: logoutUserCompletely(req, res, context) standard signature use karo
-            await logoutUserCompletely(req, res, "Password Change Request");
+            await logoutUserCompletely(user, device, "Password Change Request");
+            res.set('x-access-token', '');
         } catch (logoutError) {
             logWithTime(`⚠️ Warning: Password changed but logout failed for User ${user.userId}`);
             logoutStatusMsg = "Password changed, but automatic logout failed. Please logout manually.";
