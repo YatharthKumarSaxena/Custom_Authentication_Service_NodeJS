@@ -1,6 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("../swagger.json");
 
 const { globalLimiter } = require("@rate-limiters/global.rate-limiter");
 const { malformedJsonHandler } = require("@middlewares/handlers/malformed-json-handler.middleware");
@@ -24,10 +26,13 @@ app.use(cookieParser());
 // 4. Malformed JSON handler (should come AFTER express.json)
 app.use(malformedJsonHandler);
 
-// 5. Routes
+// 5. Swagger Documentation UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// 6. Routes
 require("@routes/index")(app);
 
-// 6. Unknown route fallback
+// 7. Unknown route fallback
 app.use(unknownRouteHandler);
 
 module.exports = { app };
