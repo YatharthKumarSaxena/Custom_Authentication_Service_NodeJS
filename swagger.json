@@ -1,0 +1,1679 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Custom Auth Service API",
+    "description": "Comprehensive authentication and account management service with multi-device support, 2FA, and secure verification.\n\n## Environment Configuration\n\n### AUTH_MODE\nControls which authentication methods are available:\n- **email**: Only email-based authentication (countryCode/localNumber not required)\n- **phone**: Only phone-based authentication (email not required)\n- **both**: Email AND phone required for registration\n- **either**: Email OR phone (at least one required)\n\n### FIRST_NAME_SETTING\nControls firstName field requirement:\n- **Mandatory**: firstName is required in signup\n- **Optional**: firstName is optional in signup\n- **Disabled**: firstName field is not accepted\n\n### IS_2FA_FEATURE_ENABLED\nControls Two-Factor Authentication availability:\n- **true**: 2FA endpoints (/account/enable-2fa, /account/disable-2fa, /verification/verify-device) are available\n- **false**: 2FA endpoints are disabled",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@customauth.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/custom-auth-service/api/v1",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "http://192.168.1.1:3000/custom-auth-service/api/v1",
+      "description": "Production Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User signup, signin, and session management"
+    },
+    {
+      "name": "Account Management",
+      "description": "Account settings, password changes, and 2FA control"
+    },
+    {
+      "name": "Account Verification",
+      "description": "Email verification, phone verification, and device verification"
+    },
+    {
+      "name": "Password Management",
+      "description": "Password recovery and reset operations"
+    },
+    {
+      "name": "Internal",
+      "description": "Internal admin operations (requires special authorization)"
+    }
+  ],
+  "paths": {
+    "/auth/signup": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Sign Up",
+        "description": "Register a new user account with email and/or phone number\n\n**Field Requirements Based on AUTH_MODE:**\n- AUTH_MODE=email: Only email and password required (phone, countryCode, localNumber not needed)\n- AUTH_MODE=phone: Only phone/countryCode/localNumber and password required (email not needed)\n- AUTH_MODE=both: Email AND phone required\n- AUTH_MODE=either: Email OR phone required (at least one)\n\n**firstName field based on FIRST_NAME_SETTING:**\n- Mandatory: firstName is required\n- Optional: firstName is optional\n- Disabled: firstName not accepted",
+        "operationId": "signUp",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com",
+                    "description": "Required when AUTH_MODE=email|both|either"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890",
+                    "description": "Auto-generated from countryCode+localNumber. Required when AUTH_MODE=phone|both|either"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "+1",
+                    "description": "Required when AUTH_MODE=phone|both|either"
+                  },
+                  "localNumber": {
+                    "type": "string",
+                    "example": "234567890",
+                    "description": "Required when AUTH_MODE=phone|both|either"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "SecurePass123!",
+                    "description": "Always required"
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "example": "John",
+                    "description": "Required when FIRST_NAME_SETTING=Mandatory, Optional when FIRST_NAME_SETTING=Optional, Not accepted when FIRST_NAME_SETTING=Disabled"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Doe",
+                    "description": "Always optional"
+                  }
+                },
+                "description": "Field requirements vary based on AUTH_MODE and FIRST_NAME_SETTING environment variables"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "User registered successfully. Please verify your account."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userId": {
+                          "type": "string",
+                          "example": "user_12345"
+                        },
+                        "contactMode": {
+                          "type": "string",
+                          "enum": ["email", "phone", "both"],
+                          "example": "email"
+                        },
+                        "nextStep": {
+                          "type": "string",
+                          "example": "VERIFICATION_REQUIRED"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Email already registered"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/auth/signin": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Sign In",
+        "description": "Authenticate user with email/phone and password. Provide email OR phone based on AUTH_MODE configuration.",
+        "operationId": "signIn",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["emailOrPhone", "password"],
+                "properties": {
+                  "emailOrPhone": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "SecurePass123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully signed in",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Refresh token stored in HTTP-only cookie",
+                "example": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; Path=/; SameSite=Strict"
+              },
+              "Authorization": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "JWT Access Token (Bearer token)",
+                "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Welcome John, You are successfully logged in."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials or user locked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/signout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign Out From All Devices",
+        "description": "Sign out user from all active devices",
+        "operationId": "signOutAllDevices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully signed out from all devices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Signed out from all devices successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          }
+        }
+      }
+    },
+    "/auth/signout-device": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign Out From Specific Device",
+        "description": "Sign out user from a specific device",
+        "operationId": "signOutDevice",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deviceUUID"],
+                "properties": {
+                  "deviceUUID": {
+                    "type": "string",
+                    "example": "device_uuid_12345"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully signed out from device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Signed out from device successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/active-sessions": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get Active Sessions",
+        "description": "Retrieve list of all active device sessions for the user",
+        "operationId": "getActiveDevices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active sessions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deviceUUID": {
+                            "type": "string"
+                          },
+                          "deviceName": {
+                            "type": "string"
+                          },
+                          "deviceType": {
+                            "type": "string"
+                          },
+                          "lastActive": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "loginDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get My Account Details",
+        "description": "Retrieve current user's account information",
+        "operationId": "getMyAccount",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userId": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "isEmailVerified": {
+                          "type": "boolean"
+                        },
+                        "isPhoneVerified": {
+                          "type": "boolean"
+                        },
+                        "is2FAEnabled": {
+                          "type": "boolean"
+                        },
+                        "accountStatus": {
+                          "type": "string",
+                          "enum": ["active", "deactivated", "blocked"]
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/auth-logs": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get My Auth Logs",
+        "description": "Retrieve authentication and login history",
+        "operationId": "getMyAuthLogs",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auth logs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "logId": {
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "deviceName": {
+                            "type": "string"
+                          },
+                          "deviceType": {
+                            "type": "string"
+                          },
+                          "ipAddress": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/account/activate": {
+      "post": {
+        "tags": ["Account Management"],
+        "summary": "Activate Account",
+        "description": "Activate a deactivated user account. Provide email OR phone (countryCode+localNumber) based on AUTH_MODE.",
+        "operationId": "activateAccount",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com",
+                    "description": "User's email address"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890",
+                    "description": "User's phone number (auto-generated from countryCode + localNumber)"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "+1",
+                    "description": "Country code for phone number"
+                  },
+                  "localNumber": {
+                    "type": "string",
+                    "example": "234567890",
+                    "description": "Local phone number without country code"
+                  }
+                },
+                "description": "Provide either email or (countryCode + localNumber) to activate account"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account activated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Account activated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/deactivate": {
+      "post": {
+        "tags": ["Account Management"],
+        "summary": "Deactivate Account",
+        "description": "Deactivate the user's account",
+        "operationId": "deactivateAccount",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["reason"],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "example": "Taking a break"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account deactivated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Account deactivated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/account/enable-2fa": {
+      "post": {
+        "tags": ["Account Management"],
+        "summary": "Enable Two-Factor Authentication",
+        "description": "Enable 2FA for enhanced security\n\n**⚠️ Available only when IS_2FA_FEATURE_ENABLED=true in environment**",
+        "operationId": "enable2FA",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["method"],
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "enum": ["email", "phone", "authenticator"],
+                    "example": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA enabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "2FA enabled successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/disable-2fa": {
+      "post": {
+        "tags": ["Account Management"],
+        "summary": "Disable Two-Factor Authentication",
+        "description": "Disable 2FA for the account\n\n**⚠️ Available only when IS_2FA_FEATURE_ENABLED=true in environment**",
+        "operationId": "disable2FA",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["verificationCode"],
+                "properties": {
+                  "verificationCode": {
+                    "type": "string",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA disabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "2FA disabled successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/update-details": {
+      "post": {
+        "tags": ["Account Management"],
+        "summary": "Update Account Details",
+        "description": "Update user profile information",
+        "operationId": "updateAccount",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "profilePicture": {
+                    "type": "string"
+                  },
+                  "bio": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account details updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Account details updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/change-password": {
+      "post": {
+        "tags": ["Account Management"],
+        "summary": "Change Password",
+        "description": "Change user's account password",
+        "operationId": "changePassword",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RefreshTokenCookie"
+          }
+        ],
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["oldPassword", "newPassword"],
+                "properties": {
+                  "oldPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "OldPassword123!"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "NewPassword456!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Password changed successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/verify-email": {
+      "post": {
+        "tags": ["Account Verification"],
+        "summary": "Verify Email Address",
+        "description": "Verify user's email with OTP or verification token",
+        "operationId": "verifyEmail",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["verificationCode", "email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "verificationCode": {
+                    "type": "string",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Email verified successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/verify-phone": {
+      "post": {
+        "tags": ["Account Verification"],
+        "summary": "Verify Phone Number",
+        "description": "Verify user's phone number with OTP",
+        "operationId": "verifyPhone",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["verificationCode", "phone"],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890"
+                  },
+                  "verificationCode": {
+                    "type": "string",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Phone verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Phone verified successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/verify-device": {
+      "post": {
+        "tags": ["Account Verification"],
+        "summary": "Verify Device (2FA)",
+        "description": "Verify new device with 2FA code\n\n**⚠️ Available only when IS_2FA_FEATURE_ENABLED=true in environment**",
+        "operationId": "verifyDevice",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["verificationCode", "deviceUUID"],
+                "properties": {
+                  "deviceUUID": {
+                    "type": "string",
+                    "example": "device_uuid_12345"
+                  },
+                  "verificationCode": {
+                    "type": "string",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Device verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Device verified successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/resend-verification-link": {
+      "post": {
+        "tags": ["Account Verification"],
+        "summary": "Resend Email Verification Link",
+        "description": "Resend email verification link to user. Provide email OR phone (countryCode+localNumber) based on AUTH_MODE.",
+        "operationId": "resendVerificationLink",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com",
+                    "description": "User's email address"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890",
+                    "description": "User's phone number (auto-generated from countryCode + localNumber)"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "+1",
+                    "description": "Country code for phone number"
+                  },
+                  "localNumber": {
+                    "type": "string",
+                    "example": "234567890",
+                    "description": "Local phone number without country code"
+                  }
+                },
+                "description": "Provide either email or (countryCode + localNumber) for verification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification link sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification link sent to your email"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/resend-verification-otp": {
+      "post": {
+        "tags": ["Account Verification"],
+        "summary": "Resend Phone Verification OTP",
+        "description": "Resend OTP to user's phone number. Provide email OR phone (countryCode+localNumber) based on AUTH_MODE.",
+        "operationId": "resendVerificationOTP",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com",
+                    "description": "User's email address"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890",
+                    "description": "User's phone number (auto-generated from countryCode + localNumber)"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "+1",
+                    "description": "Country code for phone number"
+                  },
+                  "localNumber": {
+                    "type": "string",
+                    "example": "234567890",
+                    "description": "Local phone number without country code"
+                  }
+                },
+                "description": "Provide either email or (countryCode + localNumber) for verification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "OTP sent to your phone"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/password/forgot-password": {
+      "post": {
+        "tags": ["Password Management"],
+        "summary": "Forgot Password",
+        "description": "Initiate password reset process. Provide email OR phone (countryCode+localNumber) based on AUTH_MODE.",
+        "operationId": "forgotPassword",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com",
+                    "description": "User's email address"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890",
+                    "description": "User's phone number (auto-generated from countryCode + localNumber)"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "+1",
+                    "description": "Country code for phone number"
+                  },
+                  "localNumber": {
+                    "type": "string",
+                    "example": "234567890",
+                    "description": "Local phone number without country code"
+                  }
+                },
+                "description": "Provide either email or (countryCode + localNumber) to initiate password reset"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset link/OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Reset instructions sent to your email"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "resetTokenId": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/password/reset-password": {
+      "post": {
+        "tags": ["Password Management"],
+        "summary": "Reset Password",
+        "description": "Complete password reset with verification code",
+        "operationId": "resetPassword",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceUUIDHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceTypeHeader"
+          },
+          {
+            "$ref": "#/components/parameters/DeviceNameHeader"
+          }
+        ],
+        "requestBody": {
+          "required": "true",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["verificationCode", "newPassword"],
+                "properties": {
+                  "verificationCode": {
+                    "type": "string",
+                    "example": "123456"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "NewPassword456!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Password reset successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Access Token passed as Bearer token in Authorization header"
+      }
+    },
+    "parameters": {
+      "DeviceUUIDHeader": {
+        "name": "x-device-uuid",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Unique device identifier (required for all requests)",
+        "example": "device_uuid_12345"
+      },
+      "DeviceTypeHeader": {
+        "name": "x-device-type",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": ["MOBILE", "TABLET", "LAPTOP", "DESKTOP", "OTHER"]
+        },
+        "description": "Device type (optional)",
+        "example": "LAPTOP"
+      },
+      "DeviceNameHeader": {
+        "name": "x-device-name",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Human-readable device name (optional)",
+        "example": "My-MacBook-Pro"
+      },
+      "RefreshTokenCookie": {
+        "name": "refreshToken",
+        "in": "cookie",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Refresh token stored in HTTP-only cookie"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "isEmailVerified": {
+            "type": "boolean"
+          },
+          "isPhoneVerified": {
+            "type": "boolean"
+          },
+          "is2FAEnabled": {
+            "type": "boolean"
+          },
+          "accountStatus": {
+            "type": "string",
+            "enum": ["active", "deactivated", "blocked"]
+          }
+        }
+      },
+      "AuthLog": {
+        "type": "object",
+        "properties": {
+          "logId": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceType": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string",
+            "format": "ipv4"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "deviceUUID": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceType": {
+            "type": "string"
+          },
+          "lastActive": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "loginDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isBlocked": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
