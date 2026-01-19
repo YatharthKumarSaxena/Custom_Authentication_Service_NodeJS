@@ -47,51 +47,79 @@ const validateSessionAndSyncDevice = async (userId, device) => {
 }
 
 /**
- * Handles Token Rotation
+ * Handles Refresh Token Rotation
+ * Single source of truth for:
+ * - Session validation
+ * - Stale checks
+ * - Token rotation
  */
-const rotateRefreshToken = async (refreshToken, device) => {
-    
-    // 1. Verify Refresh Token
+const rotateRefreshToken = async (userId, device) => {
+
+    // 1. Fetch session using userId + device
+    const sessionResult = await validateSessionAndSyncDevice(userId, device);
+    if (!sessionResult.success) {
+        return { success: false, error: sessionResult.error };
+    }
+
+    const { userDevice, user } = sessionResult.details;
+    const refreshToken = userDevice.refreshToken;
+
+    // 2. Verify Refresh Token
     let refreshDecoded;
     try {
         refreshDecoded = verifyToken(refreshToken, Token.REFRESH);
     } catch (err) {
-        return { success: false, error: "Invalid Refresh Token" };
+        return { success: false, error: "Invalid refresh token" };
     }
 
-    // 2. Validate Session
-    // ⚠️ FIX: Pass proper object structure `{ deviceUUID: ... }`
-    // Hum token ka 'did' use kar rahe hain device identify karne ke liye
-    const sessionResult = await validateSessionAndSyncDevice(
-        refreshDecoded.uid, 
-        { ...device, deviceUUID: refreshDecoded.did } // Ensure UUID comes from token
+    // 3. Stale Token Check
+    const tokenIssuedAt = new Date(userDevice.jwtTokenIssuedAt).getTime();
+    const currentTime = Date.now();
+
+    if (currentTime - tokenIssuedAt <= expiryTimeOfAccessToken) {
+        return { success: false, error: "STALE_ACCESS_TOKEN" };
+    }
+
+    // 4. Double Expiry Check
+    if (currentTime - tokenIssuedAt >= expiryTimeOfRefreshToken) {
+        return {
+            success: false,
+            error: "Session expired. Please login again."
+        };
+    }
+
+    if (
+        refreshDecoded.uid !== userId ||
+        refreshDecoded.did !== device.deviceUUID
+    ) {
+        return { success: false, error: "REFRESH_TOKEN_MISMATCH" };
+    }
+
+    // 5. Generate New Tokens
+    const newAccessToken = createToken(
+        userId,
+        expiryTimeOfAccessToken,
+        device.deviceUUID
     );
 
-    if (!sessionResult.success) {
-        return { success: false, error: sessionResult.error };
-    };
+    const newRefreshToken = createToken(
+        userId,
+        expiryTimeOfRefreshToken,
+        device.deviceUUID
+    );
 
-    // ⚠️ FIX: Define userDevice variable properly
-    const { userDevice, user } = sessionResult.details;
-
-    // 3. Reuse Detection
-    if (userDevice.refreshToken !== refreshToken) {
-        await UserDeviceModel.deleteOne({ _id: userDevice._id });
-        return { success: false, error: "Refresh Token reuse detected" };
-    }
-
-    // 4. Generate New Tokens
-    const newAccessToken = createToken(refreshDecoded.uid, expiryTimeOfAccessToken, refreshDecoded.did);
-    const newRefreshToken = createToken(refreshDecoded.uid, expiryTimeOfRefreshToken, refreshDecoded.did);
-
-    // 5. Update DB
+    // 6. Update DB
     userDevice.refreshToken = newRefreshToken;
     userDevice.jwtTokenIssuedAt = new Date();
     await userDevice.save();
 
     return {
         success: true,
-        details: { newAccessToken, newRefreshToken, user, userDevice }
+        details: {
+            newAccessToken,
+            user,
+            userDevice
+        }
     };
 };
 
