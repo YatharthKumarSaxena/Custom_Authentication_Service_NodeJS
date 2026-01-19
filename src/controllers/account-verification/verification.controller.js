@@ -23,9 +23,10 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
         // Middleware ensure karta hai ki foundUser/user set ho
         const user = req.foundUser || req.user;
         const { token, type } = req.body; 
+        const device = req.device;
 
         // 1. Dynamic Service Call
-        const { success, autoLoggedIn } = await serviceFunction(req, res, token, type);
+        const { success, autoLoggedIn } = await serviceFunction(user, device, token, type);
 
         if (success) {
             let additionalMessage = "";
