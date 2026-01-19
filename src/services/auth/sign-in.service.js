@@ -15,10 +15,7 @@ const { verifyPasswordWithRateLimit } = require("../password-management/password
  * Main Orchestrator for Sign In
  */
 
-const performSignIn = async (req, res) => {
-    const user = req.user;
-    const deviceInput = req.device;
-    const plainPassword = req.body.password;
+const performSignIn = async (user, deviceInput, plainPassword) => {
 
     // ---------------------------------------------------------
     // STEP 1: Check if User is ALREADY Logged In (AND Token is Valid)
@@ -120,7 +117,7 @@ const performSignIn = async (req, res) => {
     // ---------------------------------------------------------
     // STEP 4: Call Login Session Service
     // ---------------------------------------------------------
-    const loginSuccess = await loginUserOnDevice(req, res, refreshToken, "Standard Sign-In");
+    const loginSuccess = await loginUserOnDevice(user, deviceInput, refreshToken, "Standard Sign-In");
 
     if (!loginSuccess) {
         throw new Error("Login session creation failed internal error");
