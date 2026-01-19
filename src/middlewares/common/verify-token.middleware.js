@@ -1,29 +1,26 @@
-const { 
-    throwMissingFieldsError, 
-    logMiddlewareError, 
-    throwAccessDeniedError, 
-    throwDBResourceNotFoundError, 
+const {
+    throwMissingFieldsError,
+    logMiddlewareError,
+    throwAccessDeniedError,
+    throwDBResourceNotFoundError,
     throwSessionExpiredError,
-    throwInternalServerError 
+    throwInternalServerError
 } = require("@/utils/error-handler.util");
-const { extractAccessToken, extractRefreshToken } = require("@/utils/extract-token.util");
+const { extractAccessToken } = require("@/utils/extract-token.util");
 const { validateSessionAndSyncDevice, rotateRefreshToken } = require("@/services/auth/session-token.service");
 const { verifyToken, decodeTokenUnsafe } = require("@utils/verify-token.util");
 const { Token } = require("@configs/enums.config");
 const { expiryTimeOfAccessToken, expiryTimeOfRefreshToken } = require("@/configs/token.config");
 const { buildAccessTokenHeaders } = require("@/utils/token-headers.util");
-const { setRefreshTokenCookie } = require("@/services/auth/auth-cookie-service");
 const { logWithTime } = require("@/utils/time-stamps.util");
 
 const verifyTokenMiddleware = async (req, res, next) => {
     try {
         const accessToken = extractAccessToken(req);
-        const refreshToken = extractRefreshToken(req);
         const device = req.device; // Scope fix: Available everywhere
 
         const missing = [];
         if (!accessToken) missing.push("Access token");
-        if (!refreshToken) missing.push("Refresh token");
 
         if (missing.length) {
             logMiddlewareError("verifyToken", "Missing tokens", req);
@@ -31,7 +28,6 @@ const verifyTokenMiddleware = async (req, res, next) => {
         }
 
         let accessDecoded;
-        let refreshDecoded;
         let user, userDevice;
         let accessDecodeSuccess = false;
 
@@ -53,6 +49,8 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
             accessDecodeSuccess = true;
 
+            // Check Stale Access Token 
+
         } catch (err) {
             // 🛑 Catch Block: Access Token Invalid/Expired
 
@@ -63,35 +61,16 @@ const verifyTokenMiddleware = async (req, res, next) => {
                 return throwAccessDeniedError(res, "Invalid access token");
             }
 
-            // 2. Validate Session BEFORE Rotation 
-            const sessionResult = await validateSessionAndSyncDevice(accessDecoded.uid, device);
-            if (!sessionResult.success) {
-                logMiddlewareError("verifyToken", "Invalid Access Token Provided during decoding, no user-device session detected", req);
-                return throwAccessDeniedError(res, "Invalid access token");
+            const tokenAge = Date.now() - new Date(userDevice.jwtTokenIssuedAt).getTime();
+            const buffer = 5 * 1000; // 5 seconds
+
+            if (tokenAge < -buffer || tokenAge > buffer) {
+                logMiddlewareError("verifyToken", "Invalid token age detected during access token failure", req);
+                return throwAccessDeniedError(res, "Invalid Access Token");
             }
 
-            const { userDevice: currentDevice } = sessionResult.details;
-            const tokenIssuedAt = new Date(currentDevice.jwtTokenIssuedAt).getTime();
-            const currentTime = Date.now();
+            const tokenRotated = await rotateRefreshToken(accessDecoded.uid, device);
 
-            // ✅ Logic 2: Stale Access Token Check
-            if (currentTime - tokenIssuedAt <= expiryTimeOfAccessToken) {
-                logMiddlewareError("verifyToken", "Stale Access Token Detected. Access token expired but still within valid window.", req);
-                return throwAccessDeniedError(res, "Invalid access token");
-            }
-
-            // ✅ Logic 3: Double Expiry Check
-            if (currentTime - tokenIssuedAt >= expiryTimeOfRefreshToken) {
-                logMiddlewareError("verifyToken", "Both Access and Refresh tokens expired beyond issued-at window", req);
-                return throwSessionExpiredError(res, "Both access and refresh tokens have expired. Please login again.");
-            }
-
-            // 🔄 Logic 4: Rotation Flow
-            logMiddlewareError("verifyToken", "Access token expired or invalid — rotating", req);
-
-            // ⚠️ FIX: Pass refreshToken & device (Service will verify refresh token)
-            const tokenRotated = await rotateRefreshToken(refreshToken, device);
-            
             if (!tokenRotated.success) {
                 logMiddlewareError("verifyToken", "Refresh token invalid during rotation", req);
                 return throwAccessDeniedError(res, tokenRotated.error);
@@ -100,12 +79,12 @@ const verifyTokenMiddleware = async (req, res, next) => {
             // Set New Tokens
             const accessTokenData = buildAccessTokenHeaders(tokenRotated.details.newAccessToken);
             res.set(accessTokenData.headers);
-            setRefreshTokenCookie(res, tokenRotated.details.newRefreshToken);
             logWithTime(`🔄 Tokens rotated for user ID: ${accessDecoded.uid} for device UUID: ${accessDecoded.did}`);
 
             // Populate user/device for next()
             user = tokenRotated.details.user;
             userDevice = tokenRotated.details.userDevice;
+            return next();
         }
 
         // ✅ Final Logic: If Access Token was valid (Not rotated)
@@ -118,22 +97,34 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
             ({ user, userDevice } = sessionResult.details);
 
-            // Verify Refresh Token consistency
-            try {
-                refreshDecoded = verifyToken(refreshToken, Token.REFRESH);
-                const tokenAge = Date.now() - (refreshDecoded.iat * 1000);
-                if (tokenAge > expiryTimeOfRefreshToken) {
-                    return throwAccessDeniedError(res, "Invalid or expired refresh token");
-                }
-            } catch (e) {
-                return throwAccessDeniedError(res, "Invalid refresh token");
+            const tokenIssuedAt = new Date(userDevice.jwtTokenIssuedAt).getTime();
+            const currentTime = Date.now();
+            const jwtTokenIssuedAt = userDevice.jwtTokenIssuedAt;
+
+            // Extra Safety Check: Ensure Access Token is not stale
+            if (currentTime - tokenIssuedAt >= expiryTimeOfAccessToken) {
+                logMiddlewareError("verifyToken", "Access token is stale despite being valid", req);
+                return throwAccessDeniedError(res, "Stale access token detected");
+            }
+
+            if (currentTime - jwtTokenIssuedAt >= expiryTimeOfRefreshToken) {
+                logMiddlewareError("verifyToken", "Session expired during access token validation", req);
+                return throwSessionExpiredError(res, "Session has expired. Please login again.");
+            }
+
+            const tokenAge = Date.now() - new Date(userDevice.jwtTokenIssuedAt).getTime();
+            const buffer = 5 * 1000; // 5 seconds
+
+            if (tokenAge < -buffer || tokenAge > buffer) {
+                logMiddlewareError("verifyToken", "Invalid token age detected despite valid access token", req);
+                return throwAccessDeniedError(res, "Invalid Access Token");
             }
         }
 
         // User ID Mismatch Check
         // Note: accessDecoded might be from unsafe decode if rotation happened
-        const currentUid = accessDecoded ? accessDecoded.uid : user.userId;
-        const currentRefreshUid = refreshDecoded ? refreshDecoded.uid : (decodeTokenUnsafe(refreshToken)).uid;
+        const currentUid = accessDecoded.uid;
+        const currentRefreshUid = user.userId;
 
         if (currentRefreshUid !== currentUid) {
             logMiddlewareError("verifyToken", "User ID mismatch between tokens", req);
