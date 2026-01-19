@@ -1,7 +1,6 @@
 // Modules & Configs
 const { OK } = require("@configs/http-status.config");
 const { signOutService } = require("@services/auth/sign-out.service");
-const { clearRefreshTokenCookie } = require("@services/auth/auth-cookie-service");
 
 // Error Handlers
 const { 
@@ -20,10 +19,8 @@ const signOut = async (req, res) => {
         const result = await signOutService(user, device, userDevice);
 
         // Case: User pehle se logout tha
-        if (result.alreadyLoggedOut) {
-            // Cookie clear karna safe rehta hai even if DB says logged out
-            clearRefreshTokenCookie(res); 
-            
+        if (result.alreadyLoggedOut) {  
+            res.set('x-access-token', '');
             logWithTime(`🚫 Logout Request Denied: User (${user.userId}) already logged out.`);
             return res.status(OK).json({
                 success: true,
@@ -31,11 +28,9 @@ const signOut = async (req, res) => {
             });
         }
 
-        // 2. Clear Cookie (Response Cleanup) - CRITICAL STEP
-        // Service DB saaf karti hai, Controller Browser saaf karta hai
-        clearRefreshTokenCookie(res);
-
+        
         // 3. Success Response
+        res.set('x-access-token', '');
         const praiseBy = user.firstName || "User";
         
         logWithTime(`✅ Sign-out successful for User ID: ${user.userId} on Device ID: ${device.deviceUUID}`);

@@ -21,12 +21,14 @@ const {
  */
 const signIn = async (req, res) => {
     try {
-
+        const user = req.user;
+        const device = req.device;
+        const plainPassword = req.body.password;
         // ---------------------------------------------------------
         // 1. ORCHESTRATION (Call Service)
         // ---------------------------------------------------------
         // Ye function check karega: Already Login? -> Password Valid? -> Session Create -> Cookie Set
-        await performSignIn(req, res);
+        await performSignIn(user, device, plainPassword);
 
         // ---------------------------------------------------------
         // 2. ACCESS TOKEN GENERATION (Response Header)
@@ -48,9 +50,9 @@ const signIn = async (req, res) => {
         // 3. SUCCESS RESPONSE
         // ---------------------------------------------------------
 
-        const praiseBy = req.user.firstName || req.user.name || "User";
+        const praiseBy = user.firstName || "User";
 
-        logWithTime(`✅ User (${req.user.userId}) signed in successfully on device (${req.device.deviceUUID}).`);
+        logWithTime(`✅ User (${user.userId}) signed in successfully on device (${device.deviceUUID}).`);
 
         return res.status(OK).json({
             success: true,

@@ -7,9 +7,10 @@ const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 const signOutAllDevices = async (req, res) => {
     try {
         const user = req.user;
+        const device = req.device;
 
         // 1. Service Call
-        const isUserLoggedOut = await logoutUserCompletely(req, res);
+        const isUserLoggedOut = await logoutUserCompletely(user, device);
 
         // 2. Handle Failure 
         if (!isUserLoggedOut) {
@@ -17,6 +18,7 @@ const signOutAllDevices = async (req, res) => {
         }
 
         // 3. Extract correct identifiers 
+        res.set('x-access-token', '');
         const deviceUUID = req.device.deviceUUID;
         const userId = user.userId; 
 
