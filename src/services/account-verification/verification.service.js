@@ -17,13 +17,10 @@ const { userSmsTemplate } = require("@services/templates/smsTemplate");
  * Generic verification logic factory
  */
 
-const performVerificationCore = async (req, res, code, contactMode, config) => {
+const performVerificationCore = async (user, device, code, contactMode, config) => {
     const { 
         purpose, updateField, logEvent, authModeType, otherVerifiedField, type 
     } = config;
-
-    const user = req.foundUser;
-    const device = req.device;
 
     // 1️⃣ Validate Token
     const validation = await verifyVerification(user._id, purpose, code, contactMode);
@@ -65,7 +62,7 @@ const performVerificationCore = async (req, res, code, contactMode, config) => {
             const refreshTokenString = createToken(user.userId, expiryTimeOfRefreshToken, device.deviceUUID);
             if (!refreshTokenString) throw new Error("Token generation failed");
 
-            const loginSuccess = await loginUserOnDevice(req, res, refreshTokenString, `Auto-Login (${type} Verified)`);
+            const loginSuccess = await loginUserOnDevice(user, device, refreshTokenString, `Auto-Login (${type} Verified)`);
             if (loginSuccess) autoLoggedIn = true;
         }
     }
@@ -77,8 +74,8 @@ const performVerificationCore = async (req, res, code, contactMode, config) => {
 // 🚀 PUBLIC EXPORTS (Wrappers)
 // ==========================================
 
-const verifyEmailService = async (req, res, code, contactMode) => {
-    return await performVerificationCore(req, res, code, contactMode, {
+const verifyEmailService = async (user, device, code, contactMode) => {
+    return await performVerificationCore(user, device, code, contactMode, {
         purpose: VerificationPurpose.EMAIL_VERIFICATION,
         updateField: 'isEmailVerified',
         logEvent: AUTH_LOG_EVENTS.VERIFY_EMAIL,
@@ -88,8 +85,8 @@ const verifyEmailService = async (req, res, code, contactMode) => {
     });
 };
 
-const verifyPhoneService = async (req, res, code, contactMode) => {
-    return await performVerificationCore(req, res, code, contactMode, {
+const verifyPhoneService = async (user, device, code, contactMode) => {
+    return await performVerificationCore(user, device, code, contactMode, {
         purpose: VerificationPurpose.PHONE_VERIFICATION,
         updateField: 'isPhoneVerified',
         logEvent: AUTH_LOG_EVENTS.VERIFY_PHONE,

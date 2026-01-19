@@ -1,4 +1,4 @@
-const { UserDeviceModel } = require("@models/user-device.model");
+const { UserDeviceModel, DeviceModel } = require("@models/index");
 const { verifyVerification } = require("@services/account-verification/verification-validator.service");
 const { VerificationPurpose, AuthErrorTypes } = require("@configs/enums.config");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
@@ -15,14 +15,20 @@ const {
     resetDeviceAttempts 
 } = require("@utils/device-limiter.util");
 
-const verifyDeviceService = async (req, res, code, contactMode) => {
-    const user = req.user;
-    const device = req.device;
+const verifyDeviceService = async (user, device, code, contactMode) => {
+
+    const deviceDoc = await DeviceModel.findOne({ deviceUUID: device.deviceUUID });
+    if(!deviceDoc) {
+        throw { 
+            type: AuthErrorTypes.INVALID_CREDENTIALS, 
+            message: "Device not recognized. Please login again." 
+        };
+    }
 
     // 1️⃣ Fetch Mapping & Check Existence
     const userDeviceMapping = await UserDeviceModel.findOne({ 
         userId: user._id, 
-        deviceId: device._id 
+        deviceId: deviceDoc._id 
     });
 
     if (!userDeviceMapping) {
@@ -81,7 +87,7 @@ const verifyDeviceService = async (req, res, code, contactMode) => {
     const refreshTokenString = createToken(user.userId, expiryTimeOfRefreshToken, device.deviceUUID);
     
     // Call session service to set cookies & update DB
-    const loginSuccess = await loginUserOnDevice(req, res, refreshTokenString, "Device Verification Completed (2FA)");
+    const loginSuccess = await loginUserOnDevice(user, device, refreshTokenString, "Device Verification Completed (2FA)");
 
     if (!loginSuccess) {
         throw new Error("Failed to finalize login session after device verification.");
