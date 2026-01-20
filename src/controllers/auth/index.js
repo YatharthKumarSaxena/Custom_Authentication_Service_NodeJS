@@ -5,6 +5,7 @@ const { getMyAccount } = require("./view-account.controller");
 const { getMyActiveSessions } = require("./view-my-active-devices.controller");
 const { signUp } = require("./sign-up.controller");
 const { getMyAuthLogs } = require("./view-auth-logs.controller");
+const { refreshToken } = require("./refresh-token.controller");
 
 const authController = {
     signUp,
@@ -13,7 +14,8 @@ const authController = {
     signOut,
     getMyAccount,
     getMyActiveSessions,
-    getMyAuthLogs
+    getMyAuthLogs,
+    refreshToken
 }
 
 module.exports = { 

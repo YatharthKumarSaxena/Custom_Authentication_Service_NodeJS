@@ -53,7 +53,7 @@ accountManagementRouter.post(DISABLE_2FA, [
 ], accountManagementControllers.disable2FA);
 
 // 📌 Update Account Details
-accountManagementRouter.post(UPDATE_ACCOUNT_DETAILS, [
+accountManagementRouter.patch(UPDATE_ACCOUNT_DETAILS, [
     rateLimiters.updateMyAccountRateLimiter,
     ...baseAuthMiddlewares
 ], accountManagementControllers.updateMyAccount);

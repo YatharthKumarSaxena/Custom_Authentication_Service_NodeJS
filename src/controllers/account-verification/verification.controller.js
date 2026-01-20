@@ -13,6 +13,7 @@ const {
 // Services Import
 const { verifyEmailService, verifyPhoneService } = require("@services/account-verification/verification.service");
 const { verifyDeviceService } = require("@services/account-verification/verify-device.service");
+const { getUserContacts } = require("@utils/contact-selector.util");
 
 /**
  * 🏭 CORE CONTROLLER LOGIC (Factory)
@@ -22,11 +23,14 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
     try {
         // Middleware ensure karta hai ki foundUser/user set ho
         const user = req.foundUser || req.user;
-        const { token, type } = req.body; 
+        const { token } = req.body; 
         const device = req.device;
 
+        // Get contactMode from getUserContacts (instead of req.body.type)
+        const contactMode = getUserContacts(user);
+
         // 1. Dynamic Service Call
-        const { success, autoLoggedIn } = await serviceFunction(user, device, token, type);
+        const { success, autoLoggedIn } = await serviceFunction(user, device, token, contactMode);
 
         if (success) {
             let additionalMessage = "";

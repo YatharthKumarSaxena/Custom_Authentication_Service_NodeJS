@@ -2,7 +2,7 @@
 
 const express = require("express");
 const passwordManagementRouter = express.Router();
-const { PASSWORD_MANAGEMENT_ROUTES } = require("../configs/uri.config");
+const { PASSWORD_MANAGEMENT_ROUTES } = require("@configs/uri.config");
 const { passwordManagementController } = require("@controllers/password-management/index");
 const { passwordManagementMiddlewares } = require("@middlewares/password-management/index");
 const { authMiddlewares } = require("@middlewares/auth/index");
