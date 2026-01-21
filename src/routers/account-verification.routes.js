@@ -8,6 +8,7 @@ const { accountVerificationMiddlewares } = require("@middlewares/account-verific
 const { authMiddlewares } = require("@middlewares/auth/index");
 const { baseMiddlewares } = require("./middleware.gateway.routes");
 const { rateLimiters } = require("@rate-limiters/index");
+const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
     RESEND_VERIFICATION_LINK,
@@ -23,6 +24,7 @@ accountVerificationRouter.post(RESEND_VERIFICATION_LINK, [
     ...baseMiddlewares,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
 ], accountVerificationController.resendVerificationLink);
 
 // 📌 Resend Verification OTP (Phone)
@@ -31,6 +33,7 @@ accountVerificationRouter.post(RESEND_VERIFICATION_OTP, [
     ...baseMiddlewares,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
 ], accountVerificationController.resendVerificationOTP);
 
 // 📌 Verify Email

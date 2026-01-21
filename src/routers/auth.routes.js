@@ -7,6 +7,7 @@ const { authController } = require("@controllers/auth/index");
 const { authMiddlewares } = require("@middlewares/auth/index");
 const { baseAuthMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
 const { rateLimiters } = require("@rate-limiters/index");
+const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
     SIGNUP, SIGNIN, SIGNOUT, SIGNOUT_FROM_SPECIFIC_DEVICE,
@@ -30,6 +31,9 @@ authRouter.post(SIGNIN, [
     ...baseMiddlewares,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
+    commonMiddlewares.checkUserIsVerified,
     authMiddlewares.signinFieldPresenceMiddleware,
     authMiddlewares.signinFieldValidationMiddleware
 ], authController.signIn);

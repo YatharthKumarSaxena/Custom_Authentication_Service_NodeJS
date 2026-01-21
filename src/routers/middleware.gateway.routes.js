@@ -8,7 +8,8 @@ const baseAuthMiddlewares = [
     ...baseMiddlewares,
     commonMiddlewares.verifyTokenMiddleware,
     commonMiddlewares.isUserAccountBlocked,
-    commonMiddlewares.isUserAccountActive
+    commonMiddlewares.isUserAccountActive,
+    commonMiddlewares.checkUserIsVerified
 ];
 
 module.exports = { baseAuthMiddlewares, baseMiddlewares };

@@ -8,6 +8,7 @@ const { accountManagementMiddlewares } = require("@middlewares/account-managemen
 const { baseAuthMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
 const { authMiddlewares } = require("@middlewares/auth/index");
 const { rateLimiters } = require("@rate-limiters/index");
+const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
     ACTIVATE_ACCOUNT,
@@ -24,6 +25,7 @@ accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     ...baseMiddlewares,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
     accountManagementMiddlewares.activateAccountFieldPresenceMiddleware,
     accountManagementMiddlewares.activateAccountFieldValidationMiddleware
 ], accountManagementControllers.activateMyAccount);

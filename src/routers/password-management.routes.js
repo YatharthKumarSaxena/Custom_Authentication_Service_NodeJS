@@ -9,6 +9,7 @@ const { authMiddlewares } = require("@middlewares/auth/index");
 const { accountVerificationMiddlewares } = require("@middlewares/account-verification/index");
 const { baseMiddlewares } = require("./middleware.gateway.routes");
 const { rateLimiters } = require("@rate-limiters/index");
+const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
     FORGOT_PASSWORD,
@@ -20,7 +21,10 @@ passwordManagementRouter.post(FORGOT_PASSWORD, [
     rateLimiters.forgetPasswordRateLimiter,
     ...baseMiddlewares,
     authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists
+    authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
+    commonMiddlewares.checkUserIsVerified
 ], passwordManagementController.forgotPassword);
 
 // 📌 Reset Password (Verify OTP/Token & Change Password)
