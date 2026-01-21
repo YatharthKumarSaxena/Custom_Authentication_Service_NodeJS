@@ -150,24 +150,23 @@ const userSchema = new mongoose.Schema({
 /* ------------------ 🔐 Centralized AUTH_MODE Validation ------------------ */
 
 userSchema.pre("validate", function (next) {
-    const mode = authMode;
 
     const hasEmail = !!this.email;
     const hasPhone = !!this.phone && !!this.localNumber && !!this.countryCode;
 
-    if (mode === AuthModes.EMAIL && !hasEmail) {
+    if (authMode === AuthModes.EMAIL && !hasEmail) {
         return next(new Error("Email is required in EMAIL auth mode."));
     }
 
-    if (mode === AuthModes.PHONE && !hasPhone) {
+    if (authMode === AuthModes.PHONE && !hasPhone) {
         return next(new Error("Phone number is required in PHONE auth mode."));
     }
 
-    if (mode === AuthModes.BOTH && (!hasEmail || !hasPhone)) {
+    if (authMode === AuthModes.BOTH && (!hasEmail || !hasPhone)) {
         return next(new Error("Both email and phone are required in BOTH auth mode."));
     }
 
-    if (mode === AuthModes.EITHER) {
+    if (authMode === AuthModes.EITHER) {
         if (!hasEmail && !hasPhone) {
             return next(new Error("Either email or phone is required in EITHER auth mode."));
         }
@@ -180,13 +179,18 @@ userSchema.pre("validate", function (next) {
 });
 
 userSchema.pre("validate", function (next) {
-    
+
     // 1. Handle DISABLED Case
-    if (FIRST_NAME_SETTING === FirstNameFieldSetting.DISABLED) {
-        // Agar disabled hai, toh value ko undefined kar do (Mongoose save nahi karega)
-        this.firstName = undefined;
+    if (
+        FIRST_NAME_SETTING === FirstNameFieldSetting.DISABLED &&
+        this.firstName != null
+    ) {
+        this.invalidate(
+            "firstName",
+            "First Name field is disabled and must not be provided."
+        );
     }
-    
+
     // 2. Handle MANDATORY Case
     else if (FIRST_NAME_SETTING === FirstNameFieldSetting.MANDATORY) {
         // Check if value exists and is not empty
@@ -195,7 +199,7 @@ userSchema.pre("validate", function (next) {
             this.invalidate("firstName", "First Name is required as per configuration.");
         }
     }
-    
+
     // 3. Handle OPTIONAL Case
     // Do nothing, as firstName is already optional by schema definition
 
