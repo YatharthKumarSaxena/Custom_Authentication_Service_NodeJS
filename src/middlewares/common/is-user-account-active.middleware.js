@@ -4,7 +4,7 @@ const { logWithTime } = require("@utils/time-stamps.util");
 // ✅ Checking if user Account is Active
 const isUserAccountActive = async (req, res, next) => {
     try {
-        const user = req.user;
+        const user = req.user || req.foundUser;
         if (user.isActive === false) {
             logMiddlewareError("isUserAccountActive", "User account is deactivated", req);
             return throwAccessDeniedError(res, "Your account has been deactivated. Please activate your account before continuing.");

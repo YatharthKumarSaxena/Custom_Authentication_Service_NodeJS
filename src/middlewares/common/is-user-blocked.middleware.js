@@ -5,7 +5,7 @@ const { logWithTime } = require("@utils/time-stamps.util");
 // ✅ Checking if user Account is Blocked
 const isUserAccountBlocked = async (req, res, next) => {
     try {
-        const user = req.user;
+        const user = req.user || req.foundUser;
         if(user.userType === UserTypes.ADMIN){
             logWithTime(`✅ User (${user.userId}) is Admin, skipping blocked check`);
             return next();
