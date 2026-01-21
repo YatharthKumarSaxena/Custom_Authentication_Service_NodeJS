@@ -2,14 +2,16 @@
 const { OK } = require("@configs/http-status.config");
 const { activateAccountService } = require("@services/account-management/account-activation.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
+const { isAdminId } = require("@/utils/auth.util");
 
 // Error Handlers
 const { 
     throwInternalServerError, 
-    throwBadRequestError, 
+    throwTooManyRequestsError, 
     getLogIdentifiers,
     throwInvalidResourceError,
-    throwConflictError
+    throwConflictError,
+    throwAccessDeniedError
 } = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 
@@ -19,12 +21,17 @@ const activateMyAccount = async (req, res) => {
         const device = req.device;  // Middleware se mila device
         const { password } = req.body;
 
+        if(isAdminId(user.userId)){
+            logWithTime(`❌ Activation Blocked: Attempt to activate Admin ${user.userId}.`);
+            return throwAccessDeniedError(res,"Activation of Admin account is not permitted.");
+        }
+
         // 1. Call Service
         const result = await activateAccountService(user, device, password);
 
         if (!result.success) {
             logWithTime(`❌ Account is already active for User ID: ${user.userId} - ${result.message}`);
-            throwConflictError(res, result.message);
+            return throwConflictError(res, result.message);
         }
 
         // 2. Send Response
@@ -47,7 +54,7 @@ const activateMyAccount = async (req, res) => {
 
         // 2. User Locked (Rate Limit Hit)
         if (err.type === AuthErrorTypes.LOCKED) {
-            return throwBadRequestError(res, err.message);
+            return throwTooManyRequestsError(res, err.message);
         }
 
         // 3. Internal Server Error

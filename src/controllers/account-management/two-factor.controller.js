@@ -9,9 +9,11 @@ const {
     throwInvalidResourceError, 
     throwTooManyRequestsError,
     throwBadRequestError,
-    getLogIdentifiers
+    getLogIdentifiers,
+    throwAccessDeniedError
 } = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
+const { isAdminId } = require("@/utils/auth.util");
 
 /**
  * Helper to handle the toggle request (DRY Principle)
@@ -21,6 +23,11 @@ const handleTwoFactorToggle = async (req, res, shouldEnable) => {
         const user = req.user;
         const device = req.device;
         const { password } = req.body;
+
+        if (isAdminId(user.userId)) {
+            logWithTime(`❌ 2FA Toggle Blocked: Attempt to change 2FA for Super Admin ${user.userId}.`);
+            return throwAccessDeniedError(res, "Modifications to Super Admin 2FA are not allowed.");
+        }
 
         // Service Call
         const result = await toggleTwoFactorService(user, device, password, shouldEnable);

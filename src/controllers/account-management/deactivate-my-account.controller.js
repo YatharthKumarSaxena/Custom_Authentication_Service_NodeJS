@@ -3,7 +3,8 @@ const {
     throwInvalidResourceError, 
     throwInternalServerError, 
     getLogIdentifiers, 
-    throwTooManyRequestsError, 
+    throwTooManyRequestsError,
+    throwAccessDeniedError, 
 } = require("@utils/error-handler.util");
 
 const { logWithTime } = require("@utils/time-stamps.util");
@@ -11,12 +12,18 @@ const { OK } = require("@configs/http-status.config");
 const { deactivateAccountService } = require("@services/account-management/account-deactivation.service");
 const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 const { AuthErrorTypes } = require("@configs/enums.config"); 
+const { isAdminId } = require("@/utils/auth.util");
 
 const deactivateMyAccount = async (req, res) => {
     try {
         const user = req.user; 
         const device = req.device;
         const { password } = req.body;
+
+        if(isAdminId(user.userId)){
+            logWithTime(`❌ Deactivation Blocked: Attempt to deactivate Super Admin ${user.userId}.`);
+            return throwAccessDeniedError(res,"Deactivation of Admin account is not permitted.");
+        }
 
         // ---------------------------------------------------------
         // 1. CRITICAL: DB Update (Deactivate)
