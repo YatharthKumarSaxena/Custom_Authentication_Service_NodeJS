@@ -34,8 +34,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         minlength: firstNameLength.min,
         maxlength: firstNameLength.max,
-        match: firstNameRegex,
-        default: null
+        match: firstNameRegex
     },
 
     email: {
@@ -45,7 +44,6 @@ const userSchema = new mongoose.Schema({
         minlength: emailLength.min,
         maxlength: emailLength.max,
         match: emailRegex,
-        default: null,
         unique: true,
         sparse: true,
         index: true
@@ -55,18 +53,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         minlength: countryCodeLength.min,
         maxlength: countryCodeLength.max,
-        default: null,
         match: countryCodeRegex,
-        sparse: true
     },                 // e.g. "91"
 
     localNumber: {
         type: String,
-        default: null,
         minlength: localNumberLength.min,
         maxlength: localNumberLength.max,
         match: localNumberRegex,
-        sparse: true
     },
 
     phone: {
@@ -75,7 +69,6 @@ const userSchema = new mongoose.Schema({
         minlength: phoneNumberLength.min,
         maxlength: phoneNumberLength.max,
         match: phoneNumberRegex,
-        default: null,
         unique: true,
         sparse: true,
         index: true
@@ -129,12 +122,22 @@ const userSchema = new mongoose.Schema({
     },
 
     security: {
+        login: {
+            failedAttempts: {
+                type: Number,
+                default: 0
+            },
+            lockoutUntil: {
+                type: Date,
+                default: null
+            }
+        },
         changePassword: {
             failedAttempts: {
                 type: Number,
                 default: 0
             },
-            lastAttemptAt: {
+            lockoutUntil: {
                 type: Date,
                 default: null
             }
