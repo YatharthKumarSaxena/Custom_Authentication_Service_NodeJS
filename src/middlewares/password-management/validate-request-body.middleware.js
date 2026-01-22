@@ -3,7 +3,7 @@ const {
     resetPassword
 } = require("@configs/required-fields.config.js");
 
-const resetPasswordFieldPresenceMiddleware = checkBodyPresence(resetPassword);
+const resetPasswordFieldPresenceMiddleware = checkBodyPresence("resetPasswordFieldPresence", resetPassword);
 
 const presenceMiddlewares = {
     resetPasswordFieldPresenceMiddleware

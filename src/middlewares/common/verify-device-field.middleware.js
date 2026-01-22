@@ -40,7 +40,7 @@ const verifyDeviceField = async (req, res, next) => {
         }
 
         if (type && type.trim() !== "") {
-            const lowerType = type.toLowerCase().trim();
+            const lowerType = type.trim();
             if (!DeviceTypeHelper.validate(lowerType)) {
                 logMiddlewareError("verifyDeviceField", "Invalid Device Type", req);
                 const validTypes = DeviceTypeHelper.getValidValues().join(', ');
