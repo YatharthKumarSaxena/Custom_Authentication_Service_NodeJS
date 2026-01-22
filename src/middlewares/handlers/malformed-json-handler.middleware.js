@@ -1,6 +1,7 @@
-const { malformedAndWrongRequestRateLimiter } = require("@rate-limiters/device-based.rate-limiter");
+const { deviceBasedRateLimiters } = require("@rate-limiters/device-based.rate-limiter");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { BAD_REQUEST } = require("@configs/http-status.config");
+const { malformedAndWrongRequestRateLimiter } = deviceBasedRateLimiters;
 
 const malformedJsonHandler = (err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === BAD_REQUEST && "body" in err) {
