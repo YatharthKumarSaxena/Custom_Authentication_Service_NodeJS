@@ -6,10 +6,10 @@ const {
     changePassword
 } = require("@configs/required-fields.config.js");
 
-const activateAccountFieldPresenceMiddleware = checkBodyPresence(activateAccount);
-const deactivateAccountFieldPresenceMiddleware = checkBodyPresence(deactivateAccount);
-const handle2FAFieldPresenceMiddleware = checkBodyPresence(handle2FA);
-const changePasswordFieldPresenceMiddleware = checkBodyPresence(changePassword);
+const activateAccountFieldPresenceMiddleware = checkBodyPresence("activateAccountFieldPresence",activateAccount);
+const deactivateAccountFieldPresenceMiddleware = checkBodyPresence("deactivateAccountFieldPresence",deactivateAccount);
+const handle2FAFieldPresenceMiddleware = checkBodyPresence("handle2FAFieldPresence",handle2FA);
+const changePasswordFieldPresenceMiddleware = checkBodyPresence("changePasswordFieldPresence",changePassword);
 
 const presenceMiddlewares = {
     activateAccountFieldPresenceMiddleware,
