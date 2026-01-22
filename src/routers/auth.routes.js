@@ -34,8 +34,7 @@ authRouter.post(SIGNIN, [
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     commonMiddlewares.checkUserIsVerified,
-    authMiddlewares.signinFieldPresenceMiddleware,
-    authMiddlewares.signinFieldValidationMiddleware
+    authMiddlewares.signinFieldPresenceMiddleware
 ], authController.signIn);
 
 // 📌 User Sign Out (Current Device)

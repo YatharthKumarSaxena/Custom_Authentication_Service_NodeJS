@@ -26,32 +26,28 @@ accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
-    accountManagementMiddlewares.activateAccountFieldPresenceMiddleware,
-    accountManagementMiddlewares.activateAccountFieldValidationMiddleware
+    accountManagementMiddlewares.activateAccountFieldPresenceMiddleware
 ], accountManagementControllers.activateMyAccount);
 
 // 📌 Deactivate Account
 accountManagementRouter.post(DEACTIVATE_ACCOUNT, [
     rateLimiters.deactivateAccountRateLimiter,
     ...baseAuthMiddlewares,
-    accountManagementMiddlewares.deactivateAccountFieldPresenceMiddleware,
-    accountManagementMiddlewares.deactivateAccountFieldValidationMiddleware
+    accountManagementMiddlewares.deactivateAccountFieldPresenceMiddleware
 ], accountManagementControllers.deactivateMyAccount);
 
 // 📌 Enable 2FA
 accountManagementRouter.post(ENABLE_2FA, [
     rateLimiters.enable2FARateLimiter,
     ...baseAuthMiddlewares,
-    accountManagementMiddlewares.handle2FAFieldPresenceMiddleware,
-    accountManagementMiddlewares.handle2FAFieldValidationMiddleware
+    accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.enable2FA);
 
 // 📌 Disable 2FA
 accountManagementRouter.post(DISABLE_2FA, [
     rateLimiters.disable2FARateLimiter,
     ...baseAuthMiddlewares,
-    accountManagementMiddlewares.handle2FAFieldPresenceMiddleware,
-    accountManagementMiddlewares.handle2FAFieldValidationMiddleware
+    accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.disable2FA);
 
 // 📌 Update Account Details

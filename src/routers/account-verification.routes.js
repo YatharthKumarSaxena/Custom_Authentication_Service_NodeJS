@@ -54,6 +54,10 @@ accountVerificationRouter.post(VERIFY_PHONE, [
 accountVerificationRouter.post(VERIFY_DEVICE, [
     rateLimiters.verifyDeviceRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.authValidatorBody,
+    authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
     accountVerificationMiddlewares.validateVerificationInput
 ], accountVerificationController.verifyDevice);
 
