@@ -7,6 +7,10 @@ module.exports = {
     ADMIN: 2,
     CUSTOMER: 5
   },
+  SecurityContext: {
+    LOGIN: "login",
+    CHANGE_PASSWORD: "changePassword"
+  },
   authMode: process.env.AUTH_MODE,
   verificationMode: process.env.VERIFICATION_MODE,
   otp: {
@@ -46,7 +50,7 @@ module.exports = {
     }
   },
   AUTO_LOGIN_AFTER_VERIFICATION: process.env.AUTO_LOGIN_AFTER_VERIFICATION === 'true',
-  IS_TWO_FA_FEATURE_ENABLED: process.env.IS_TWO_FA_FEATURE_ENABLED === 'true',
+  IS_TWO_FA_FEATURE_ENABLED: process.env.IS_2FA_FEATURE_ENABLED === 'true',
   WHITELISTED_DEVICE_UUIDS: process.env.WHITELISTED_DEVICE_UUIDS ? process.env.WHITELISTED_DEVICE_UUIDS.split(',') : [],
   FIRST_NAME_SETTING: process.env.FIRST_NAME_SETTING,
   ADMIN: {
@@ -60,5 +64,8 @@ module.exports = {
     DEVICE_NAME: process.env.DEVICE_NAME || "System Device",
     DEVICE_TYPE: process.env.DEVICE_TYPE || "LAPTOP",
     DEVICE_UUID: process.env.DEVICE_UUID || "00000000-0000-4000-8000-000000000000"
+  },
+  link: {
+    length: 32 // 32 bytes = 64 hex characters
   }
 };
