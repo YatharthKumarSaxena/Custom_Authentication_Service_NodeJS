@@ -13,7 +13,8 @@ const {
 } = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
-const { updatePassword } = require("@services/password-management/change-password.service");
+const { updatePassword } = require("@/services/account-management/change-password.service");
+const { SecurityContext } = require("@/configs/security.config");
 
 const changePassword = async (req, res) => {
     try {
@@ -33,7 +34,7 @@ const changePassword = async (req, res) => {
         // 2. Verify Old Password (with Rate Limit)
         // ---------------------------------------------------------
         try {
-            await verifyPasswordWithRateLimit(user, password);
+            await verifyPasswordWithRateLimit(user, password, SecurityContext.CHANGE_PASSWORD);
         } catch (error) {
             if (error.type === AuthErrorTypes.LOCKED){
                 logWithTime(`❌ Change Password locked due to too many failed attempts for User ${user.userId}`);
