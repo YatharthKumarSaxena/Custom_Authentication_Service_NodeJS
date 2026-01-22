@@ -4,8 +4,8 @@ const {
     signInField
 } = require("@configs/required-fields.config.js");
 
-const signupFieldPresenceMiddleware = checkBodyPresence(signUpField);
-const signinFieldPresenceMiddleware = checkBodyPresence(signInField);
+const signupFieldPresenceMiddleware = checkBodyPresence("signUpFieldPresence",signUpField);
+const signinFieldPresenceMiddleware = checkBodyPresence("signInFieldPresence",signInField);
 
 
 const presenceMiddlewares = {

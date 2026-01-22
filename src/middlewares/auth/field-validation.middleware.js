@@ -1,12 +1,10 @@
 const { validateBody } = require("../factory/field-validation.middleware-factory");
 const { validationSets } = require("@configs/validation-sets.config.js");
 
-const signupFieldValidationMiddleware = validateBody(validationSets.signUp);
-const signinFieldValidationMiddleware = validateBody(validationSets.signIn);
+const signupFieldValidationMiddleware = validateBody("signUpFieldValidation", validationSets.signUp);
 
 const validationMiddlewares = {
-    signupFieldValidationMiddleware,
-    signinFieldValidationMiddleware
+    signupFieldValidationMiddleware
 }
 
 module.exports = {
