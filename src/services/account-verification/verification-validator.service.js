@@ -8,20 +8,21 @@ const { verificationMode } = require("@configs/security.config");
 /**
  * Service to Verify OTP with Rate Limiting / Retry Mechanism
  */
-const verifyUserOTP = async ({ userId, purpose, inputOtp }) => {
+const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
     // 1. Find the most recent, unused OTP
-    // 🔥 FIX: Added .select("+otpHash +salt") kyunki model me wo select: false hain
-    const otpRecord = await OTPModel.findOne({
-        userId,
-        purpose,
-        isUsed: false
-    })
-    .select("+otpHash +salt") 
-    .sort({ createdAt: -1 });
+    const otpRecord = await OTPModel
+        .findOne({
+            userId,
+            deviceId,
+            purpose,
+            isUsed: false
+        })
+        .sort({ createdAt: -1 })
+        .select("+otpHash +salt");
+
 
     // 2. Check if OTP exists
     if (!otpRecord) {
-        // 🔥 FIX: Added 'return' keyword. Bina iske code crash ho jata niche.
         return { success: false, message: "No valid OTP found. Please request a new one." };
     }
 
@@ -40,22 +41,22 @@ const verifyUserOTP = async ({ userId, purpose, inputOtp }) => {
 
     if (!isValid) {
         // ❌ INCORRECT OTP SCENARIO
-        
+
         // Attempt count badhao
         otpRecord.attemptCount += 1;
         await otpRecord.save();
 
         const remaining = otpRecord.maxAttempts - otpRecord.attemptCount;
-        
+
         if (remaining <= 0) {
             return { success: false, message: "Invalid OTP. Max attempts reached. Request a new code." };
         }
-        
+
         return { success: false, message: `Invalid OTP. You have ${remaining} attempts remaining.` };
     }
 
     // ✅ SUCCESS SCENARIO
-    
+
     // Mark as used
     otpRecord.isUsed = true;
     await otpRecord.save();
@@ -68,14 +69,13 @@ const verifyUserOTP = async ({ userId, purpose, inputOtp }) => {
  */
 const verifyUserLink = async ({ userId, purpose, inputToken }) => {
     // 1. Find the link record
-    // 🔥 FIX: Added .select("+tokenHash +salt") here too
     const linkRecord = await VerificationLinkModel.findOne({
         userId,
         purpose,
         isUsed: false
     })
-    .select("+tokenHash +salt")
-    .sort({ createdAt: -1 });
+        .select("+tokenHash +salt")
+        .sort({ createdAt: -1 });
 
     if (!linkRecord) {
         return { success: false, message: "Invalid or already used verification link." };
@@ -99,25 +99,26 @@ const verifyUserLink = async ({ userId, purpose, inputToken }) => {
     return { success: true, message: "Link Verified Successfully" };
 };
 
-const verifyVerification = async (userId, purpose, code, contactMode) => {
-    
+const verifyVerification = async (userId, deviceId, purpose, code, contactMode) => {
+
     const checkVerifyType = (
-        verificationMode === VerifyMode.LINK && 
+        verificationMode === VerifyMode.LINK &&
         contactMode === ContactModes.EMAIL // 👈 Important Check: Phone nahi hona chahiye
     );
-    
+
     if (checkVerifyType) {
-        return await verifyUserLink({ 
-            userId, 
-            purpose, 
-            inputToken: code 
+        return await verifyUserLink({
+            userId,
+            purpose,
+            inputToken: code
         });
     } else {
         // Default to OTP (Safe fallback)
-        return await verifyUserOTP({ 
-            userId, 
-            purpose, 
-            inputOtp: code 
+        return await verifyUserOTP({
+            userId,
+            deviceId,
+            purpose,
+            inputOtp: code
         });
     }
 };

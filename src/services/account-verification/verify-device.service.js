@@ -1,102 +1,158 @@
 const { UserDeviceModel, DeviceModel } = require("@models/index");
 const { verifyVerification } = require("@services/account-verification/verification-validator.service");
-const { VerificationPurpose, AuthErrorTypes } = require("@configs/enums.config");
+const { VerificationPurpose, VerifyMode, AuthModes } = require("@configs/enums.config");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { createToken } = require("@utils/issue-token.util");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { loginUserOnDevice } = require("../auth/auth-session.service");
+const { verificationMode, authMode } = require("@configs/security.config");
 
-// 👇 Rate Limiter Imports
-const { 
-    checkIsDeviceLocked, 
-    handleFailedDeviceAttempt, 
-    resetDeviceAttempts 
+const {
+    checkIsDeviceLocked,
+    handleFailedDeviceAttempt,
+    resetDeviceAttempts
 } = require("@utils/device-limiter.util");
 
 const verifyDeviceService = async (user, device, code, contactMode) => {
 
-    const deviceDoc = await DeviceModel.findOne({ deviceUUID: device.deviceUUID });
-    if(!deviceDoc) {
-        throw { 
-            type: AuthErrorTypes.INVALID_CREDENTIALS, 
-            message: "Device not recognized. Please login again." 
+    // 🔐 Guard
+    if (!user.twoFactorEnabled) {
+        return {
+            success: false,
+            message: "Two-factor authentication is not enabled for this account."
         };
     }
 
-    // 1️⃣ Fetch Mapping & Check Existence
-    const userDeviceMapping = await UserDeviceModel.findOne({ 
-        userId: user._id, 
-        deviceId: deviceDoc._id 
-    });
+    const isOtpFlow =
+        verificationMode === VerifyMode.OTP ||
+        authMode !== AuthModes.EMAIL;
 
-    if (!userDeviceMapping) {
-        throw { 
-            type: AuthErrorTypes.INVALID_CREDENTIALS, 
-            message: "Device session not found. Please login again." 
-        };
-    }
+    let deviceDoc = null;
+    let userDeviceMapping = null;
 
-    // 2️⃣ Check Lock Status (Security Config Logic)
-    const lockStatus = checkIsDeviceLocked(userDeviceMapping);
-    if (lockStatus.isLocked) {
-        throw { 
-            type: AuthErrorTypes.LOCKED, 
-            message: lockStatus.message 
-        };
-    }
+    // --------------------------------------------------
+    // OTP FLOW → device binding + lock + attempts
+    // --------------------------------------------------
+    if (isOtpFlow) {
 
-    // 3️⃣ Validate OTP
-    const validation = await verifyVerification(
-        user._id, 
-        VerificationPurpose.DEVICE_VERIFICATION, 
-        code, 
-        contactMode
-    );
+        deviceDoc = await DeviceModel.findOne({
+            deviceUUID: device.deviceUUID
+        });
 
-    // 4️⃣ Handle Failure (Increment Attempts)
-    if (!validation.success) {
-        const failureResult = await handleFailedDeviceAttempt(userDeviceMapping);
-        
-        if (failureResult.isLocked) {
-            throw { 
-                type: AuthErrorTypes.LOCKED, 
-                message: failureResult.message 
+        if (!deviceDoc) {
+            return {
+                success: false,
+                message: "OTP must be verified from the same device."
             };
-        } else {
-            throw { 
-                type: AuthErrorTypes.INVALID_PASSWORD, // or INVALID_OTP
-                message: failureResult.message // e.g., "Invalid code. 1 attempt remaining."
+        }
+
+        userDeviceMapping = await UserDeviceModel.findOne({
+            userId: user._id,
+            deviceId: deviceDoc._id
+        });
+
+        if (!userDeviceMapping) {
+            return {
+                success: false,
+                message: "No verification code was issued for this device."
+            };
+        }
+
+        // 🔒 device lock
+        const lockStatus = checkIsDeviceLocked(userDeviceMapping);
+        if (lockStatus.isLocked) {
+            return {
+                success: false,
+                message: lockStatus.message
             };
         }
     }
 
-    // 5️⃣ Success Handler
-    // A. Reset Failed Attempts
-    await resetDeviceAttempts(userDeviceMapping);
+    // --------------------------------------------------
+    // VERIFY OTP / LINK
+    // --------------------------------------------------
+    const validation = await verifyVerification(
+        user._id,
+        isOtpFlow ? deviceDoc._id : null,
+        VerificationPurpose.DEVICE_VERIFICATION,
+        code,
+        contactMode
+    );
 
-    // B. Mark Device as Verified
-    userDeviceMapping.twoFactorVerifiedAt = new Date();
-    await userDeviceMapping.save();
+    if (!validation.success) {
 
-    logAuthEvent(user, device, AUTH_LOG_EVENTS.VERIFY_DEVICE, `Device verified via 2FA/OTP.`, null);
-    logWithTime(`✅ Device (${device.deviceUUID}) verified for User (${user.userId})`);
+        if (isOtpFlow) {
+            const failure = await handleFailedDeviceAttempt(userDeviceMapping);
+            return {
+                success: false,
+                message: failure.message
+            };
+        }
 
-    // 6️⃣ Finalize Login (Generate Session)
-    const refreshTokenString = createToken(user.userId, expiryTimeOfRefreshToken, device.deviceUUID);
-    
-    // Call session service to set cookies & update DB
-    const loginSuccess = await loginUserOnDevice(user, device, refreshTokenString, "Device Verification Completed (2FA)");
-
-    if (!loginSuccess) {
-        throw new Error("Failed to finalize login session after device verification.");
+        return {
+            success: false,
+            message: validation.message
+        };
     }
 
-    return { 
-        success: true, 
-        autoLoggedIn: true 
+    // --------------------------------------------------
+    // SUCCESS POST-VERIFY
+    // --------------------------------------------------
+    if (isOtpFlow) {
+        await resetDeviceAttempts(userDeviceMapping);
+        userDeviceMapping.twoFactorVerifiedAt = new Date();
+        await userDeviceMapping.save();
+    }
+
+    logAuthEvent(
+        user,
+        device,
+        AUTH_LOG_EVENTS.VERIFY_DEVICE,
+        "Device verified via 2FA",
+        null
+    );
+
+    logWithTime(
+        `✅ Device (${device.deviceUUID}) verified for User (${user.userId})`
+    );
+
+    // --------------------------------------------------
+    // LOGIN SESSION
+    // --------------------------------------------------
+    const refreshToken = createToken(
+        user.userId,
+        expiryTimeOfRefreshToken,
+        device.deviceUUID
+    );
+
+    if (!refreshToken) {
+        return {
+            success: false,
+            message: "Token generation failed due to internal error."
+        }
+    }
+
+    const loginSuccess = await loginUserOnDevice(
+        user,
+        device,
+        refreshToken,
+        "Device Verification Completed (2FA)"
+    );
+
+    if (!loginSuccess) {
+        return{
+            success: false,
+            message: "Login session creation failed due to internal error."
+        }
+    }
+
+    return {
+        success: true,
+        autoLoggedIn: true
     };
 };
+
 
 module.exports = { verifyDeviceService };

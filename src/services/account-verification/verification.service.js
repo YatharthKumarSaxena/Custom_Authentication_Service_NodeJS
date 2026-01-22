@@ -11,30 +11,61 @@ const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { DeviceModel } = require("@models/device.model");
 
 /**
- * 🔒 PRIVATE HELPER (NOT EXPORTED)
- * Generic verification logic factory
+ * 🔒 PRIVATE CORE
  */
-
 const performVerificationCore = async (user, device, code, contactMode, config) => {
-    const { 
-        purpose, updateField, logEvent, authModeType, otherVerifiedField, type 
+    const {
+        purpose,
+        updateField,
+        logEvent,
+        authModeType,
+        otherVerifiedField,
+        type
     } = config;
 
-    // 1️⃣ Validate Token
-    const validation = await verifyVerification(user._id, purpose, code, contactMode);
-    if (!validation.success) throw new Error(validation.message);
+    // ✅ ensure device exists
+    const deviceDoc = await DeviceModel.findOneAndUpdate(
+        { deviceUUID: device.deviceUUID },
+        {
+            deviceName: device.deviceName,
+            deviceType: device.deviceType
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
-    // 2️⃣ Update User Status
-    user[updateField] = true; 
+    // ✅ verify OTP / LINK
+    const validation = await verifyVerification(
+        user._id,
+        deviceDoc._id,
+        purpose,
+        code,
+        contactMode
+    );
+
+    if (!validation.success) {
+        return { success: false, message: validation.message };
+    }
+
+    // ✅ mark verified
+    user[updateField] = true;
     await user.save();
 
-    logAuthEvent(user, device, logEvent, `User ID ${user.userId} verified ${type} via ${contactMode}.`, null);
+    logAuthEvent(
+        user,
+        device,
+        logEvent,
+        `User ${user.userId} verified ${type} via ${contactMode}`,
+        null
+    );
 
-    // 3️⃣ Send Welcome Notification (After First Verification)
-    // Check if this is initial verification (email or phone) - send welcome
-    if (purpose === VerificationPurpose.EMAIL_VERIFICATION || purpose === VerificationPurpose.PHONE_VERIFICATION) {
+    // ✅ welcome notification
+    if (
+        purpose === VerificationPurpose.EMAIL_VERIFICATION ||
+        purpose === VerificationPurpose.PHONE_VERIFICATION
+    ) {
         const contactInfo = getUserContacts(user);
         sendNotification({
             contactInfo,
@@ -44,56 +75,74 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         });
     }
 
-    // 4️⃣ Auto Login Logic
+    // ✅ auto login
     let autoLoggedIn = false;
+
     if (AUTO_LOGIN_AFTER_VERIFICATION) {
-        
-        const canLogin = 
-            authMode === AuthModes.EITHER || 
-            authMode === authModeType || 
+        const canLogin =
+            authMode === AuthModes.EITHER ||
+            authMode === authModeType ||
             (authMode === AuthModes.BOTH && user[otherVerifiedField]);
 
         if (canLogin) {
-            logWithTime(`🔄 Auto-login triggered for User (${user.userId}) after ${type} Verification.`);
-            
-            // 🛡️ CRITICAL FIX: Ensure req.user is set for loginUserOnDevice
-            req.user = user; 
+            logWithTime(
+                `🔄 Auto-login triggered for User (${user.userId}) after ${type} verification`
+            );
 
-            const refreshTokenString = createToken(user.userId, expiryTimeOfRefreshToken, device.deviceUUID);
-            if (!refreshTokenString) throw new Error("Token generation failed");
+            const refreshToken = createToken(
+                user.userId,
+                expiryTimeOfRefreshToken,
+                device.deviceUUID
+            );
 
-            const loginSuccess = await loginUserOnDevice(user, device, refreshTokenString, `Auto-Login (${type} Verified)`);
-            if (loginSuccess) autoLoggedIn = true;
+            if (!refreshToken) {
+                return {
+                    success: false,
+                    message: "Token generation failed."
+                };
+            }
+
+            const loginSuccess = await loginUserOnDevice(
+                user,
+                device,
+                refreshToken,
+                `Auto-Login (${type} Verified)`
+            );
+
+            if (loginSuccess) {
+                autoLoggedIn = true;
+            }
         }
     }
 
     return { success: true, autoLoggedIn };
 };
 
-// ==========================================
-// 🚀 PUBLIC EXPORTS (Wrappers)
-// ==========================================
+// ===================================================
+// 🚀 PUBLIC SERVICES
+// ===================================================
 
-const verifyEmailService = async (user, device, code, contactMode) => {
-    return await performVerificationCore(user, device, code, contactMode, {
+const verifyEmailService = (user, device, code, contactMode) =>
+    performVerificationCore(user, device, code, contactMode, {
         purpose: VerificationPurpose.EMAIL_VERIFICATION,
-        updateField: 'isEmailVerified',
+        updateField: "isEmailVerified",
         logEvent: AUTH_LOG_EVENTS.VERIFY_EMAIL,
         authModeType: AuthModes.EMAIL,
-        otherVerifiedField: 'isPhoneVerified',
-        type: "Email" // ✅ Added Type
+        otherVerifiedField: "isPhoneVerified",
+        type: "Email"
     });
-};
 
-const verifyPhoneService = async (user, device, code, contactMode) => {
-    return await performVerificationCore(user, device, code, contactMode, {
+const verifyPhoneService = (user, device, code, contactMode) =>
+    performVerificationCore(user, device, code, contactMode, {
         purpose: VerificationPurpose.PHONE_VERIFICATION,
-        updateField: 'isPhoneVerified',
+        updateField: "isPhoneVerified",
         logEvent: AUTH_LOG_EVENTS.VERIFY_PHONE,
         authModeType: AuthModes.PHONE,
-        otherVerifiedField: 'isEmailVerified',
-        type: "Phone" // ✅ Added Type
+        otherVerifiedField: "isEmailVerified",
+        type: "Phone"
     });
-};
 
-module.exports = { verifyEmailService, verifyPhoneService };
+module.exports = {
+    verifyEmailService,
+    verifyPhoneService
+};

@@ -42,7 +42,7 @@ const resendVerificationService = async ( user, device, purpose) => {
 
     if (!verificationResult) return false;
 
-    // 5️⃣ STEP 3: Send (Factory)
+    // 5️⃣ STEP 3: Send (AWAIT for confirmation - user needs to know if sent)
     const isSent = await SendNotificationFactory(
         user,
         contactMode,
@@ -53,9 +53,13 @@ const resendVerificationService = async ( user, device, purpose) => {
         route
     );
 
+    if (!isSent) {
+        return false;
+    }
+
     logAuthEvent(user, device, "RESEND_VERIFICATION",
         `Resent ${verificationResult.type} for ${purpose} to User ID ${user._id} via ${contactMode}.`, null);
-    return isSent; // Returns True or False
+    return true;
 };
 
 module.exports = { resendVerificationService };
