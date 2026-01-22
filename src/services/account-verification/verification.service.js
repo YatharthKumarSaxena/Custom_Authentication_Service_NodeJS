@@ -61,10 +61,20 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         null
     );
 
+    let checkUserIsVerified = false;
+    if(authMode === AuthModes.BOTH){
+        checkUserIsVerified = user["isEmailVerified"] && user["isPhoneVerified"];
+    } else if (authMode === AuthModes.EMAIL){
+        checkUserIsVerified = user["isEmailVerified"];
+    } else if (authMode === AuthModes.PHONE){
+        checkUserIsVerified = user["isPhoneVerified"];
+    } else {
+        checkUserIsVerified = user["isEmailVerified"] || user["isPhoneVerified"];
+    }
+
     // ✅ welcome notification
     if (
-        purpose === VerificationPurpose.EMAIL_VERIFICATION ||
-        purpose === VerificationPurpose.PHONE_VERIFICATION
+        checkUserIsVerified
     ) {
         const contactInfo = getUserContacts(user);
         sendNotification({
