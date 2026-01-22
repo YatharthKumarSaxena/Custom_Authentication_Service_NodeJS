@@ -2,7 +2,7 @@ const { UserDeviceModel } = require("@/models/user-device.model");
 const { DeviceModel } = require("@/models/device.model");
 const { loginUserOnDevice } = require("./auth-session.service"); // Login Service
 const { createToken } = require("@utils/issue-token.util");
-const { AuthErrorTypes, VerificationPurpose } = require("@configs/enums.config");
+const { AuthErrorTypes, VerificationPurpose, VerifyMode } = require("@configs/enums.config");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
@@ -10,6 +10,10 @@ const ms = require("ms");
 const { getUserContacts } = require("@/utils/contact-selector.util");
 const { verificationSecurity, IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
 const { verifyPasswordWithRateLimit } = require("../password-management/password-verification.service");
+const { SecurityContext } = require('@configs/security.config');
+const { sendNotification } = require("@/utils/notification-dispatcher.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /*
  * Main Orchestrator for Sign In
@@ -61,7 +65,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
     // ---------------------------------------------------------
     // STEP 2: Verify Password
     // ---------------------------------------------------------
-    await verifyPasswordWithRateLimit(user, plainPassword);
+    await verifyPasswordWithRateLimit(user, plainPassword, SecurityContext.LOGIN);
 
     if (IS_TWO_FA_FEATURE_ENABLED && user.twoFactorEnabled) {
         logWithTime(`🔒 2FA is enabled for User (${user.userId}). Initiating verification.`);
@@ -88,7 +92,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
         }
 
         // A. Send OTP (to Email/Phone)
-        await generateVerificationForUser(
+        const verificationResult = await generateVerificationForUser(
             user,
             targetDeviceId,
             VerificationPurpose.DEVICE_VERIFICATION,
@@ -96,6 +100,66 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
             verificationSecurity[VerificationPurpose.DEVICE_VERIFICATION].MAX_ATTEMPTS,
             verificationSecurity[VerificationPurpose.DEVICE_VERIFICATION].LINK_EXPIRY_MINUTES * 60
         );
+
+
+        if (!verificationResult) {
+            logWithTime(`❌ Failed to initiate 2FA for User (${user.userId}) on device (${deviceInput.deviceUUID}).`);
+            return {
+                success: false,
+                requires2FA: true,
+                message: "Failed to initiate two-factor authentication. Please try again."
+            }
+        }
+
+        if (verificationResult.reused) {
+            logWithTime(`⏳ OTP already active for User (${user.userId})`);
+
+            return {
+                success: false,
+                requires2FA: true,
+                rateLimited: true,
+                retryAfter: verificationResult.expiresAt,
+                message: "Verification already sent. Please wait before requesting again."
+            };
+        }
+
+        const expiryMs =
+            verificationSecurity[VerificationPurpose.DEVICE_VERIFICATION].LINK_EXPIRY_MINUTES
+            * 60 * 1000;
+
+        await UserDeviceModel.findOneAndUpdate(
+            {
+                userId: user._id,
+                deviceId: targetDeviceId
+            },
+            {
+                $set: {
+                    verificationInitiatedAt: new Date(),
+                    verificationExpiresAt: new Date(Date.now() + expiryMs),
+                    failed2FAAttempts: 0
+                },
+                $setOnInsert: {
+                    firstSeenAt: new Date()
+                }
+            },
+            { upsert: true }
+        );
+
+        logWithTime(`✅ 2FA verification initiated for User (${user.userId}) on device (${deviceInput.deviceUUID}).`);
+        
+        const { type, token } = verificationResult;
+
+        const contactInfo = getUserContacts(user);
+        sendNotification({
+            contactInfo,
+            emailTemplate: userTemplate.deviceVerification,
+            smsTemplate: userSmsTemplate.deviceVerification,
+            data: {
+                name: user.firstName || "User",
+                otp: type === VerifyMode.OTP ? token : undefined,
+                link: type === VerifyMode.LINK ? token : undefined
+            }
+        })
 
         // B. Stop Login (Return specific response)
 

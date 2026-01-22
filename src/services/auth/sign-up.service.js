@@ -3,7 +3,10 @@ const { DeviceModel } = require("@models/device.model");
 const { makeUserId } = require("@services/userId.service");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const { getUserContacts } = require("@utils/contact-selector.util");
-const { AuthErrorTypes, VerificationPurpose } = require("@configs/enums.config");
+const { sendNotification } = require("@utils/notification-dispatcher.util");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { AuthErrorTypes, VerificationPurpose, VerifyMode } = require("@configs/enums.config");
 const { verificationSecurity } = require("@configs/security.config");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
@@ -16,41 +19,65 @@ const { hashPassword } = require("@/utils/auth.util");
  */
 
 const signUpService = async (deviceInput, userPayload) => {
-    const { firstName, email, phone, password } = userPayload;;
+
+    const {
+        email,
+        countryCode,
+        localNumber,
+        phone,
+        firstName,
+        password
+    } = userPayload;
 
     // ---------------------------------------------------------
     // 1. GENERATE USER ID & HASH PASSWORD
     // ---------------------------------------------------------
-    const generatedUserID = await makeUserId(); 
+
+    const hashedPassword = await hashPassword(password);
+
+    const generatedUserID = await makeUserId();
 
     if (generatedUserID === "0") {
         throw { type: AuthErrorTypes.SERVER_LIMIT_REACHED, message: "User limit reached (ID Gen Failed)." };
-    }else if(!generatedUserID === ""){
+    } else if (!generatedUserID === "") {
         throw { type: AuthErrorTypes.SERVER_ERROR, message: "User ID generation failed." };
     }
-
-    const hashedPassword = hashPassword(password);
 
     // ---------------------------------------------------------
     // 2. CREATE USER (DB Insert)
     // ---------------------------------------------------------
-    const newUser = await UserModel.create({
+
+    // normalize values (VERY IMPORTANT)
+    const safeEmail = email?.trim() || undefined;
+    const safeCountryCode = countryCode?.trim() || undefined;
+    const safeLocalNumber = localNumber?.trim() || undefined;
+    const safePhone = phone?.trim() || undefined;
+
+    // build object dynamically
+    const userData = {
         userId: generatedUserID,
-        firstName: firstName,
-        email: email,
-        // Phone Object Structure (Schema dependent)
-        countryCode: phone?.countryCode,
-        localNumber: phone?.number,
-        phone: phone, // Unified
+        firstName,
         password: hashedPassword,
-        // Default flags
         isEmailVerified: false,
         isPhoneVerified: false,
-        isActive: true // User active hai, bas verified nahi
-    });
+        isActive: true
+    };
+
+    if (safeEmail) {
+        userData.email = safeEmail;
+    }
+
+    if (safeCountryCode && safeLocalNumber && safePhone) {
+        userData.countryCode = safeCountryCode;
+        userData.localNumber = safeLocalNumber;
+        userData.phone = safePhone;
+    }
+
+    const newUser = await UserModel.create(userData);
+
 
     logWithTime(`🟢 User Created: ${newUser.userId} from device Id : ${deviceInput.deviceUUID}`);
-    
+
     // ---------------------------------------------------------
     // 3. DEVICE HANDLING (Ensure Device Exists)
     // ---------------------------------------------------------
@@ -67,30 +94,61 @@ const signUpService = async (deviceInput, userPayload) => {
     // ---------------------------------------------------------
     // 4. GENERATE VERIFICATION (OTP/Link) 🔥
     // ---------------------------------------------------------
-    // Pata lagao contact mode kya hai (Email/Phone/Both)
-    const { contactMode } = getUserContacts(newUser);
+    const contactInfo = getUserContacts(newUser);
 
-    // Verification Generator Call
-    // Note: Hum yahan ACCOUNT_ACTIVATION ya EMAIL_VERIFICATION purpose use kar sakte hain
-    await generateVerificationForUser(
+    // Generate verification token (NO email dispatch inside)
+    const verificationResult = await generateVerificationForUser(
         newUser,
         deviceDoc._id,
-        VerificationPurpose.REGISTRATION, // Ya AuthMode ke hisab se dynamic
-        contactMode,
+        VerificationPurpose.REGISTRATION,
+        contactInfo.contactMode,
         verificationSecurity[VerificationPurpose.REGISTRATION].MAX_ATTEMPTS,
         verificationSecurity[VerificationPurpose.REGISTRATION].LINK_EXPIRY_MINUTES * 60
     );
 
+    if (!verificationResult) {
+        throw new Error("Failed to generate verification token. Please try again.");
+    }
+
     // ---------------------------------------------------------
-    // 5. LOG EVENT
+    // 5. SEND VERIFICATION NOTIFICATION (Fire and Forget)
     // ---------------------------------------------------------
-    logAuthEvent(newUser, deviceDoc, AUTH_LOG_EVENTS.REGISTER, `User with ID ${newUser.userId} Registered on device Id : ${deviceInput.deviceUUID}`, null);
+    const { type, token } = verificationResult;
+    
+    // Debug log to check what's being generated
+    logWithTime(`🔍 DEBUG: Generated ${type} with token: ${token.substring(0, 10)}...`);
+    
+    sendNotification({
+        contactInfo,
+        emailTemplate: userTemplate.verification,
+        smsTemplate: userSmsTemplate.verification,
+        data: { 
+            name: newUser.firstName || "User", 
+            otp: type === VerifyMode.OTP ? token : undefined,
+            link: type === VerifyMode.LINK ? token : undefined
+        }
+    });
+
+    // ---------------------------------------------------------
+    // 6. SEND REGISTRATION SUCCESS NOTIFICATION (Fire and Forget - Compulsory)
+    // ---------------------------------------------------------
+    sendNotification({
+        contactInfo,
+        emailTemplate: userTemplate.registrationSuccess,
+        smsTemplate: userSmsTemplate.registrationSuccess,
+        data: { name: newUser.firstName || "User" }
+    });
+
+    // ---------------------------------------------------------
+    // 7. LOG EVENT
+    // ---------------------------------------------------------
+    logAuthEvent(newUser, deviceInput, AUTH_LOG_EVENTS.REGISTER, `User with ID ${newUser.userId} Registered on device Id : ${deviceInput.deviceUUID}`, null);
 
     return {
         success: true,
         userId: newUser.userId,
-        contactMode: contactMode,
-        message: "Registration successful. Please verify your account to continue."
+        contactMode: contactInfo.contactMode,
+        message: "Registration successful. Verification code sent. Please verify your account to continue."
     };
 };
 
