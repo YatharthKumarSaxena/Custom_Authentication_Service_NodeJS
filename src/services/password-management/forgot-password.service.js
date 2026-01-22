@@ -50,7 +50,7 @@ const forgotPasswordService = async(user, deviceId) => {
 
     const { type, token } = verificationResult; // Actual Generated Type & Token
 
-    // 5️⃣ STEP 3: Send Notification
+    // 5️⃣ STEP 3: Send Notification (AWAIT for confirmation)
     const isSent = await SendNotificationFactory(
         user,
         contactMode,
@@ -62,7 +62,7 @@ const forgotPasswordService = async(user, deviceId) => {
     );
 
     if (!isSent) {
-        throw new Error("Failed to send verification code.");
+        throw new Error("Failed to send verification code. Please try again.");
     }
 
     // Return info for the controller response

@@ -8,48 +8,39 @@ const { generateSmsMessage } = require("@utils/sms-generator.util");
 const { VerifyMode } = require("@configs/enums.config");
 const { errorMessage } = require("@utils/error-handler.util"); // Path fix kar lena
 
-const SendNotificationFactory = async(user, contactModes, token, type, emailTemplate, smsTemplate, middleUri) => {
+const SendNotificationFactory = async(user, contactMode, token, type, emailTemplate, smsTemplate, middleUri) => {
     try {
         let frontendUrl = null;
-        let emailHtml = null;
+        let data = { name: user.firstName || "User" };
         
         if (!token) token = null;
-        
-        const userName = user.firstName || "User";
 
-        // --- EMAIL LOGIC ---
+        // --- PREPARE DATA FOR TEMPLATE ---
         if (token) {
             if (type === VerifyMode.LINK) {
                 frontendUrl = getFrontendUrl(middleUri, { token });
-                emailHtml = generateEmailHtml(emailTemplate, { 
-                    name: userName, 
-                    frontendUrl: frontendUrl 
-                });
-            } else {
-                emailHtml = generateEmailHtml(emailTemplate, { 
-                    name: userName, 
-                    otp: token 
-                });
+                data.link = frontendUrl;
+                data.frontendUrl = frontendUrl;
             }
-        } else {
-            emailHtml = generateEmailHtml(emailTemplate, { 
-                name: userName
-            });
+            data.otp = token; // OTP or Link token
         }
 
-        // --- SMS LOGIC ---
-        const smsMessage = generateSmsMessage(smsTemplate, token);
-
-        // --- DISPATCH ---
-        const notificationPayload = {
-            user: user,
-            contactModes: contactModes,
-            email: emailHtml,
-            sms: smsMessage
+        // --- GET USER CONTACTS ---
+        const contactInfo = {
+            email: user.email || null,
+            phone: user.phone || null,
+            contactMode: contactMode
         };
 
-        sendNotification(notificationPayload);
-        return true;
+        // --- DISPATCH (Await for confirmation) ---
+        const result = await sendNotification({
+            contactInfo,
+            emailTemplate,
+            smsTemplate,
+            data
+        });
+        
+        return result.success; // Return true/false based on actual send status
 
     } catch (err) {
         logWithTime("ERROR", `Notification Factory Failed: ${err.message}`);
