@@ -5,6 +5,8 @@ const deactivateAccount = ["password"];
 const handle2FA = ["password"];
 const changePassword = ["password", "newPassword", "confirmPassword"];
 const resetPassword = ["newPassword", "confirmPassword"];
+const verifyEmail = ["email"];
+const verifyPhone = ["phone"];
 
 module.exports = {
     signUpField,
@@ -13,5 +15,7 @@ module.exports = {
     deactivateAccount,
     handle2FA,
     changePassword,
-    resetPassword
+    resetPassword,
+    verifyEmail,
+    verifyPhone
 };

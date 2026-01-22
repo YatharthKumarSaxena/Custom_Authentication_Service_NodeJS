@@ -11,6 +11,12 @@ const validationSets = {
   resetPassword: {
     'newPassword': validationRules.password,
     'confirmPassword': validationRules.password
+  },
+  verifyPhone: {
+    'phone': validationRules.phone
+  },
+  verifyEmail: {
+    'email': validationRules.email
   }
 };
 
