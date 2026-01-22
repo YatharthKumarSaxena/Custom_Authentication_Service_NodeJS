@@ -31,6 +31,11 @@ passwordManagementRouter.post(FORGOT_PASSWORD, [
 passwordManagementRouter.post(RESET_PASSWORD, [
     rateLimiters.resetPasswordRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.authValidatorBody,
+    authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
+    commonMiddlewares.checkUserIsVerified,
     accountVerificationMiddlewares.validateVerificationInput,
     passwordManagementMiddlewares.resetPasswordFieldPresenceMiddleware,
     passwordManagementMiddlewares.resetPasswordFieldValidationMiddleware

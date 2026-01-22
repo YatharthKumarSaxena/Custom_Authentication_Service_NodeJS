@@ -2,7 +2,7 @@
 
 const express = require("express");
 const accountVerificationRouter = express.Router();
-const { ACCOUNT_VERIFICATION_ROUTES } = require("../configs/uri.config");
+const { ACCOUNT_VERIFICATION_ROUTES } = require("@configs/uri.config");
 const { accountVerificationController } = require("@controllers/account-verification/index");
 const { accountVerificationMiddlewares } = require("@middlewares/account-verification/index");
 const { authMiddlewares } = require("@middlewares/auth/index");
@@ -25,6 +25,7 @@ accountVerificationRouter.post(RESEND_VERIFICATION_LINK, [
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
 ], accountVerificationController.resendVerificationLink);
 
 // 📌 Resend Verification OTP (Phone)
@@ -34,12 +35,18 @@ accountVerificationRouter.post(RESEND_VERIFICATION_OTP, [
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
 ], accountVerificationController.resendVerificationOTP);
 
 // 📌 Verify Email
 accountVerificationRouter.post(VERIFY_EMAIL, [
     rateLimiters.verifyEmailRateLimiter,
     ...baseMiddlewares,
+    accountVerificationMiddlewares.verifyEmailFieldPresenceMiddleware,
+    accountVerificationMiddlewares.verifyEmailFieldValidationMiddleware,
+    authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
     accountVerificationMiddlewares.validateVerificationInput
 ], accountVerificationController.verifyEmail);
 
@@ -47,6 +54,11 @@ accountVerificationRouter.post(VERIFY_EMAIL, [
 accountVerificationRouter.post(VERIFY_PHONE, [
     rateLimiters.verifyPhoneRateLimiter,
     ...baseMiddlewares,
+    accountVerificationMiddlewares.verifyPhoneFieldPresenceMiddleware,
+    accountVerificationMiddlewares.verifyPhoneFieldValidationMiddleware,
+    authMiddlewares.ensureUserExists,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
     accountVerificationMiddlewares.validateVerificationInput
 ], accountVerificationController.verifyPhone);
 
