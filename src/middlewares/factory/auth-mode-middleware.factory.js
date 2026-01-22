@@ -1,12 +1,14 @@
 const { throwInternalServerError, logMiddlewareError, throwMissingFieldsError, throwBadRequestError, throwValidationError } = require("@utils/error-handler.util");
 const { isValidRegex, validateLength } = require("@utils/validators-factory.util");
 const { AuthModes, RequestLocation } = require("@configs/enums.config");
+const { authMode } = require("@configs/security.config");
 
 // ✅ Correct Imports
 const { emailRegex, countryCodeRegex, localNumberRegex } = require("@configs/regex.config");
 const { emailLength, countryCodeLength, localNumberLength } = require("@configs/fields-length.config");
 
 const { createPhoneNumber } = require("@utils/auth.util");
+const { logWithTime } = require("@/utils/time-stamps.util");
 
 /**
  * Factory function to validate Auth fields based on request location
@@ -19,14 +21,77 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
             // STEP 0: CHECK IF LOCATION EXISTS
             if (!req[location]) {
                 logMiddlewareError("authModeValidator", `Invalid request location: ${location}`, req);
-                return throwInternalServerError(res, `Server Error: Cannot validate from ${location}`);
+                return throwBadRequestError(res, `Empty request ${location}`);
             }
 
             // STEP 1: EXTRACT DATA DYNAMICALLY
-            let { email, phone, countryCode, localNumber } = req[location];
+            let { email, countryCode, localNumber } = req[location];
 
-            let normalizedPhone = null;
+            email = email ? email.trim() : null;
+            countryCode = countryCode ? countryCode.trim() : null;
+            localNumber = localNumber ? localNumber.trim() : null;
+            
+            let missingFields = [];
             const validationErrors = [];
+
+            // CASE 1: EMAIL ONLY MODE
+            if (authMode === AuthModes.EMAIL) {
+                if (!email){
+                    logMiddlewareError("authModeValidator", "Email is required in EMAIL auth mode", req);
+                    return throwMissingFieldsError(res, "email");
+                }
+                if(countryCode){
+                    logWithTime("⚠️ Removing countryCode field in EMAIL auth mode from device id: " + req.device.deviceUUID);
+                    delete req[location].countryCode;
+                }
+                if(localNumber){
+                    logWithTime("⚠️ Removing localNumber field in EMAIL auth mode from device id: " + req.device.deviceUUID);
+                    delete req[location].localNumber;
+                }
+            }
+            
+            // CASE 2: PHONE ONLY MODE
+            else if (authMode === AuthModes.PHONE) {
+                if (!countryCode) {
+                    missingFields.push("countryCode");
+                }
+                if (!localNumber) {
+                    missingFields.push("localNumber");
+                }
+                if (missingFields.length > 0) {
+                    logMiddlewareError("authModeValidator", "Missing fields in PHONE auth mode", req);
+                    return throwMissingFieldsError(res, missingFields.join(", "));
+                }
+                if(email){
+                    logWithTime("⚠️ Removing email field in PHONE auth mode from device id: " + req.device.deviceUUID);
+                    delete req[location].email;
+                }
+            }
+            
+            // CASE 3: BOTH REQUIRED
+            else if (authMode === AuthModes.BOTH) {
+                const missingFields = [];
+                if (!email) missingFields.push("email");
+                if (!countryCode) missingFields.push("countryCode");
+                if (!localNumber) missingFields.push("localNumber");
+
+                if (missingFields.length > 0) {
+                    logMiddlewareError("authModeValidator", "Missing fields in BOTH auth mode", req);
+                    return throwMissingFieldsError(res, missingFields.join(", "));
+                }
+            }
+            
+            // CASE 4: EITHER (Hybrid)
+            else {
+                if (!email && (!countryCode || !localNumber)){
+                    logMiddlewareError("authModeValidator", "Either Email or Phone is required in EITHER auth mode", req);
+                    return throwMissingFieldsError(res, "email OR (countryCode + localNumber)");
+                }
+                if (email && (countryCode && localNumber)){
+                    logMiddlewareError("authModeValidator", "Both Email and Phone provided in EITHER auth mode", req);
+                    return throwBadRequestError(res, "Provide either Email OR Phone, not both.");
+                } 
+            }
 
             // Email Validation
             if(email){
@@ -35,33 +100,15 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
                 }
             }
 
-            // Phone Validation Logic
-            if (phone) {
-                // 1. Check Existence
-                if(!countryCode || !localNumber) {
-                    logMiddlewareError("authModeValidator", "Incomplete phone parts when phone is provided", req);
-                    return throwBadRequestError(res, "Both countryCode and localNumber are required when phone is provided");
-                }
-                normalizedPhone = createPhoneNumber(countryCode, localNumber);
-                // 2. Validate Normalized Phone
-                if (normalizedPhone !== phone) {
-                    logMiddlewareError("authModeValidator", "Phone does not match countryCode and localNumber", req);
-                    return throwBadRequestError(res, "Provided phone does not match countryCode and localNumber");
-                }
-            }
+            let phone = null;
 
-            // Auto-Generate Phone (Mutation on Dynamic Location)
-            if (!phone && countryCode && localNumber) {
-                normalizedPhone = createPhoneNumber(countryCode, localNumber);
-                
-                // ⚠️ Important: Update the specific location (body/query), not always body
-                req[location].phone = normalizedPhone;
-                
-                phone = normalizedPhone; 
+            if (countryCode && localNumber && authMode !== AuthModes.EMAIL) {
+                phone = createPhoneNumber(countryCode, localNumber);
+                req[location].phone = phone;
             }
 
             // Validate Phone Parts
-            if (normalizedPhone) {
+            if (phone) {
                 // 1. Validate Country Code
                 const isCCValid = validateLength(countryCode, countryCodeLength.min, countryCodeLength.max) && 
                                   isValidRegex(countryCode, countryCodeRegex);
@@ -75,40 +122,7 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
                 if (!isLNValid) validationErrors.push("Invalid Local Number");
             }
 
-            // STEP 2: AUTH MODE VALIDATION
-            const authMode = process.env.AUTH_MODE;
-            
-            // CASE 1: EMAIL ONLY MODE
-            if (authMode === AuthModes.EMAIL) {
-                if (normalizedPhone) {
-                    logMiddlewareError("authModeValidator", "Phone provided in EMAIL-only mode", req);
-                    return throwBadRequestError(res, "Phone login is disabled. Please provide Email only.");
-                }
-                if (!email) return throwMissingFieldsError(res, "email");
-            }
-            
-            // CASE 2: PHONE ONLY MODE
-            else if (authMode === AuthModes.PHONE) {
-                if (email) return throwBadRequestError(res, "Email login is disabled. Please provide Phone Number only.");
-                if (!normalizedPhone) return throwMissingFieldsError(res, "countryCode and localNumber");
-            }
-            
-            // CASE 3: BOTH REQUIRED
-            else if (authMode === AuthModes.BOTH) {
-                const missingFields = [];
-                if (!email) missingFields.push("email");
-                if (!normalizedPhone) missingFields.push("countryCode", "localNumber");
-
-                if (missingFields.length > 0) {
-                    return throwMissingFieldsError(res, missingFields.join(", "));
-                }
-            }
-            
-            // CASE 4: EITHER (Hybrid)
-            else {
-                if (!email && !normalizedPhone) return throwMissingFieldsError(res, "email OR (countryCode + localNumber)");
-                if (email && normalizedPhone) return throwBadRequestError(res, "Provide either Email OR Phone, not both.");
-            }
+            // STEP 2: Check Validation Errors and Respond
             
             // FINAL ERROR THROWING
             if (validationErrors.length > 0) {

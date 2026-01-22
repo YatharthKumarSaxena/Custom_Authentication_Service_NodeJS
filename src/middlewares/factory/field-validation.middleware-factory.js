@@ -49,7 +49,7 @@ const _genericValidation = (controllerName, validationSet, requestLocation) => {
         }
 
         // 3. Regex Validation
-        if (rules.regex && !isValidRegex(rules.regex, value)) {
+        if (rules.regex && !isValidRegex(value, rules.regex)) {
           errors.push({ 
             field, 
             message: `${field} format is invalid`, 
