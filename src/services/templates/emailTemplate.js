@@ -20,10 +20,22 @@ const userTemplate = {
         message_intro: "Thank you for signing up! Please verify your email address to activate your account.",
         actionbutton_text: "Verify Account",
         actionlink: "<LINK>/verify-email", // Frontend URL
-        fallback_note: "Or enter this OTP manually: {{otp}}",
+        fallback_note: "Or copy and paste this link in your browser: {{link}}",
         action_link: "<LINK>/verify-email",
-        notes: "This link/OTP is valid for 10 minutes only.",
+        notes: "", // Will be dynamically set based on OTP or Link
         details: {} // OTP, Expiry
+    },
+
+    // 🔹 Registration Successful (Sent immediately after signup)
+    registrationSuccess: {
+        ...defaultConfig,
+        subject: "🎉 Registration Successful - Verify Your Account",
+        event_name: "Account Created",
+        action: "Verification Required",
+        status: "Pending", // 🟡 Yellow Badge
+        message_intro: "Thank you for registering with us! Your account has been created successfully.",
+        notes: "We have sent a verification code/link to this email. Please verify your account to get started.",
+        details: {} 
     },
 
     // 🔹 Welcome Super Admin (Used during Bootstrap or Manual Creation)
@@ -264,8 +276,8 @@ const userTemplate = {
         // Dono options rakhte hain: Button for Link, OTP for manual entry
         actionbutton_text: "Authorize This Device",
         actionlink: "<LINK>/verify-device?token={{token}}",
-        fallback_note: "Or enter this Device Authorization Code: {{otp}}",
-
+        fallback_note: "Or copy and paste this link in your browser: {{link}}",
+        action_link: "<LINK>/verify-device?token={{token}}",
         notes: "This authorization request will expire in 10 minutes. If this wasn't you, someone might have your password. Please change it immediately.",
 
         details: {} // Browser, OS, Location, IP Address
