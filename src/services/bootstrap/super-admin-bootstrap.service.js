@@ -8,7 +8,7 @@ const { logBootstrapEvent } = require("@utils/system-log.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
-const { authMode, FIRST_NAME_SETTING, ADMIN } = require("@configs/security.config");
+const { authMode, FIRST_NAME_SETTING, ADMIN, IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
 const { sendNotification } = require("@/utils/notification-dispatcher.util");
 
 async function bootstrapSuperAdmin() {
@@ -39,7 +39,7 @@ async function bootstrapSuperAdmin() {
     // ---------------------------------------------------------
     // 3. PREPARE PAYLOAD
     // ---------------------------------------------------------
-    
+
 
     const newAdminPayload = {
       userId: adminID,
@@ -157,12 +157,21 @@ async function bootstrapSuperAdmin() {
     }
 
     logWithTime(`⚙️ Bootstrapping Super Admin... [Mode: ${authMode}]`);
-    
+
     // 👉 Handle First Name
     if (FIRST_NAME_SETTING !== FirstNameFieldSetting.DISABLED && ADMIN.NAME) {
       newAdminPayload.firstName = ADMIN.NAME;
     }
 
+    if (IS_TWO_FA_FEATURE_ENABLED) {
+      newAdminPayload.twoFactorEnabled = true;
+      newAdminPayload.twoFactorEnabledAt = new Date();
+    }
+
+    logWithTime(
+      `🔐 Super Admin Security Policy → 2FA: ${IS_TWO_FA_FEATURE_ENABLED ? "ENABLED" : "DISABLED"}`
+    );
+    
     // ---------------------------------------------------------
     // 5. CREATE ADMIN
     // ---------------------------------------------------------
