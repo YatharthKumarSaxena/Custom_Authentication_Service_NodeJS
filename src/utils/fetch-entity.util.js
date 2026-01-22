@@ -28,7 +28,7 @@ const fetchEntity = async (
     // Priority 1: userId (direct fetch)
     if (userId) {
       const query = { [userIdField]: userId };
-      const entity = await Model.findOne(query).lean();
+      const entity = await Model.findOne(query);
       
       if (entity) {
         logWithTime(`✅ ${entityType} found by userId: ${entity[userIdField]}`);
@@ -58,7 +58,7 @@ const fetchEntity = async (
 
     // Query with $or to match any provided identifier
     const query = conditions.length === 1 ? conditions[0] : { $or: conditions };
-    const entity = await Model.findOne(query).lean();
+    const entity = await Model.findOne(query);
 
     if (entity) {
       logWithTime(`✅ ${entityType} found: ${entity[userIdField] || entity.email || entity.phone}`);

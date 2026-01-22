@@ -1,7 +1,9 @@
 const crypto = require("crypto");
 const { otp, hashing } = require("@configs/security.config");
 const { algorithm, encoding, saltLength } = hashing;
-const { OTP_LENGTH, OTP_DIGITS } = otp;
+
+const OTP_LENGTH = otp.length;
+const OTP_DIGITS = otp.digits;
 
 /**
  * Generate a random numeric OTP of given length

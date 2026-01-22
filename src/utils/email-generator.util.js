@@ -7,24 +7,20 @@ const { defaultConfig, masterEmailTemplate } = require("@configs/email.config");
 const getStatusColor = (status) => {
     const { ui } = defaultConfig;
     
-    // Check success categories
     if (ui.status_categories.success.includes(status)) {
         return ui.colors.success;
     }
-    // Check warning categories
     if (ui.status_categories.warning.includes(status)) {
         return ui.colors.warning;
     }
-    // Check danger categories
     if (ui.status_categories.danger.includes(status)) {
         return ui.colors.danger;
     }
-    // Default to primary color
     return ui.colors.primary;
 };
 
 /**
- * 📧 Generator Function (Updated for OTP Support)
+ * 📧 Generator Function (FIXED - OTP Priority)
  */
 const generateEmailHtml = (templateConfig, data = {}) => {
 
@@ -48,8 +44,8 @@ const generateEmailHtml = (templateConfig, data = {}) => {
         <p>${templateConfig.message_intro}</p>
     `;
 
-    // --- 🟢 NEW LOGIC: OTP BLOCK START ---
-    // Agar 'data' object mein 'otp' field pass kiya gaya hai, to use highlight karein
+    // --- 🟢 FIXED: OTP PRIORITY CHECK ---
+    // PRIORITY 1: OTP (agar otp field hai)
     if (data.otp) {
         innerContent += `
             <div style="text-align: center; margin: 30px 0;">
@@ -61,29 +57,29 @@ const generateEmailHtml = (templateConfig, data = {}) => {
             </div>
         `;
     }
-    // --- 🟢 NEW LOGIC: OTP BLOCK END ---
-
-    // --- BUTTON LOGIC (Existing) ---
-    // Button tabhi banega jab Link ho, aur OTP na ho (ya dono chahiye to condition hata dein)
-    else if (templateConfig.actionbutton_text && templateConfig.actionlink) {
-        // Link replacement logic
-        // Agar data.frontendUrl available hai to use karein, varna process.env se lein
-        const baseUrl = data.frontendUrl || process.env.FRONTEND_URL || "#";
-        const link = templateConfig.actionlink.replace("<LINK>", baseUrl);
-
+    // PRIORITY 2: LINK BUTTON (agar explicitly link diya gaya hai)
+    else if (data.link) {
         innerContent += `
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${link}" class="btn" style="background-color: ${themeColor}">${templateConfig.actionbutton_text}</a>
+                <a href="${data.link}" class="btn" style="background-color: ${themeColor}">${templateConfig.actionbutton_text || 'Click Here'}</a>
+            </div>
+        `;
+    }
+    // PRIORITY 3: TEMPLATE DEFAULT BUTTON (fallback - agar template mein define hai)
+    else if (templateConfig.actionbutton_text && templateConfig.actionlink) {
+        const baseUrl = process.env.FRONTEND_URL || "#";
+        const finalLink = templateConfig.actionlink.replace("<LINK>", baseUrl);
+        
+        innerContent += `
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${finalLink}" class="btn" style="background-color: ${themeColor}">${templateConfig.actionbutton_text}</a>
             </div>
         `;
     }
 
-    // --- FALLBACK NOTE ---
-    // Change: Hum check kar rahe hain (!data.otp). 
-    // Matlab agar OTP bheja hai, to Link wala fallback note mat dikhao.
-    if (templateConfig.fallback_note && !data.otp) {
-
-        let note = templateConfig.fallback_note;
+    // --- FALLBACK NOTE (Only for LINK mode) ---
+    if (templateConfig.fallback_note && data.link && !data.otp) {
+        let note = templateConfig.fallback_note.replace("{{link}}", data.link);
         if (data.frontendUrl) {
             note = note.replace("<LINK>", data.frontendUrl);
         }
@@ -95,11 +91,25 @@ const generateEmailHtml = (templateConfig, data = {}) => {
         `;
     }
 
+    // --- DYNAMIC NOTES ---
     if (templateConfig.notes) {
-        innerContent += `<p style="color: #888; font-size: 12px; margin-top: 30px;"><em>${templateConfig.notes}</em></p>`;
+        let finalNotes = templateConfig.notes;
+        
+        // OTP-specific note
+        if (data.otp) {
+            finalNotes = "This verification code is valid for 10 minutes only.";
+        }
+        // Link-specific note
+        else if (data.link) {
+            finalNotes = "This verification link is valid for 10 minutes only.";
+        }
+        
+        if (finalNotes) {
+            innerContent += `<p style="color: #888; font-size: 12px; margin-top: 30px;"><em>${finalNotes}</em></p>`;
+        }
     }
 
-    // 4. Master Template Injection (Same as before)
+    // 4. Master Template Injection
     let finalHtml = masterEmailTemplate
         .replace("{{content}}", innerContent)
         .replace(/{{status_color}}/g, themeColor)
@@ -111,7 +121,7 @@ const generateEmailHtml = (templateConfig, data = {}) => {
         .replace("{{company_address}}", defaultConfig.company_address || "")
         .replace(/{{support_email}}/g, defaultConfig.support_email || "");
 
-    // 5. Data Injection for other placeholders
+    // 5. Data Injection
     Object.keys(data).forEach(key => {
         const placeholder = `{{${key}}}`;
         finalHtml = finalHtml.replace(new RegExp(placeholder, 'g'), data[key]);

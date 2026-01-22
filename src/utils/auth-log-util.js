@@ -14,7 +14,7 @@ const logAuthEvent = (user, device, eventType, description, logOptions = {}) => 
                 userId: userId,
                 eventType: eventType,
                 description: description,
-                deviceId: device.deviceId
+                deviceId: device.deviceUUID
             };
 
             if (device.deviceName) baseLog.deviceName = device.deviceName;
@@ -25,7 +25,7 @@ const logAuthEvent = (user, device, eventType, description, logOptions = {}) => 
             }
             const result = new AuthLogModel(baseLog);
             await result.save();
-            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${userId} | device: ${device.deviceId}`);
+            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${userId} | device: ${device.deviceUUID}`);
         } catch (err) {
             logWithTime(`❌ Internal Error saving AuthLog for event: ${eventType}`);
             errorMessage(err);

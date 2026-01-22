@@ -8,11 +8,15 @@ const { generateSmsMessage } = require("./sms-generator.util");
 const { logWithTime } = require("./time-stamps.util");
 
 /**
- * 🏭 Simplified Notification Dispatcher
- * @param {object} contactInfo - Result from getUserContacts() -> { email, phone, contactMode }
+ * 🚀 Flexible Notification Dispatcher
+ * - Use WITHOUT await: Fire-and-forget (signup, verification generation)
+ * - Use WITH await: Wait for confirmation (resend verification, critical flows)
+ * 
+ * @param {object} contactInfo - { email, phone, contactMode }
  * @param {object} emailTemplate - Config Object
  * @param {object} smsTemplate - Config Object
  * @param {object} data - Dynamic Data
+ * @returns {Promise<{emailSent: boolean, smsSent: boolean}>} - Success status
  */
 const sendNotification = async ({
     contactInfo, 
@@ -20,48 +24,58 @@ const sendNotification = async ({
     smsTemplate = null, 
     data = {} 
 }) => {
-    
-    const { email, phone, contactMode } = contactInfo;
-
-    // 1️⃣ Flag Logic (Ab super simple hai)
-    
-    // Email bhejo agar: Mode allow kare AND Email exist kare AND Template diya ho
-    const shouldSendEmail = (
-        (contactMode === ContactModes.EMAIL || contactMode === ContactModes.BOTH) && 
-        email && 
-        emailTemplate
-    );
-
-    // SMS bhejo agar: Mode allow kare AND Phone exist kare AND Template diya ho
-    const shouldSendSMS = (
-        (contactMode === ContactModes.PHONE || contactMode === ContactModes.BOTH) && 
-        phone && 
-        smsTemplate
-    );
-
     try {
-        // 2️⃣ Execution
+        const { email, phone, contactMode } = contactInfo;
         
-        // --- EMAIL ---
+        let emailSent = false;
+        let smsSent = false;
+
+        // 1️⃣ Flag Logic
+        const shouldSendEmail = (
+            (contactMode === ContactModes.EMAIL || contactMode === ContactModes.BOTH) && 
+            email && 
+            emailTemplate
+        );
+
+        const shouldSendSMS = (
+            (contactMode === ContactModes.PHONE || contactMode === ContactModes.BOTH) && 
+            phone && 
+            smsTemplate
+        );
+
+        // 2️⃣ EMAIL - Execute and track
         if (shouldSendEmail) {
             const emailContent = generateEmailHtml(emailTemplate, { name: data.name, ...data });
             if (emailContent) {
-                await sendEmail(email, emailContent.subject, emailContent.html);
-                logWithTime("INFO", `📧 Email sent to ${email}`);
+                try {
+                    await sendEmail(email, emailContent.subject, emailContent.html);
+                    emailSent = true;
+                    logWithTime("INFO", `📧 Email sent to ${email}`);
+                } catch (error) {
+                    logWithTime("ERROR", `❌ Email Error: ${error.message}`);
+                }
             }
         }
 
-        // --- SMS ---
+        // 3️⃣ SMS - Execute and track
         if (shouldSendSMS) {
             const smsMessage = generateSmsMessage(smsTemplate, data.otp);
             if (smsMessage) {
-                await sendSMS(phone, smsMessage);
-                logWithTime("INFO", `📱 SMS sent to ${phone}`);
+                try {
+                    await sendSMS(phone, smsMessage);
+                    smsSent = true;
+                    logWithTime("INFO", `📱 SMS sent to ${phone}`);
+                } catch (error) {
+                    logWithTime("ERROR", `❌ SMS Error: ${error.message}`);
+                }
             }
         }
 
+        return { emailSent, smsSent, success: emailSent || smsSent };
+
     } catch (error) {
-        logWithTime("ERROR", `❌ Notification Error: ${error.message}`);
+        logWithTime("ERROR", `❌ Notification Dispatch Error: ${error.message}`);
+        return { emailSent: false, smsSent: false, success: false };
     }
 };
 

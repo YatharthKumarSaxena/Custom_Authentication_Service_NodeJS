@@ -1,14 +1,15 @@
 const crypto = require("crypto");
-const { hashing } = require("@configs/security.config");
+const { hashing, link } = require("@configs/security.config");
 const { algorithm, encoding, saltLength } = hashing;
 
+const LINK_TOKEN_LENGTH = link.length; 
 /**
  * Generate a random verification token for links
  * @param {number} length
  * @returns {string} token
  */
 
-const generateLinkToken = (length = 32) => {
+const generateLinkToken = (length = LINK_TOKEN_LENGTH) => {
   return crypto.randomBytes(length).toString(encoding); // 64 chars hex by default
 };
 
