@@ -22,11 +22,8 @@ const forgetPasswordRateLimiter = createRedisDeviceRateLimiter(perDevice.forgotP
 // ✅ middlewares/rateLimit_resetPassword.js
 const resetPasswordRateLimiter = createRedisDeviceRateLimiter(perDevice.resetPassword);
 
-// ✅ middlewares/rateLimit_resendVerificationLink.js
-const resendVerificationLinkRateLimiter = createRedisDeviceRateLimiter(perDevice.resendVerificationLink);
-
-// ✅ middlewares/rateLimit_resendVerificationOTPs.js
-const resendVerificationOTPsRateLimiter = createRedisDeviceRateLimiter(perDevice.resendVerificationOTPs);
+// ✅ middlewares/rateLimit_resendVerification.js
+const resendVerificationRateLimiter = createRedisDeviceRateLimiter(perDevice.resendVerification);
 
 const verifyEmailRateLimiter = createRedisDeviceRateLimiter(perDevice.verifyEmail);
 
@@ -42,8 +39,7 @@ const deviceBasedRateLimiters = {
     activateAccountRateLimiter,
     forgetPasswordRateLimiter,
     resetPasswordRateLimiter,
-    resendVerificationLinkRateLimiter,
-    resendVerificationOTPsRateLimiter,
+    resendVerificationRateLimiter,
     verifyEmailRateLimiter,
     verifyPhoneRateLimiter,
     verifyDeviceRateLimiter
