@@ -11,66 +11,57 @@ const { rateLimiters } = require("@rate-limiters/index");
 const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
-    RESEND_VERIFICATION_LINK,
-    RESEND_VERIFICATION_OTP,
+    RESEND_VERIFICATION,
     VERIFY_DEVICE,
     VERIFY_EMAIL,
     VERIFY_PHONE
 } = ACCOUNT_VERIFICATION_ROUTES;
 
 // 📌 Resend Verification Link (Email)
-accountVerificationRouter.post(RESEND_VERIFICATION_LINK, [
-    rateLimiters.resendVerificationLinkRateLimiter,
+accountVerificationRouter.post(RESEND_VERIFICATION, [
+    rateLimiters.resendVerificationRateLimiter,
     ...baseMiddlewares,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
-], accountVerificationController.resendVerificationLink);
-
-// 📌 Resend Verification OTP (Phone)
-accountVerificationRouter.post(RESEND_VERIFICATION_OTP, [
-    rateLimiters.resendVerificationOTPsRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
-    commonMiddlewares.isUserAccountBlocked,
-    commonMiddlewares.isUserAccountActive,
-], accountVerificationController.resendVerificationOTP);
+    accountVerificationMiddlewares.verifyPurposeFieldPresenceMiddleware,
+    accountVerificationMiddlewares.verifyPurposeFieldValidationMiddleware
+], accountVerificationController.resendVerification);
 
 // 📌 Verify Email
 accountVerificationRouter.post(VERIFY_EMAIL, [
     rateLimiters.verifyEmailRateLimiter,
     ...baseMiddlewares,
+    accountVerificationMiddlewares.validateVerificationInput,
     accountVerificationMiddlewares.verifyEmailFieldPresenceMiddleware,
     accountVerificationMiddlewares.verifyEmailFieldValidationMiddleware,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
-    commonMiddlewares.isUserAccountActive,
-    accountVerificationMiddlewares.validateVerificationInput
+    commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyEmail);
 
 // 📌 Verify Phone
 accountVerificationRouter.post(VERIFY_PHONE, [
     rateLimiters.verifyPhoneRateLimiter,
     ...baseMiddlewares,
+    accountVerificationMiddlewares.validateVerificationInput,
     accountVerificationMiddlewares.verifyPhoneFieldPresenceMiddleware,
     accountVerificationMiddlewares.verifyPhoneFieldValidationMiddleware,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
-    commonMiddlewares.isUserAccountActive,
-    accountVerificationMiddlewares.validateVerificationInput
+    commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyPhone);
 
 // 📌 Verify Device (2FA)
 accountVerificationRouter.post(VERIFY_DEVICE, [
     rateLimiters.verifyDeviceRateLimiter,
     ...baseMiddlewares,
+    accountVerificationMiddlewares.validateVerificationInput,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
-    commonMiddlewares.isUserAccountActive,
-    accountVerificationMiddlewares.validateVerificationInput
+    commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyDevice);
 
 module.exports = {
