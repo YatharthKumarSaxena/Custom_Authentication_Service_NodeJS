@@ -1,77 +1,120 @@
+const { UserModel } = require("@models/user.model");
 const { verifyPasswordWithRateLimit } = require("@services/password-management/password-verification.service");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
-const { IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
+const { IS_TWO_FA_FEATURE_ENABLED, SecurityContext } = require("@configs/security.config");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { AuthErrorTypes } = require("@configs/enums.config");
 
 /**
- * Common Service to Toggle 2FA Status
- * @param {Object} user - User document
- * @param {Object} device - Device document
- * @param {String} password - Plain text password
- * @param {Boolean} shouldEnable - true to enable, false to disable
+ * 🔐 Service to Toggle Two-Factor Authentication (2FA)
+ * Atomic • Race-safe • Industry standard
  */
 const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
-    
-    // 1. Feature Flag Check (Safety)
+
+    // --------------------------------------------------
+    // 0️⃣ Feature flag safety
+    // --------------------------------------------------
     if (shouldEnable && !IS_TWO_FA_FEATURE_ENABLED) {
-        throw new Error("2FA feature is currently disabled by system administrator.");
-    }
-
-    // 2. Password Verification (With Rate Limiter) 🛡️
-    await verifyPasswordWithRateLimit(user, password);
-
-    // 3. Optimization: Check if status is already same
-    if (user.twoFactorEnabled === shouldEnable) {
-        return { 
-            success: true, 
-            message: `Two-factor authentication is already ${shouldEnable ? 'enabled' : 'disabled'}.` 
+        return {
+            success: false,
+            type: AuthErrorTypes.FEATURE_DISABLED,
+            message: "Two-factor authentication feature is currently disabled by system administrator."
         };
     }
 
-    // 4. Update Status & Timestamps (✅ Added Logic)
-    user.twoFactorEnabled = shouldEnable;
+    // --------------------------------------------------
+    // 1️⃣ Password verification (rate-limited)
+    // --------------------------------------------------
+    const passwordVerification =
+        await verifyPasswordWithRateLimit(
+            user,
+            password,
+            SecurityContext.TOGGLE_2FA
+        );
 
-    if (shouldEnable) {
-        // Case: ENABLING
-        user.twoFactorEnabledAt = new Date();
-        user.twoFactorDisabledAt = null; // Reset opposite field (Clean State)
-    } else {
-        // Case: DISABLING
-        user.twoFactorDisabledAt = new Date();
-        user.twoFactorEnabledAt = null;  // Reset opposite field (Clean State)
+    if (passwordVerification.success === false) {
+        return passwordVerification;
     }
 
-    await user.save();
+    // --------------------------------------------------
+    // 2️⃣ 🔥 Atomic toggle update
+    // --------------------------------------------------
+    const updatedUser = await UserModel.findOneAndUpdate(
+        {
+            _id: user._id,
+            twoFactorEnabled: !shouldEnable
+        },
+        {
+            $set: shouldEnable
+                ? {
+                    twoFactorEnabled: true,
+                    twoFactorEnabledAt: new Date(),
+                    twoFactorDisabledAt: null
+                }
+                : {
+                    twoFactorEnabled: false,
+                    twoFactorDisabledAt: new Date(),
+                    twoFactorEnabledAt: null
+                }
+        },
+        { new: true }
+    );
 
-    // 5. Log Event
+    // Already same state → idempotent success
+    if (!updatedUser) {
+        return {
+            success: true,
+            type: AuthErrorTypes.ALREADY_IN_STATE,
+            message: `Two-factor authentication is already ${shouldEnable ? "enabled" : "disabled"}.`
+        };
+    }
+
+    // --------------------------------------------------
+    // 3️⃣ Audit logs
+    // --------------------------------------------------
     const action = shouldEnable ? "ENABLED" : "DISABLED";
-    logWithTime(`🔒 2FA ${action} for UserID: ${user.userId} from device: ${device.deviceUUID}`);
-    
+
+    logWithTime(
+        `🔐 2FA ${action} for UserID: ${updatedUser.userId} from device: ${device.deviceUUID}`
+    );
+
     logAuthEvent(
-        user, 
-        device, 
-        shouldEnable ? AUTH_LOG_EVENTS.ENABLE_2FA : AUTH_LOG_EVENTS.DISABLE_2FA, 
-        `User ${action.toLowerCase()} 2FA security.`,
+        updatedUser,
+        device,
+        shouldEnable
+            ? AUTH_LOG_EVENTS.ENABLE_2FA
+            : AUTH_LOG_EVENTS.DISABLE_2FA,
+        `User ${action.toLowerCase()} two-factor authentication.`,
         null
     );
 
-    // 6. Send Notification
-    const contactInfo = getUserContacts(user);
+    // --------------------------------------------------
+    // 4️⃣ Notifications
+    // --------------------------------------------------
+    const contactInfo = getUserContacts(updatedUser);
+
     sendNotification({
         contactInfo,
-        emailTemplate: shouldEnable ? userTemplate.twoFactorEnabled : userTemplate.twoFactorDisabled,
-        smsTemplate: shouldEnable ? userSmsTemplate.twoFactorEnabled : userSmsTemplate.twoFactorDisabled,
-        data: { name: user.firstName || "User" }
+        emailTemplate: shouldEnable
+            ? userTemplate.twoFactorEnabled
+            : userTemplate.twoFactorDisabled,
+        smsTemplate: shouldEnable
+            ? userSmsTemplate.twoFactorEnabled
+            : userSmsTemplate.twoFactorDisabled,
+        data: { name: updatedUser.firstName || "User" }
     });
 
+    // --------------------------------------------------
+    // 5️⃣ Final response
+    // --------------------------------------------------
     return {
         success: true,
-        message: `Two-factor authentication has been successfully ${shouldEnable ? 'enabled' : 'disabled'}.`
+        message: `Two-factor authentication has been successfully ${shouldEnable ? "enabled" : "disabled"}.`
     };
 };
 

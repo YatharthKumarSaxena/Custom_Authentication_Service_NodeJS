@@ -1,56 +1,55 @@
 // src/services/password-management/password-update.service.js
 
+const { UserModel } = require("@models/user.model");
 const { hashPassword } = require("@/utils/auth.util");
-const { errorMessage } = require("@/utils/error-handler.util");
-const { logWithTime } = require("@/utils/time-stamps.util");
+const { logWithTime } = require("@utils/time-stamps.util");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 
 /**
- * Updates the user's password in the database
- * Handles hashing and security field resets
+ * 🔐 Atomic password update service
  */
-
 const updatePassword = async (user, newPassword) => {
-    try {
-        // 1. Hash the new password
-        const hashedPassword = await hashPassword(newPassword);
 
-        if (!hashedPassword) {
-            logWithTime(`❌ Password Hashing failed for User ${user.userId} in updatePassword service`);
-            return false;
-        }
+    // 1️⃣ Hash new password
+    const hashedPassword = await hashPassword(newPassword);
 
-        // 2. Update User Fields
-        user.password = hashedPassword;
-        user.passwordChangedAt = Date.now();
-
-        // 3. Security Cleanup (Good Practice)
-        if (user.security) {
-            user.security.changePassword.failedAttempts = 0;
-            user.security.changePassword.lastAttemptAt = null;
-        }
-
-        // 4. Save to Database
-        await user.save();
-
-        // 5. Send Notification
-        const contactInfo = getUserContacts(user);
-        sendNotification({
-            contactInfo,
-            emailTemplate: userTemplate.passwordChanged,
-            smsTemplate: userSmsTemplate.passwordChanged,
-            data: { name: user.firstName || "User" }
-        });
-
-        return true;
-    } catch (err) {
-        logWithTime(`❌ Error in updatePassword service for userId: (${user.userId})`);
-        errorMessage(err);
+    if (!hashedPassword) {
+        logWithTime(`❌ Password hashing failed for user ${user.userId}`);
         return false;
     }
+
+    // 2️⃣ Atomic DB update
+    const updatedUser = await UserModel.findOneAndUpdate(
+        { _id: user._id },
+        {
+            $set: {
+                password: hashedPassword,
+                passwordChangedAt: new Date(),
+                "security.changePassword.failedAttempts": 0,
+                "security.changePassword.lockoutUntil": null
+            }
+        },
+        { new: true }
+    );
+
+    if (!updatedUser) {
+        return false;
+    }
+
+    // 3️⃣ Notification AFTER successful DB write
+    const contactInfo = getUserContacts(updatedUser);
+
+    sendNotification({
+        contactInfo,
+        emailTemplate: userTemplate.passwordChanged,
+        smsTemplate: userSmsTemplate.passwordChanged,
+        data: { name: updatedUser.firstName || "User" }
+    });
+
+    return true;
 };
 
 module.exports = {
