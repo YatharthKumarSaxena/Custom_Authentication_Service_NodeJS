@@ -3,8 +3,6 @@
 const { getFrontendUrl } = require("@utils/url.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
-const { generateEmailHtml } = require("@utils/email-generator.util");
-const { generateSmsMessage } = require("@utils/sms-generator.util");
 const { VerifyMode } = require("@configs/enums.config");
 const { errorMessage } = require("@utils/error-handler.util"); // Path fix kar lena
 
