@@ -1,33 +1,43 @@
 const crypto = require("crypto");
-const { hashing, link } = require("@configs/security.config");
-const { algorithm, encoding, saltLength } = hashing;
+const { link } = require("@configs/security.config");
 
-const LINK_TOKEN_LENGTH = link.length; 
+const {
+  length,
+  algorithm,
+  encoding,
+  secret
+} = link;
+
 /**
- * Generate a random verification token for links
- * @param {number} length
- * @returns {string} token
+ * Generate opaque random verification token
  */
-
-const generateLinkToken = (length = LINK_TOKEN_LENGTH) => {
-  return crypto.randomBytes(length).toString(encoding); // 64 chars hex by default
+const generateLinkToken = (len = length) => {
+  return crypto.randomBytes(len).toString(encoding);
 };
 
 /**
- * Hash the token with a random salt
+ * Hash token using server secret (HMAC)
  */
 const hashLinkToken = (token) => {
-  const salt = crypto.randomBytes(saltLength).toString(encoding); // per-token salt
-  const tokenHash = crypto.createHash(algorithm).update(token + salt).digest(encoding);
-  return { tokenHash, salt };
+  return crypto
+    .createHmac(algorithm, secret)
+    .update(token)
+    .digest(encoding);
 };
 
 /**
- * Verify token against hash & salt
+ * Verify token safely
  */
-const verifyLinkToken = (inputToken, tokenHash, salt) => {
-  const hashCheck = crypto.createHash(algorithm).update(inputToken + salt).digest(encoding);
-  return hashCheck === tokenHash;
+const verifyLinkToken = (inputToken, storedHash) => {
+  const inputHash = crypto
+    .createHmac(algorithm, secret)
+    .update(inputToken)
+    .digest(encoding);
+
+  return crypto.timingSafeEqual(
+    Buffer.from(inputHash, encoding),
+    Buffer.from(storedHash, encoding)
+  );
 };
 
 module.exports = {
