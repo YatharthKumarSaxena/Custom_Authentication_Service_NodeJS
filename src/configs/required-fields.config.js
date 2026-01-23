@@ -7,6 +7,7 @@ const changePassword = ["password", "newPassword", "confirmPassword"];
 const resetPassword = ["newPassword", "confirmPassword"];
 const verifyEmail = ["email"];
 const verifyPhone = ["phone"];
+const resendVerification = ["purpose"];
 
 module.exports = {
     signUpField,
@@ -17,5 +18,6 @@ module.exports = {
     changePassword,
     resetPassword,
     verifyEmail,
-    verifyPhone
+    verifyPhone,
+    resendVerification
 };

@@ -48,8 +48,7 @@ module.exports = {
         CHANGE_PASSWORD: `/change-password`
     },
     ACCOUNT_VERIFICATION_ROUTES: {
-        RESEND_VERIFICATION_LINK: `/resend-verification-link`,
-        RESEND_VERIFICATION_OTP: `/resend-verification-otp`,
+        RESEND_VERIFICATION: `/resend-verification`,
         VERIFY_DEVICE: `/verify-device`,
         VERIFY_EMAIL: `/verify-email`,
         VERIFY_PHONE: `/verify-phone`

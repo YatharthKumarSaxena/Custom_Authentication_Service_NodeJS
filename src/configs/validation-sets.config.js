@@ -17,6 +17,9 @@ const validationSets = {
   },
   verifyEmail: {
     'email': validationRules.email
+  },
+  resendVerification: {
+    'purpose': validationRules.verifyPurpose
   }
 };
 

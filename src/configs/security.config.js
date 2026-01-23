@@ -9,7 +9,10 @@ module.exports = {
   },
   SecurityContext: {
     LOGIN: "login",
-    CHANGE_PASSWORD: "changePassword"
+    CHANGE_PASSWORD: "changePassword",
+    ACTIVATE_ACCOUNT: "activateAccount",
+    DEACTIVATE_ACCOUNT: "deactivateAccount",
+    TOGGLE_2FA: "toggle2FA"
   },
   authMode: process.env.AUTH_MODE,
   verificationMode: process.env.VERIFICATION_MODE,
@@ -43,10 +46,6 @@ module.exports = {
     [VerificationPurpose.DEVICE_VERIFICATION]: {
       MAX_ATTEMPTS: 2,
       LINK_EXPIRY_MINUTES: 15
-    },
-    [VerificationPurpose.REGISTRATION]: {
-      MAX_ATTEMPTS: 3,
-      LINK_EXPIRY_MINUTES: 30
     }
   },
   AUTO_LOGIN_AFTER_VERIFICATION: process.env.AUTO_LOGIN_AFTER_VERIFICATION === 'true',
@@ -66,6 +65,9 @@ module.exports = {
     DEVICE_UUID: process.env.DEVICE_UUID || "00000000-0000-4000-8000-000000000000"
   },
   link: {
-    length: 32 // 32 bytes = 64 hex characters
+    length: 32,
+    algorithm: "sha256",
+    encoding: "hex",
+    secret: process.env.VERIFICATION_LINK_SECRET
   }
 };

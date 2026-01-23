@@ -37,19 +37,12 @@ module.exports = {
       reason: "Reset password abuse",
       message: "Too many reset password attempts."
     },
-    resendVerificationLink: {
+    resendVerification: {
       maxRequests: 3,
       windowMs: 15 * 60 * 1000,
-      prefix: "resend_verification_link",
-      reason: "Resend verification link abuse",
-      message: "Too many resend verification link attempts."
-    },
-    resendVerificationOTPs: {
-      maxRequests: 5,
-      windowMs: 10 * 60 * 1000,
-      prefix: "resend_verification_otps",
-      reason: "Resend verification OTP abuse",
-      message: "Too many resend verification OTP attempts."
+      prefix: "resend_verification",
+      reason: "Resend verification abuse",
+      message: "Too many resend verification attempts."
     },
     malformedRequest: {
       maxRequests: 20,

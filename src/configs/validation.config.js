@@ -10,6 +10,10 @@ const {
     emailLength
 } = require("./fields-length.config");
 
+const {
+    VerificationPurposeHelper
+} = require("@utils/enum-validators.util");
+
 const validationRules = {
     password: {
         regex: strongPasswordRegex,
@@ -22,6 +26,9 @@ const validationRules = {
     email: {
         length: emailLength,
         regex: emailRegex
+    },
+    verifyPurpose: {
+        enum : VerificationPurposeHelper
     }
 };
 
