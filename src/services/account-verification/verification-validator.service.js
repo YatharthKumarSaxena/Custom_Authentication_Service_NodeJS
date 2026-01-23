@@ -1,7 +1,6 @@
-const { OTPModel } = require("@models/otp.model");
-const { VerificationLinkModel } = require("@models/link.model");
+const { VerificationLinkModel, OTPModel, UserModel } = require("@models/index");
 const { verifyOTP } = require("@utils/otp.util");
-const { verifyLinkToken } = require("@utils/link.util");
+const { hashLinkToken } = require("@utils/link.util");
 const { VerifyMode, ContactModes } = require("@configs/enums.config"); // ContactModes import kiya
 const { verificationMode } = require("@configs/security.config");
 
@@ -42,11 +41,12 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
     if (!isValid) {
         // ❌ INCORRECT OTP SCENARIO
 
-        // Attempt count badhao
-        otpRecord.attemptCount += 1;
-        await otpRecord.save();
+        await OTPModel.updateOne(
+            { _id: otpRecord._id },
+            { $inc: { attemptCount: 1 } }
+        );
 
-        const remaining = otpRecord.maxAttempts - otpRecord.attemptCount;
+        const remaining = otpRecord.maxAttempts - (otpRecord.attemptCount + 1);
 
         if (remaining <= 0) {
             return { success: false, message: "Invalid OTP. Max attempts reached. Request a new code." };
@@ -57,46 +57,78 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
 
     // ✅ SUCCESS SCENARIO
 
-    // Mark as used
-    otpRecord.isUsed = true;
-    await otpRecord.save();
+    await OTPModel.updateOne(
+        { _id: otpRecord._id, isUsed: false },
+        { $set: { isUsed: true } }
+    );
 
     return { success: true, message: "OTP Verified Successfully" };
 };
 
 /**
- * Service to Verify Link
+ * 🔐 Service to verify verification link (industry standard)
  */
-const verifyUserLink = async ({ userId, purpose, inputToken }) => {
-    // 1. Find the link record
-    const linkRecord = await VerificationLinkModel.findOne({
-        userId,
-        purpose,
-        isUsed: false
-    })
-        .select("+tokenHash +salt")
-        .sort({ createdAt: -1 });
+const verifyUserLink = async ({ inputToken, purpose }) => {
 
+    // 1️⃣ Hash incoming token using same secret
+    const tokenHash = hashLinkToken(inputToken);
+
+    // 2️⃣ Atomically find & mark link as used
+    const linkRecord = await VerificationLinkModel.findOneAndUpdate(
+        {
+            tokenHash,
+            purpose,
+            isUsed: false,
+            expiresAt: { $gt: new Date() }
+        },
+        {
+            $set: { isUsed: true }
+        },
+        {
+            new: true
+        }
+    );
+
+    // 3️⃣ If no record found → invalid / expired / already used
     if (!linkRecord) {
-        return { success: false, message: "Invalid or already used verification link." };
+        return {
+            success: false,
+            message: "Invalid or expired verification link."
+        };
     }
 
-    if (new Date() > linkRecord.expiresAt) {
-        return { success: false, message: "Link has expired. Please request a new one." };
+    // 4️⃣ Fetch user from verified link
+    const user = await UserModel.findById(linkRecord.userId);
+
+    if (!user) {
+        return {
+            success: false,
+            message: "User not found."
+        };
     }
 
-    // Verify the Token
-    const isValid = verifyLinkToken(inputToken, linkRecord.tokenHash, linkRecord.salt);
-
-    if (!isValid) {
-        return { success: false, message: "Invalid verification link." };
+    // 5️⃣ Account status checks
+    if (!user.isActive) {
+        return {
+            success: false,
+            message: "User account is deactivated."
+        };
     }
 
-    // Mark used
-    linkRecord.isUsed = true;
-    await linkRecord.save();
+    if (user.isBlocked) {
+        return {
+            success: false,
+            message: "User account is blocked."
+        };
+    }
 
-    return { success: true, message: "Link Verified Successfully" };
+    // ✅ Verified successfully
+    return {
+        success: true,
+        user,
+        purpose: linkRecord.purpose,
+        message: "Link Verified Successfully."
+    };
 };
 
 const verifyVerification = async (userId, deviceId, purpose, code, contactMode) => {
@@ -108,9 +140,8 @@ const verifyVerification = async (userId, deviceId, purpose, code, contactMode) 
 
     if (checkVerifyType) {
         return await verifyUserLink({
-            userId,
-            purpose,
-            inputToken: code
+            inputToken: code,
+            purpose
         });
     } else {
         // Default to OTP (Safe fallback)

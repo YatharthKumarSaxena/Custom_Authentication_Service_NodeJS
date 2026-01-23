@@ -9,9 +9,9 @@ const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { expiryTimeOfRefreshToken } = require("@/configs/token.config");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
-const { userTemplate } = require("@services/templates/emailTemplate");
-const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { userTemplate, userSmsTemplate } = require("@services/templates/emailTemplate");
 const { DeviceModel } = require("@models/device.model");
+const { UserModel } = require("@models/user.model");
 
 /**
  * 🔒 PRIVATE CORE
@@ -26,7 +26,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         type
     } = config;
 
-    // ✅ ensure device exists
+    // 1️⃣ Ensure device
     const deviceDoc = await DeviceModel.findOneAndUpdate(
         { deviceUUID: device.deviceUUID },
         {
@@ -36,7 +36,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // ✅ verify OTP / LINK
+    // 2️⃣ Verify OTP / LINK
     const validation = await verifyVerification(
         user._id,
         deviceDoc._id,
@@ -49,88 +49,97 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         return { success: false, message: validation.message };
     }
 
-    // ✅ mark verified
-    user[updateField] = true;
-    await user.save();
+    // 🔥 LINK verification may return fresh user
+    const verifiedUser = validation.user || user;
 
+    // 3️⃣ ✅ ATOMIC VERIFICATION UPDATE
+    const updateResult = await UserModel.updateOne(
+        { _id: verifiedUser._id, [updateField]: false },
+        { $set: { [updateField]: true } }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+        return {
+            success: false,
+            message: `${type} already verified.`
+        };
+    }
+
+    verifiedUser[updateField] = true;
+
+    // 4️⃣ Logs
     logAuthEvent(
-        user,
+        verifiedUser,
         device,
         logEvent,
-        `User ${user.userId} verified ${type} via ${contactMode}`,
+        `User ${verifiedUser.userId} verified ${type}`,
         null
     );
 
-    let checkUserIsVerified = false;
-    if(authMode === AuthModes.BOTH){
-        checkUserIsVerified = user["isEmailVerified"] && user["isPhoneVerified"];
-    } else if (authMode === AuthModes.EMAIL){
-        checkUserIsVerified = user["isEmailVerified"];
-    } else if (authMode === AuthModes.PHONE){
-        checkUserIsVerified = user["isPhoneVerified"];
+    // 5️⃣ Check full verification
+    let fullyVerified = false;
+
+    if (authMode === AuthModes.BOTH) {
+        fullyVerified = verifiedUser.isEmailVerified && verifiedUser.isPhoneVerified;
+    } else if (authMode === AuthModes.EMAIL) {
+        fullyVerified = verifiedUser.isEmailVerified;
+    } else if (authMode === AuthModes.PHONE) {
+        fullyVerified = verifiedUser.isPhoneVerified;
     } else {
-        checkUserIsVerified = user["isEmailVerified"] || user["isPhoneVerified"];
+        fullyVerified = verifiedUser.isEmailVerified || verifiedUser.isPhoneVerified;
     }
 
-    // ✅ welcome notification
-    if (
-        checkUserIsVerified
-    ) {
-        const contactInfo = getUserContacts(user);
+    // 6️⃣ Welcome notification
+    if (fullyVerified) {
+        const contactInfo = getUserContacts(verifiedUser);
+
         sendNotification({
             contactInfo,
             emailTemplate: userTemplate.welcome,
             smsTemplate: userSmsTemplate.welcome,
-            data: { name: user.firstName || "User" }
+            data: { name: verifiedUser.firstName || "User" }
         });
     }
 
-    // ✅ auto login
+    // 7️⃣ Auto login
     let autoLoggedIn = false;
 
     if (AUTO_LOGIN_AFTER_VERIFICATION) {
         const canLogin =
             authMode === AuthModes.EITHER ||
             authMode === authModeType ||
-            (authMode === AuthModes.BOTH && user[otherVerifiedField]);
+            (authMode === AuthModes.BOTH && verifiedUser[otherVerifiedField]);
 
         if (canLogin) {
-            logWithTime(
-                `🔄 Auto-login triggered for User (${user.userId}) after ${type} verification`
-            );
+            logWithTime(`🔄 Auto-login after ${type} verification for ${verifiedUser.userId}`);
 
             const refreshToken = createToken(
-                user.userId,
+                verifiedUser.userId,
                 expiryTimeOfRefreshToken,
                 device.deviceUUID
             );
 
             if (!refreshToken) {
-                return {
-                    success: false,
-                    message: "Token generation failed."
-                };
+                return { success: false, message: "Token generation failed." };
             }
 
             const loginSuccess = await loginUserOnDevice(
-                user,
+                verifiedUser,
                 device,
                 refreshToken,
                 `Auto-Login (${type} Verified)`
             );
 
-            if (loginSuccess) {
-                autoLoggedIn = true;
-            }
+            autoLoggedIn = !!loginSuccess;
         }
     }
 
     return { success: true, autoLoggedIn };
 };
 
-// ===================================================
-// 🚀 PUBLIC SERVICES
-// ===================================================
+// ============================
+// PUBLIC SERVICES
+// ============================
 
 const verifyEmailService = (user, device, code, contactMode) =>
     performVerificationCore(user, device, code, contactMode, {

@@ -29,20 +29,20 @@ const findActiveLink = async ({ userId, deviceId, purpose }) => {
 };
 
 /**
- * 🔒 INTERNAL: Sirf Link Generate aur Save karega
+ * 🔒 INTERNAL: only creates and stores verification link
  */
 const generateUserLink = async ({ user, deviceId, purpose, contactMode, expiresAt }) => {
-    const link = generateLinkToken();
-    const { tokenHash, salt } = hashLinkToken(link);
+
+    const token = generateLinkToken();
+    const tokenHash = hashLinkToken(token);
 
     const verificationResult = await VerificationLinkModel.create({
         userId: user._id,
-        deviceId: deviceId,
+        deviceId,
         contact: contactMode,
-        purpose: purpose,
-        tokenHash: tokenHash,
-        salt: salt,
-        expiresAt: expiresAt,
+        purpose,
+        tokenHash,
+        expiresAt,
         isUsed: false
     });
 
@@ -51,27 +51,31 @@ const generateUserLink = async ({ user, deviceId, purpose, contactMode, expiresA
         return null;
     }
 
-    logWithTime(`🔗 Generated Link for User ID ${user.userId} for purpose ${purpose}.`);
-    return { type: 'LINK', token: link };
+    logWithTime(`🔗 Verification link generated for User ID ${user.userId} | Purpose: ${purpose}`);
+
+    return {
+        type: VerifyMode.LINK,
+        token
+    };
 };
 
 /**
- * 🔒 INTERNAL: Sirf OTP Generate aur Save karega
+ * 🔒 INTERNAL: only creates and stores OTP
  */
 const generateUserOTP = async ({ user, deviceId, purpose, contactMode, maxAttempts, expiresAt }) => {
+
     const otp = generateOTP();
-    console.log("Generated OTP:", otp); // For debugging; remove in production
     const { otpHash, salt } = hashOTP(otp);
 
     const verificationResult = await OTPModel.create({
         userId: user._id,
-        deviceId: deviceId,
+        deviceId,
         contact: contactMode,
-        purpose: purpose,
-        otpHash: otpHash,
-        salt: salt,
-        expiresAt: expiresAt,
-        maxAttempts: maxAttempts,
+        purpose,
+        otpHash,
+        salt,
+        expiresAt,
+        maxAttempts,
         isUsed: false
     });
 
@@ -82,23 +86,29 @@ const generateUserOTP = async ({ user, deviceId, purpose, contactMode, maxAttemp
 
     logWithTime(`🔢 Generated OTP for User ID ${user.userId} for purpose ${purpose}.`);
 
-    return { type: 'OTP', token: otp };
+    return {
+        type: VerifyMode.OTP,
+        token: otp
+    };
 };
 
 /**
- * 🚀 PUBLIC MASTER FUNCTION
- * Ye Logic Decision Tree handle karega aur sahi internal function call karega
+ * 🚀 MASTER DECISION ENGINE
  */
-const generateVerificationForUser = async (user, deviceId, purpose, contactMode, maxAttempts, expiryTime) => {
+const generateVerificationForUser = async (
+    user,
+    deviceId,
+    purpose,
+    contactMode,
+    maxAttempts,
+    expiryTime
+) => {
     try {
-        // 1. Expiry Calculation Common hai
         const expirationDate = new Date(Date.now() + expiryTime * 1000);
 
-        // 2. Logic Check (Kaunsa tareeka use karna hai?)
-        const shouldGenerateLink = (
+        const shouldGenerateLink =
             verificationMode === VerifyMode.LINK &&
-            contactMode === ContactModes.EMAIL // Only Email supports Links
-        );
+            contactMode === ContactModes.EMAIL;
 
         let verificationResult;
 
@@ -111,14 +121,14 @@ const generateVerificationForUser = async (user, deviceId, purpose, contactMode,
             });
 
             if (existingLink) {
-                logWithTime(`⚠️ Active verification link already exists for ${user.userId}`);
-
                 return {
                     type: VerifyMode.LINK,
                     reused: true,
+                    token: null,
                     expiresAt: existingLink.expiresAt
                 };
             }
+
             verificationResult = await generateUserLink({
                 user,
                 deviceId,
@@ -126,6 +136,7 @@ const generateVerificationForUser = async (user, deviceId, purpose, contactMode,
                 contactMode,
                 expiresAt: expirationDate
             });
+
         } else {
 
             const existingOTP = await findActiveOTP({
@@ -135,14 +146,14 @@ const generateVerificationForUser = async (user, deviceId, purpose, contactMode,
             });
 
             if (existingOTP) {
-                logWithTime(`⚠️ Active OTP already exists for ${user.userId}`);
-
                 return {
                     type: VerifyMode.OTP,
                     reused: true,
+                    token: null,
                     expiresAt: existingOTP.expiresAt
                 };
             }
+
             verificationResult = await generateUserOTP({
                 user,
                 deviceId,
@@ -158,7 +169,12 @@ const generateVerificationForUser = async (user, deviceId, purpose, contactMode,
             return null;
         }
 
-        return verificationResult; // Return { type, token }
+        // ✅ CONSISTENT FINAL RESPONSE
+        return {
+            ...verificationResult,
+            reused: false,
+            expiresAt: expirationDate
+        };
 
     } catch (err) {
         logWithTime(`❌ Error generating verification for user: ${user._id || user}`);
@@ -169,6 +185,6 @@ const generateVerificationForUser = async (user, deviceId, purpose, contactMode,
 
 module.exports = {
     generateVerificationForUser,
-    generateUserLink, // Exported in case you need to force-generate a link internally later
-    generateUserOTP   // Exported in case you need to force-generate an OTP internally later
+    generateUserLink,
+    generateUserOTP
 };
