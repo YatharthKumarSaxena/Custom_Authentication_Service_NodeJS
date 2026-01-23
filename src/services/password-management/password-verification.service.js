@@ -1,47 +1,58 @@
 const { checkPasswordIsValid } = require("@/utils/auth.util");
-const { checkIsUserLocked, handleFailedPasswordAttempt, resetPasswordAttempts } = require("@/utils/password-limiter.util");
-const { AuthErrorTypes } = require("@configs/enums.config"); // Import Enum
+const {
+    checkIsUserLocked,
+    handleFailedPasswordAttempt,
+    resetPasswordAttempts
+} = require("@/utils/password-limiter.util");
+const { AuthErrorTypes } = require("@configs/enums.config");
 const { UserModel } = require("@models/user.model");
 
 const verifyPasswordWithRateLimit = async (user, plainPassword, context) => {
 
-    // 1. Check Lock Status
+    // 1️⃣ Fetch fresh security + password
     const userForAuth = await UserModel
         .findById(user._id)
         .select("+password +security");
 
+    // 2️⃣ Check lock status
     const lockStatus = checkIsUserLocked(userForAuth, context);
+
     if (lockStatus.isLocked) {
-        // Service throws specific error type
-        throw {
+        return {
+            success: false,
             type: AuthErrorTypes.LOCKED,
             message: lockStatus.message
         };
     }
 
-    // 2. Validate Password
-    const isPasswordValid = await checkPasswordIsValid(user.userId, plainPassword);
+    // 3️⃣ Verify password
+    const isPasswordValid = await checkPasswordIsValid(
+        user.userId,
+        plainPassword
+    );
 
-    // 3. Handle Invalid Password
     if (!isPasswordValid) {
-        const failureResult = await handleFailedPasswordAttempt(userForAuth, context);
 
-        if (failureResult.isLocked) {
-            throw {
-                type: AuthErrorTypes.LOCKED,
-                message: failureResult.message
-            };
-        } else {
-            throw {
-                type: AuthErrorTypes.INVALID_PASSWORD,
-                message: failureResult.message // "Invalid Password. 2 attempts remaining."
-            };
-        }
+        const failureResult = await handleFailedPasswordAttempt(
+            userForAuth,
+            context
+        );
+
+        return {
+            success: false,
+            type: failureResult.isLocked
+                ? AuthErrorTypes.LOCKED
+                : AuthErrorTypes.INVALID_PASSWORD,
+            message: failureResult.message
+        };
     }
 
-    // 4. Success -> Reset
-    await resetPasswordAttempts(user);
-    return true;
+    // 4️⃣ Success → reset counters
+    await resetPasswordAttempts(userForAuth);
+
+    return {
+        success: true
+    };
 };
 
 module.exports = { verifyPasswordWithRateLimit };
