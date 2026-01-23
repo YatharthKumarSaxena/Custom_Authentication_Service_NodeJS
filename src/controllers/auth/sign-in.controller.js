@@ -13,100 +13,94 @@ const {
     throwValidationError,
     throwBadRequestError,
     getLogIdentifiers,
-    throwSpecificInternalServerError,
     throwTooManyRequestsError
 } = require("@utils/error-handler.util");
 
-/**
- * Sign In Controller
- * Delegates logic to auth.service.js
- */
 const signIn = async (req, res) => {
     try {
         const user = req.foundUser;
         const device = req.device;
         const plainPassword = req.body.password;
-        // ---------------------------------------------------------
-        // 1. ORCHESTRATION (Call Service)
-        // ---------------------------------------------------------
-        // Ye function check karega: Already Login? -> Password Valid? -> Session Create -> Cookie Set
-        const signInResult = await performSignIn(user, device, plainPassword);
 
+        const result = await performSignIn(user, device, plainPassword);
 
-        if (signInResult.rateLimited) {
+        // --------------------------------------------------
+        // 🔐 RATE LIMIT (2FA resend / password)
+        // --------------------------------------------------
+        if (result.rateLimited) {
             return throwTooManyRequestsError(
                 res,
-                signInResult.message,
-                Math.ceil((new Date(signInResult.retryAfter).getTime() - Date.now()) / 1000)
+                result.message,
+                Math.ceil(
+                    (new Date(result.retryAfter).getTime() - Date.now()) / 1000
+                )
             );
         }
-        
-        if (signInResult.requires2FA && signInResult.success) {
+
+        // --------------------------------------------------
+        // ❌ BUSINESS FAILURES
+        // --------------------------------------------------
+        if (!result.success) {
+
+            if (result.type === AuthErrorTypes.LOCKED) {
+                return throwTooManyRequestsError(res, result.message);
+            }
+
+            if (result.type === AuthErrorTypes.INVALID_PASSWORD) {
+                return throwValidationError(res, {
+                    password: result.message
+                });
+            }
+
+            if (result.type === AuthErrorTypes.ALREADY_LOGGED_IN) {
+                return throwBadRequestError(res, result.message);
+            }
+
+            return throwBadRequestError(res, result.message);
+        }
+
+        // --------------------------------------------------
+        // 🔐 2FA REQUIRED
+        // --------------------------------------------------
+        if (result.requires2FA) {
             return res.status(OK).json({
                 success: true,
                 requires2FA: true,
-                message: signInResult.message
+                message: result.message
             });
         }
 
-        if (!signInResult.success && signInResult.requires2FA) {
-            return throwSpecificInternalServerError(res, "2FA required but sign-in failed.");
-        }
-
-        // ---------------------------------------------------------
-        // 2. ACCESS TOKEN GENERATION (Response Header)
-        // ---------------------------------------------------------
-        // Refresh token secure cookie me hai (Service ne set kar diya).
-        // Access token hum yahan header ke liye banayenge.
-        const accessToken = createToken(user.userId, expiryTimeOfAccessToken, device.deviceUUID);
+        // --------------------------------------------------
+        // ✅ ACCESS TOKEN
+        // --------------------------------------------------
+        const accessToken = createToken(
+            user.userId,
+            expiryTimeOfAccessToken,
+            device.deviceUUID
+        );
 
         const headers = buildAccessTokenHeaders(accessToken);
 
         if (!accessToken || !headers) {
-            throw new Error("Failed to generate or set access token headers.");
+            throw new Error("Failed to generate access token");
         }
 
-        // Set Headers
         res.set(headers);
 
-        // ---------------------------------------------------------
-        // 3. SUCCESS RESPONSE
-        // ---------------------------------------------------------
-
-        const praiseBy = user.firstName || "User";
-
-        logWithTime(`✅ User (${user.userId}) signed in successfully on device (${device.deviceUUID}).`);
+        logWithTime(
+            `✅ User (${user.userId}) logged in from device (${device.deviceUUID})`
+        );
 
         return res.status(OK).json({
             success: true,
-            message: `Welcome ${praiseBy}, You are successfully logged in.`
+            message: `Welcome ${user.firstName || "User"}, you are logged in successfully.`
         });
 
     } catch (err) {
-        // ---------------------------------------------------------
-        // ERROR HANDLING (Map Service Errors to HTTP Responses)
-        // ---------------------------------------------------------
-
-        // 1. User Locked (423)
-        if (err.type === AuthErrorTypes.LOCKED) {
-            return throwBadRequestError(res, err.message);
-        }
-
-        // 2. Invalid Password (400/401)
-        if (err.type === AuthErrorTypes.INVALID_PASSWORD) {
-            return throwValidationError(res, { password: err.message });
-        }
-
-        // 3. Already Logged In (400)
-        if (err.type === AuthErrorTypes.ALREADY_LOGGED_IN) {
-            return throwBadRequestError(res, err.message);
-        }
-
-        // 4. Unknown/Internal Errors (500)
-        const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ SignIn Error ${getIdentifiers}:`);
+        const identifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Sign-in fatal error ${identifiers}: ${err.message}`);
         return throwInternalServerError(res, err);
     }
-}
+};
 
 module.exports = { signIn };

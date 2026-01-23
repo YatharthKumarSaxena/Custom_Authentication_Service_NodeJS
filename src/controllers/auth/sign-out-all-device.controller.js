@@ -19,7 +19,7 @@ const signOutAllDevices = async (req, res) => {
 
         // 3. Extract correct identifiers 
         res.set('x-access-token', '');
-        const deviceUUID = req.device.deviceUUID;
+        const deviceUUID = device.deviceUUID;
         const userId = user.userId; 
 
         logWithTime(`🔓 User (${userId}) successfully logged out from all devices via request from (${deviceUUID})`);
