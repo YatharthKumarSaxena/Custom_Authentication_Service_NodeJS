@@ -1,10 +1,8 @@
-const { resendVerificationLink } = require("./resend-verification-link.controller");
-const { resendVerificationOTP } = require("./resend-verification-otp.controller");
+const { resendVerification } = require("./resend-verification.controller");
 const { verifyEmail, verifyDevice, verifyPhone } = require("./verification.controller");
 
 const accountVerificationController = {
-    resendVerificationLink,
-    resendVerificationOTP,
+    resendVerification,
     verifyEmail,
     verifyPhone,
     verifyDevice

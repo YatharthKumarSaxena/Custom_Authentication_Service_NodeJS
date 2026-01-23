@@ -27,7 +27,7 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
         const device = req.device;
 
         // Get contactMode from getUserContacts (instead of req.body.type)
-        const contactMode = getUserContacts(user);
+        const { contactMode } = getUserContacts(user);
 
         logWithTime(`🔍 Initiating ${successMessageBase} process for User ID: ${user.userId} via ${contactMode}`);
         // 1. Dynamic Service Call
