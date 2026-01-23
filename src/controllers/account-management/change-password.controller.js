@@ -3,13 +3,13 @@ const { AuthErrorTypes } = require("@configs/enums.config");
 const { OK } = require("@configs/http-status.config");
 const { logoutUserCompletely } = require("@/services/auth/auth-session.service");
 const { logAuthEvent } = require("@/utils/auth-log-util");
-const { 
-    throwBadRequestError, 
-    throwInvalidResourceError, 
-    throwInternalServerError, 
-    getLogIdentifiers, 
-    throwSpecificInternalServerError, 
-    throwTooManyRequestsError 
+const {
+    throwBadRequestError,
+    throwInvalidResourceError,
+    throwInternalServerError,
+    getLogIdentifiers,
+    throwSpecificInternalServerError,
+    throwTooManyRequestsError
 } = require("@utils/error-handler.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
@@ -33,18 +33,21 @@ const changePassword = async (req, res) => {
         // ---------------------------------------------------------
         // 2. Verify Old Password (with Rate Limit)
         // ---------------------------------------------------------
-        try {
-            await verifyPasswordWithRateLimit(user, password, SecurityContext.CHANGE_PASSWORD);
-        } catch (error) {
-            if (error.type === AuthErrorTypes.LOCKED){
-                logWithTime(`❌ Change Password locked due to too many failed attempts for User ${user.userId}`);
-                return throwTooManyRequestsError(res, error.message);
-            } 
-            if (error.type === AuthErrorTypes.INVALID_PASSWORD){
-                logWithTime(`❌ Change Password failed due to invalid current password for User ${user.userId}`);
-                return throwInvalidResourceError(res, "Password", error.message);
+        const passwordVerification = await verifyPasswordWithRateLimit(user, password, SecurityContext.CHANGE_PASSWORD);
+        
+        if (!passwordVerification.success) {
+
+            if (passwordVerification.type === AuthErrorTypes.LOCKED) {
+                return throwTooManyRequestsError(res, passwordVerification.message);
             }
-            throw error; // Internal errors bubble up
+
+            if (passwordVerification.type === AuthErrorTypes.INVALID_PASSWORD) {
+                return throwInvalidResourceError(
+                    res,
+                    "Password",
+                    passwordVerification.message
+                );
+            }
         }
 
         // ---------------------------------------------------------
@@ -62,22 +65,21 @@ const changePassword = async (req, res) => {
         // ---------------------------------------------------------
         // Password change ho gaya hai, agar logout fail bhi hua to bhi success hi return karenge
         let logoutStatusMsg = "You have been logged out from all devices.";
-        
-        try {
-            // Note: logoutUserCompletely(req, res, context) standard signature use karo
-            await logoutUserCompletely(user, device, "Password Change Request");
-            res.set('x-access-token', '');
-        } catch (logoutError) {
+
+        const isLoggedOut = await logoutUserCompletely(user, device, "Password Change Request");
+            
+        if(!isLoggedOut) {
             logWithTime(`⚠️ Warning: Password changed but logout failed for User ${user.userId}`);
-            logoutStatusMsg = "Password changed, but automatic logout failed. Please logout manually.";
-            // Error swallow kar lo
+            logoutStatusMsg = "Password changed, but automatic logout failed. Please logout manually."
         }
 
+        res.set('x-access-token', '');
+        
         // ---------------------------------------------------------
         // 5. Response & Logs
         // ---------------------------------------------------------
         logWithTime(`✅ Password changed for User (${user.userId}) from device (${device.deviceUUID})`);
-        
+
         logAuthEvent(user, device, AUTH_LOG_EVENTS.CHANGE_PASSWORD, `User changed password.`, null);
 
         return res.status(OK).json({

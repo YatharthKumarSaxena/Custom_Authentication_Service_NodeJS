@@ -1,79 +1,83 @@
-// Modules & Configs
 const { OK } = require("@configs/http-status.config");
 const { toggleTwoFactorService } = require("@services/account-management/two-factor.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
-// Error Handlers
-const { 
-    throwInternalServerError, 
-    throwInvalidResourceError, 
+const {
+    throwInternalServerError,
+    throwInvalidResourceError,
     throwTooManyRequestsError,
     throwBadRequestError,
-    getLogIdentifiers,
-    throwAccessDeniedError
+    throwAccessDeniedError,
+    getLogIdentifiers
 } = require("@utils/error-handler.util");
+
 const { logWithTime } = require("@utils/time-stamps.util");
 const { isAdminId } = require("@/utils/auth.util");
 
-/**
- * Helper to handle the toggle request (DRY Principle)
- */
 const handleTwoFactorToggle = async (req, res, shouldEnable) => {
     try {
         const user = req.user;
         const device = req.device;
         const { password } = req.body;
 
+        // 🚫 Admin protection
         if (isAdminId(user.userId)) {
-            logWithTime(`❌ 2FA Toggle Blocked: Attempt to change 2FA for Super Admin ${user.userId}.`);
-            return throwAccessDeniedError(res, "Modifications to Super Admin 2FA are not allowed.");
+            return throwAccessDeniedError(
+                res,
+                "Modifications to Super Admin 2FA are not allowed."
+            );
         }
 
-        // Service Call
-        const result = await toggleTwoFactorService(user, device, password, shouldEnable);
+        // ✅ Call service
+        const result = await toggleTwoFactorService(
+            user,
+            device,
+            password,
+            shouldEnable
+        );
 
+        // ❌ Business failures handled HERE
+        if (!result.success) {
+
+            if (result.type === AuthErrorTypes.LOCKED) {
+                return throwTooManyRequestsError(res, result.message);
+            }
+
+            if (result.type === AuthErrorTypes.INVALID_PASSWORD) {
+                return throwInvalidResourceError(
+                    res,
+                    "Password",
+                    result.message
+                );
+            }
+
+            return throwBadRequestError(res, result.message);
+        }
+
+        // ✅ Success
         return res.status(OK).json({
             success: true,
             message: result.message
         });
 
     } catch (err) {
-        // 1. Locked (Rate Limit)
-        if (err.type === AuthErrorTypes.LOCKED) {
-            logWithTime(`❌ 2FA Toggle Blocked: User ${req.user.userId} is locked.`);
-            return throwTooManyRequestsError(res, err.message);
-        }
-
-        // 2. Invalid Password
-        if (err.type === AuthErrorTypes.INVALID_PASSWORD) {
-            logWithTime(`❌ 2FA Toggle Failed: Invalid password for User ${req.user.userId}.`);
-            return throwInvalidResourceError(res, "Password", err.message);
-        }
-
-        // 3. System Disabled Feature Error
-        if (err.message.includes("disabled by system")) {
-            return throwBadRequestError(res, err.message);
-        }
-
-        // 4. Internal Errors
+        // 🚨 Only unexpected errors
         const identifiers = getLogIdentifiers(req);
-        const action = shouldEnable ? "Enabling" : "Disabling";
-        logWithTime(`❌ Internal Error while ${action} 2FA ${identifiers}`);
+        const action = shouldEnable ? "enable" : "disable";
+
+        logWithTime(
+            `❌ Internal error while trying to ${action} 2FA for ${identifiers}: ${err.message}`
+        );
+
         return throwInternalServerError(res, err);
     }
 };
 
-// ==========================================
-// 🚀 EXPORTED CONTROLLERS
-// ==========================================
+const enable2FA = (req, res) =>
+    handleTwoFactorToggle(req, res, true);
 
-const enable2FA = async (req, res) => {
-    return await handleTwoFactorToggle(req, res, true);
-};
-
-const disable2FA = async (req, res) => {
-    return await handleTwoFactorToggle(req, res, false);
-};
+const disable2FA = (req, res) =>
+    handleTwoFactorToggle(req, res, false);
 
 module.exports = {
     enable2FA,

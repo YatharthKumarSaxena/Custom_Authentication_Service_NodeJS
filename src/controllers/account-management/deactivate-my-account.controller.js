@@ -16,62 +16,64 @@ const { isAdminId } = require("@/utils/auth.util");
 
 const deactivateMyAccount = async (req, res) => {
     try {
-        const user = req.user; 
+        const user = req.user;
         const device = req.device;
         const { password } = req.body;
 
-        if(isAdminId(user.userId)){
-            logWithTime(`❌ Deactivation Blocked: Attempt to deactivate Super Admin ${user.userId}.`);
-            return throwAccessDeniedError(res,"Deactivation of Admin account is not permitted.");
+        if (isAdminId(user.userId)) {
+            return throwAccessDeniedError(
+                res,
+                "Deactivation of Admin account is not permitted."
+            );
         }
 
-        // ---------------------------------------------------------
-        // 1. CRITICAL: DB Update (Deactivate)
-        // ---------------------------------------------------------
-        await deactivateAccountService(user, device, password);
+        // 1️⃣ Call service
+        const result = await deactivateAccountService(user, device, password);
 
-        // ---------------------------------------------------------
-        // 2. NON-CRITICAL: Logout (Best Effort)
-        // ---------------------------------------------------------
-        try {
-            await logoutUserCompletely(user, device, "Account Deactivation Request");
-            res.set('x-access-token', '');
-        } catch (logoutError) {
-            logWithTime(`⚠️ Warning: Account deactivated but logout failed for User ${user.userId} from device ${device.deviceUUID}`);
+        if (!result.success) {
+
+            if (result.type === AuthErrorTypes.LOCKED) {
+                return throwTooManyRequestsError(res, result.message);
+            }
+
+            if (result.type === AuthErrorTypes.INVALID_PASSWORD) {
+                return throwInvalidResourceError(res, "Password", result.message);
+            }
+
+            if (result.type === AuthErrorTypes.ALREADY_DEACTIVATED) {
+                return throwInvalidResourceError(res, "Account", result.message);
+            }
+
+            return throwInternalServerError(res, result.message);
         }
 
-        // ---------------------------------------------------------
-        // 3. SUCCESS RESPONSE
-        // ---------------------------------------------------------
-        logWithTime(`✅ Account deactivation process completed for User ${user.userId} from device ${device.deviceUUID}`);
-        
+        // 2️⃣ Best-effort logout
+        const isLoggedOut = await logoutUserCompletely(
+            user,
+            device,
+            "Account Deactivation"
+        );
+
+        if (isLoggedOut) {
+            res.set("x-access-token", "");
+        } else {
+            logWithTime(
+                `⚠️ Warning: Account deactivated but logout failed for User ${user.userId}`
+            );
+        }
+
+        // 3️⃣ Response
         return res.status(OK).json({
             success: true,
-            message: "Account deactivated successfully.",
+            message: result.message,
             notice: "You have been logged out."
         });
 
     } catch (err) {
-        // 🔥 ERROR HANDLING FIXED
-        
-        // 1. Locked (Rate Limit) Check ✅
-        if (err.type === AuthErrorTypes.LOCKED) {
-            logWithTime(`❌ Deactivation blocked: User ${req.user.userId} is locked due to too many failed attempts.`);
-            // Agar aapke paas 'throwTooManyRequestsError' nahi hai to 'throwBadRequestError' use karein
-            return throwTooManyRequestsError(res, err.message);
-        }
-
-        // 2. Invalid Password Check
-        if (err.type === AuthErrorTypes.INVALID_PASSWORD) {
-            logWithTime(`❌ Deactivation failed due to invalid password for User ${req.user.userId} from device ${req.device.deviceUUID}`);
-            return throwInvalidResourceError(res, "Password", err.message);
-        }
-
-        // 3. Internal Server Error
-        const getIdentifiers = getLogIdentifiers(req);
-        logWithTime(`❌ Internal Error while deactivating account ${getIdentifiers}: ${err.message}`);
+        const identifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Deactivate account error for ${identifiers}: ${err.message}`);
         return throwInternalServerError(res, err);
     }
-}
+};
 
 module.exports = { deactivateMyAccount };
