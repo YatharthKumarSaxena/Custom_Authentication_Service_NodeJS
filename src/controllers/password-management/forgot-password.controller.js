@@ -1,28 +1,40 @@
 const { logWithTime } = require("@utils/time-stamps.util");
-const { throwInternalServerError, throwBadRequestError } = require("@/utils/error-handler.util");
+const { throwInternalServerError, throwConflictError, throwSpecificInternalServerError } = require("@/utils/error-handler.util");
 const { OK } = require("@/configs/http-status.config");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { forgotPasswordService } = require("@services/password-management/forgot-password.service");
+const { AuthErrorTypes } = require("@configs/enums.config");
 
-/** 🔐 Handle Forgot Password Request */
 const forgotPassword = async (req, res) => {
     try {
-        const foundUser = req.foundUser;
+        const user = req.foundUser;
+        const device = req.device;
 
-        // ✅ Saara kaam Service karegi (Check, Generate, Send)
-        const result = await forgotPasswordService(foundUser, req.deviceId);
+        const result = await forgotPasswordService(user, device.deviceUUID);
 
-        // 📝 Logging
-        logAuthEvent(req, AUTH_LOG_EVENTS.FORGOT_PASSWORD_REQUEST,
-            `User ID ${foundUser.id} requested reset via ${result.contactMode}. Type: ${result.type}`, null);
+        if (!result.success) {
 
-        logWithTime(`✅ Forgot Password initiated for User ID: ${foundUser.id}`);
-        
-        // 📢 Response Message Build
+            if (result.type === AuthErrorTypes.ALREADY_SENT) {
+                return throwConflictError(res, result.message);
+            }
+
+            return throwSpecificInternalServerError(res, result.message);
+        }
+
+        logAuthEvent(
+            user,
+            device,
+            AUTH_LOG_EVENTS.FORGOT_PASSWORD,
+            `Forgot password requested via ${result.contactMode}`,
+            null
+        );
+
         const responses = [];
         if (result.email) responses.push("Email sent");
         if (result.phone) responses.push("SMS sent");
+
+        logWithTime(`✅ Forgot password process initiated for User ${user.userId} via ${responses.join(" & ")}`);
 
         return res.status(OK).json({
             success: true,
@@ -30,13 +42,6 @@ const forgotPassword = async (req, res) => {
         });
 
     } catch (err) {
-        logWithTime(`❌ Error in forgotPassword controller: ${err.message}`);
-        
-        // Agar Service ne "Already sent" wala error diya hai to 400 Bad Request bhejo
-        if (err.message && (err.message.includes("already") || err.message.includes("valid"))) {
-             return throwBadRequestError(res, err.message);
-        }
-
         return throwInternalServerError(res, err);
     }
 };

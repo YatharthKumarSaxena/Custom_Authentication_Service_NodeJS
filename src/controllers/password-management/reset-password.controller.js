@@ -1,6 +1,5 @@
 const { OK } = require("@configs/http-status.config");
 const { resetPasswordService } = require("@services/password-management/reset-password.service");
-const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 const { 
     throwInternalServerError, 
     throwBadRequestError, 
@@ -27,21 +26,20 @@ const resetPassword = async (req, res) => {
         // 2. Call Service
         const result = await resetPasswordService(user, device, newPassword);
 
-        // 3. Security: Global Logout (Force logout from all devices) 🛑
-        try {
-            // Password reset ke baad safety ke liye saare active sessions kill karna best hai
-            await logoutUserCompletely(req, res, "Reset Password Force Logout");
-        } catch (logoutErr) {
-            logWithTime(`⚠️ Warning: Password reset but global logout failed for User ${user.userId}`);
-            // Non-critical, process continues
-        }
-
         if (!result.success) {
             logWithTime(`❌ Reset Password Service failed for User ${user.userId} from device ${device.deviceUUID}`);
             return throwBadRequestError(res, result.message);
         }
 
         logWithTime(`✅ Password reset successful for User ${user.userId} from device ${device.deviceUUID}`);
+        
+        if (!result.isLoggedOut) {
+            return res.status(OK).json({
+                success: true,
+                message: result.message,
+                notice: "Warning: Unable to log out all active sessions. Please verify your account security."
+            });
+        }
         
         // 4. Response
         return res.status(OK).json({
