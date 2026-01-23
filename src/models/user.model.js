@@ -141,6 +141,36 @@ const userSchema = new mongoose.Schema({
                 type: Date,
                 default: null
             }
+        },
+        activateAccount: {
+            failedAttempts: {
+                type: Number,
+                default: 0
+            },
+            lockoutUntil: {
+                type: Date,
+                default: null
+            }
+        },
+        deactivateAccount: {
+            failedAttempts: {
+                type: Number,
+                default: 0
+            },
+            lockoutUntil: {
+                type: Date,
+                default: null
+            }
+        },
+        toggle2FA: {
+            failedAttempts: {
+                type: Number,
+                default: 0
+            },
+            lockoutUntil: {
+                type: Date,
+                default: null
+            }
         }
     },
 

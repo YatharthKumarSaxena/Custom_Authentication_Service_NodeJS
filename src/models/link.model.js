@@ -33,13 +33,8 @@ const verificationLinkSchema = new mongoose.Schema({
   tokenHash: {
     type: String,
     required: true,
-    select: false
-  },
-
-  salt: {
-    type: String,
-    required: true,
-    select: false
+    select: false,
+    index: true
   },
 
   expiresAt: {
@@ -53,6 +48,11 @@ const verificationLinkSchema = new mongoose.Schema({
   }
 
 }, { timestamps: true, versionKey: false });
+
+verificationLinkSchema.index({
+  tokenHash: 1,
+  isUsed: 1
+});
 
 /* 🔥 Auto delete after expiry */
 verificationLinkSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

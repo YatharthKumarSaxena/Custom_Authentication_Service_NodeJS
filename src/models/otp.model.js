@@ -17,13 +17,6 @@ const otpSchema = new mongoose.Schema({
     index: true
   },
 
-  contact: {
-    type: String,
-    required: true,
-    enum: Object.values(ContactModes),
-    index: true
-  },
-
   purpose: {
     type: String,
     enum: Object.values(VerificationPurpose),
