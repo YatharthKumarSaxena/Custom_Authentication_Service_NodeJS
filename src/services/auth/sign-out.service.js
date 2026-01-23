@@ -1,48 +1,65 @@
+const ms = require("ms");
 const { logAuthEvent } = require("@utils/auth-log-util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
-const { expiryTimeOfRefreshToken } = require("@/configs/token.config");
+const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 
 const signOutService = async (user, device, userDevice) => {
 
-    const time = new Date();
-    // Safety check: agar jwtIssuedAt undefined hua toh crash nahi hoga
-    const jwtIssuedAt = userDevice.jwtTokenIssuedAt ? new Date(userDevice.jwtTokenIssuedAt).getTime() : time.getTime();
+    const now = new Date();
 
-    // 1. Pehle se Logged Out check
+    const jwtIssuedAt = userDevice.jwtTokenIssuedAt
+        ? new Date(userDevice.jwtTokenIssuedAt).getTime()
+        : null;
+
+    // --------------------------------------------------
+    // 1️⃣ Already logged out
+    // --------------------------------------------------
     if (!userDevice.refreshToken) {
-        return { 
-            alreadyLoggedOut: true, 
-            message: "User is already logged out from this device." 
+        return {
+            success: true,
+            alreadyLoggedOut: true,
+            message: "You are already logged out from this device."
         };
     }
 
-    // 2. Invalidate Session (DB Update) - CRITICAL STEP
-    userDevice.refreshToken = null; 
-    userDevice.lastLogoutAt = time; 
-    
-    // ✅ Save First (Clean the DB)
+    // --------------------------------------------------
+    // 2️⃣ Invalidate session (CRITICAL)
+    // --------------------------------------------------
+    userDevice.refreshToken = null;
+    userDevice.lastLogoutAt = now;
+
     await userDevice.save();
-    
-    // 3. Log Event (Hamesha Log karo, chahe expired ho ya nahi - Audit ke liye acha hai)
+
+    // --------------------------------------------------
+    // 3️⃣ Audit log (always)
+    // --------------------------------------------------
     logAuthEvent(
-        user, 
-        device, 
-        AUTH_LOG_EVENTS.LOGOUT_SPECIFIC_DEVICE, 
-        `User signed out manually.`,
+        user,
+        device,
+        AUTH_LOG_EVENTS.LOGOUT_SPECIFIC_DEVICE,
+        "User signed out manually.",
         null
     );
 
-    // 4. Check Expiry (Optional: Sirf Frontend message ke liye)
-    if ((time.getTime() - jwtIssuedAt) > expiryTimeOfRefreshToken) {
-        return {
-            alreadyLoggedOut: true, // Frontend shayad is flag pe redirect kare
-            message: "Session expired, but logged out successfully." 
+    // --------------------------------------------------
+    // 4️⃣ Expiry info (optional)
+    // --------------------------------------------------
+    let sessionExpired = false;
+
+    if (jwtIssuedAt) {
+        const expiryMs = ms(expiryTimeOfRefreshToken);
+
+        if (Date.now() > jwtIssuedAt + expiryMs) {
+            sessionExpired = true;
         }
     }
 
     return {
         success: true,
-        message: "Signed out successfully."
+        sessionExpired,
+        message: sessionExpired
+            ? "Session had already expired. You have been logged out."
+            : "Signed out successfully."
     };
 };
 

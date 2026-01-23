@@ -1,68 +1,56 @@
 const { rotateRefreshToken } = require("./session-token.service");
 const { verifyToken } = require("@utils/verify-token.util");
 const { Token } = require("@configs/enums.config");
-const { logWithTime } = require("@utils/time-stamps.util");
 
-/**
- * Main Orchestrator for Refresh Token
- * 
- * Flow:
- * 1. Verify incoming refresh token
- * 2. Extract userId and deviceUUID from token
- * 3. Call rotateRefreshToken to generate new tokens
- * 4. Return new access token
- */
 const performRefreshToken = async (refreshToken, device) => {
 
-    // ---------------------------------------------------------
-    // STEP 1: Verify Refresh Token Structure
-    // ---------------------------------------------------------
     let decoded;
+
     try {
         decoded = verifyToken(refreshToken, Token.REFRESH);
-    } catch (err) {
-        logWithTime(`❌ Invalid refresh token provided: ${err.message}`);
-        throw new Error("INVALID_REFRESH_TOKEN");
+    } catch {
+        return {
+            success: false,
+            type: AuthErrorTypes.INVALID_TOKEN,
+            message: "Invalid or expired refresh token."
+        };
     }
 
-    // ---------------------------------------------------------
-    // STEP 2: Extract userId and deviceUUID from token
-    // ---------------------------------------------------------
     const { uid: userId, did: deviceUUID } = decoded;
 
     if (!userId || !deviceUUID) {
-        logWithTime(`❌ Refresh token missing required claims (uid/did)`);
-        throw new Error("INVALID_REFRESH_TOKEN");
+        return {
+            success: false,
+            type: AuthErrorTypes.INVALID_TOKEN,
+            message: "Invalid refresh token payload."
+        };
     }
 
-    // ---------------------------------------------------------
-    // STEP 3: Validate Device UUID Match
-    // ---------------------------------------------------------
-    // Device from request should match device in token
     if (device.deviceUUID !== deviceUUID) {
-        logWithTime(`⚠️ Device UUID mismatch. Token: ${deviceUUID}, Request: ${device.deviceUUID}`);
-        throw new Error("REFRESH_TOKEN_MISMATCH");
+        return {
+            success: false,
+            type: AuthErrorTypes.TOKEN_DEVICE_MISMATCH,
+            message: "Refresh token does not belong to this device."
+        };
     }
 
-    // ---------------------------------------------------------
-    // STEP 4: Rotate Refresh Token (Validate Session & Generate New Tokens)
-    // ---------------------------------------------------------
     const result = await rotateRefreshToken(userId, device);
 
     if (!result.success) {
-        logWithTime(`❌ Token rotation failed: ${result.error}`);
-        throw new Error(result.error);
+        return {
+            success: false,
+            type: result.type || AuthErrorTypes.INVALID_TOKEN,
+            message: result.message || "Token rotation failed."
+        };
     }
 
-    // ---------------------------------------------------------
-    // STEP 5: Return New Access Token
-    // ---------------------------------------------------------
-    logWithTime(`✅ Token rotation successful for user (${userId}) on device (${deviceUUID})`);
-
     return {
+        success: true,
         userId,
         newAccessToken: result.details.newAccessToken
     };
 };
 
-module.exports = { performRefreshToken };
+module.exports = {
+    performRefreshToken
+}
