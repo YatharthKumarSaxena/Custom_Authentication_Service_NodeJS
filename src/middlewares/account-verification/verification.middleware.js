@@ -60,7 +60,7 @@ const validateVerificationInput = (req, res, next) => {
                 logMiddlewareError("validateVerificationInput", "Invalid Token Format for Email Verification", req);
                 return throwValidationError(res, "Invalid verification token format.");
             }
-            return next();
+            return next("route"); // Skip All Remaining OTP Middlewares
         }
 
         logMiddlewareError("validateVerificationInput", "Configuration Error: Unknown Verify Mode", req);
