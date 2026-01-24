@@ -45,14 +45,22 @@ const AuthErrorTypes = Object.freeze({
     NOTIFICATION_FAILED: "AUTH_NOTIFICATION_FAILED",
     GENERATION_FAILED: "AUTH_GENERATION_FAILED",
     ALREADY_SENT: "AUTH_ALREADY_SENT",
-    INVALID_PURPOSE: "AUTH_INVALID_PURPOSE"
+    INVALID_PURPOSE: "AUTH_INVALID_PURPOSE",
+    BAD_REQUEST: "AUTH_BAD_REQUEST",
+    ALREADY_VERIFIED: "AUTH_ALREADY_VERIFIED"
+});
+
+const AuditMode = Object.freeze({
+    FULL: "FULL",
+    CHANGED_ONLY: "CHANGED_ONLY"
 });
 
 const VerificationPurpose = Object.freeze({
   EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
   PHONE_VERIFICATION: "PHONE_VERIFICATION",
   FORGOT_PASSWORD: "FORGOT_PASSWORD",
-  DEVICE_VERIFICATION: "DEVICE_VERIFICATION"
+  DEVICE_VERIFICATION: "DEVICE_VERIFICATION",
+  REGISTRATION: "REGISTRATION"
 });
 
 const RequestLocation = Object.freeze({
@@ -83,5 +91,6 @@ module.exports = {
     VerifyMode,
     AuthErrorTypes,
     RequestLocation,
-    FirstNameFieldSetting
+    FirstNameFieldSetting,
+    AuditMode
 }

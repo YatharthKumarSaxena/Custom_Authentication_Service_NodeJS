@@ -16,8 +16,7 @@
    - getUserAuthLogsRateLimiter → `/auth-logs`
 
 2. **account-verification.routes.js**:
-   - resendVerificationLinkRateLimiter → `/resend-verification-link`
-   - resendVerificationOTPsRateLimiter → `/resend-verification-otp`
+   - resendVerificationRateLimiter → `/resend-verification`
 
 3. **password-management.routes.js**:
    - forgetPasswordRateLimiter → `/forgot-password`

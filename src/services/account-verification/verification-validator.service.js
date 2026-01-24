@@ -14,28 +14,23 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
             userId,
             deviceId,
             purpose,
-            isUsed: false
+            isUsed: false,
+            expiresAt: { $gt: new Date() }
         })
         .sort({ createdAt: -1 })
         .select("+otpHash +salt");
-
 
     // 2. Check if OTP exists
     if (!otpRecord) {
         return { success: false, message: "No valid OTP found. Please request a new one." };
     }
 
-    // 3. Check Expiry
-    if (new Date() > otpRecord.expiresAt) {
-        return { success: false, message: "OTP has expired. Please request a new one." };
-    }
-
-    // 4. 🔥 Check Max Attempts (The Retry Logic)
+    // 3. 🔥 Check Max Attempts (The Retry Logic)
     if (otpRecord.attemptCount >= otpRecord.maxAttempts) {
         return { success: false, message: "Max verification attempts reached. This OTP is now invalid." };
     }
 
-    // 5. Verify Hash
+    // 4. Verify Hash
     const isValid = verifyOTP(inputOtp, otpRecord.otpHash, otpRecord.salt);
 
     if (!isValid) {

@@ -1,7 +1,7 @@
 const { logWithTime } = require("@utils/time-stamps.util");
 const { throwInternalServerError, throwConflictError, throwSpecificInternalServerError } = require("@/utils/error-handler.util");
 const { OK } = require("@/configs/http-status.config");
-const { logAuthEvent } = require("@utils/auth-log-util");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { forgotPasswordService } = require("@services/password-management/forgot-password.service");
 const { AuthErrorTypes } = require("@configs/enums.config");

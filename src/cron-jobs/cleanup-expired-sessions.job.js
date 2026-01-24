@@ -3,7 +3,7 @@ const { UserDeviceModel } = require("@models/user-device.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { sessionCleanup } = require("@configs/cron.config");
 const { errorMessage } = require("@utils/error-handler.util");
-const { logCronExecution, logCronFailure } = require("@utils/system-log.util");
+const { logCronExecution, logCronFailure } = require("@/services/system/system-log.util");
 
 const cleanExpiredSessions = async () => {
   try {

@@ -1,5 +1,5 @@
 const { passwordSecurity } = require("@configs/security.config");
-const { getSecurityBucket } = require("./security-context.util");
+const { getSecurityBucket } = require("../../utils/security-context.util");
 
 const checkIsUserLocked = (user, context) => {
     const bucket = getSecurityBucket(user, context);

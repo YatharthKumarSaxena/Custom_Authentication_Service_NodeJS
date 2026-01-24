@@ -1,15 +1,16 @@
 const { verifyVerification } = require("@services/account-verification/verification-validator.service");
 const { loginUserOnDevice } = require("../auth/auth-session.service");
 const { createToken } = require("@utils/issue-token.util");
-const { logAuthEvent } = require("@utils/auth-log-util");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { authMode, AUTO_LOGIN_AFTER_VERIFICATION } = require("@/configs/security.config");
-const { AuthModes, VerificationPurpose } = require("@/configs/enums.config");
+const { AuthModes, VerificationPurpose, AuthErrorTypes } = require("@/configs/enums.config");
 const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { expiryTimeOfRefreshToken } = require("@/configs/token.config");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
-const { userTemplate, userSmsTemplate } = require("@services/templates/emailTemplate");
+const { userTemplate } = require("@services/templates/emailTemplate");
+const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { DeviceModel } = require("@models/device.model");
 const { UserModel } = require("@models/user.model");
 
@@ -25,6 +26,14 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         otherVerifiedField,
         type
     } = config;
+
+    if (user[updateField]) {
+        return {
+            success: false,
+            type: AuthErrorTypes.ALREADY_VERIFIED,
+            message: `${type} already verified.`
+        };
+    }
 
     // 1️⃣ Ensure device
     const deviceDoc = await DeviceModel.findOneAndUpdate(

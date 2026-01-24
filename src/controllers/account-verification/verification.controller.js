@@ -4,10 +4,12 @@ const { logWithTime } = require("@utils/time-stamps.util");
 const { createToken } = require("@utils/issue-token.util");
 const { expiryTimeOfAccessToken } = require("@configs/token.config");
 const { buildAccessTokenHeaders } = require("@utils/token-headers.util");
+const { AuthErrorTypes } = require("@configs/enums.config");
 const {
     throwInternalServerError,
     throwBadRequestError,
-    getLogIdentifiers
+    getLogIdentifiers,
+    throwConflictError
 } = require("@utils/error-handler.util");
 
 // Services Import
@@ -23,7 +25,7 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
     try {
         // Middleware ensure karta hai ki foundUser/user set ho
         const user = req.foundUser;
-        const { token } = req.body;
+        const { code } = req.body;
         const device = req.device;
 
         // Get contactMode from getUserContacts (instead of req.body.type)
@@ -31,7 +33,7 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
 
         logWithTime(`🔍 Initiating ${successMessageBase} process for User ID: ${user.userId} via ${contactMode}`);
         // 1. Dynamic Service Call
-        const result = await serviceFunction(user, device, token, contactMode);
+        const result = await serviceFunction(user, device, code, contactMode);
 
         const { success } = result;
 
@@ -65,6 +67,12 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
                 message: `${successMessageBase} successfully. Your account is now active.` + additionalMessage,
                 isAutoLoggedIn: autoLoggedIn
             });
+        }
+
+        if (!success) {
+            if (result.type === AuthErrorTypes.ALREADY_VERIFIED) {
+                return throwConflictError(res, `${successMessageBase}. So no longer verification is required.`);
+            }
         }
 
         const { message } = result;

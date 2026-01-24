@@ -1,8 +1,8 @@
-const { verifyPasswordWithRateLimit } = require("@/services/password-management/password-verification.service");
+const { verifyPasswordWithRateLimit } = require("@services/password-management/password-verification.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 const { OK } = require("@configs/http-status.config");
-const { logoutUserCompletely } = require("@/services/auth/auth-session.service");
-const { logAuthEvent } = require("@/utils/auth-log-util");
+const { logoutUserCompletely } = require("@services/auth/auth-session.service");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const {
     throwBadRequestError,
     throwInvalidResourceError,

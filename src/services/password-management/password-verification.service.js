@@ -1,9 +1,9 @@
-const { checkPasswordIsValid } = require("@/utils/auth.util");
+const { checkPasswordIsValid } = require("@utils/auth.util");
 const {
     checkIsUserLocked,
     handleFailedPasswordAttempt,
     resetPasswordAttempts
-} = require("@/utils/password-limiter.util");
+} = require("@services/auth/auth-security.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 const { UserModel } = require("@models/user.model");
 

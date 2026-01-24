@@ -38,7 +38,7 @@ module.exports = {
       message: "Too many reset password attempts."
     },
     resendVerification: {
-      maxRequests: 3,
+      maxRequests: 30,
       windowMs: 15 * 60 * 1000,
       prefix: "resend_verification",
       reason: "Resend verification abuse",
@@ -61,7 +61,7 @@ module.exports = {
     },
 
     verifyEmail: {
-      maxRequests: 5,
+      maxRequests: 50,
       windowMs: 10 * 60 * 1000,
       prefix: "verify_email",
       reason: "Verify email abuse",

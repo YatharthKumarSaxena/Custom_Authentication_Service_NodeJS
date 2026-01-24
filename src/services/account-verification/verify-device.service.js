@@ -2,7 +2,7 @@ const { UserDeviceModel, DeviceModel } = require("@models/index");
 const { verifyVerification } = require("@services/account-verification/verification-validator.service");
 const { VerificationPurpose, VerifyMode, AuthModes } = require("@configs/enums.config");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
-const { logAuthEvent } = require("@utils/auth-log-util");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { createToken } = require("@utils/issue-token.util");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
@@ -13,7 +13,7 @@ const {
     checkIsDeviceLocked,
     handleFailedDeviceAttempt,
     resetDeviceAttempts
-} = require("@utils/device-limiter.util");
+} = require("@/services/account-verification/device-verification-security.service");
 
 const verifyDeviceService = async (user, device, code, contactMode) => {
 

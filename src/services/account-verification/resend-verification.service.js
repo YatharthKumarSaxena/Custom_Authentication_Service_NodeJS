@@ -1,11 +1,10 @@
 const { SendNotificationFactory } = require("@services/factories/notification.factory");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const { getUserContacts } = require("@utils/contact-selector.util");
-const { logAuthEvent } = require("@utils/auth-log-util");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { DeviceModel } = require("@models/device.model");
 
-const { AuthErrorTypes } = require("@configs/enums.config");
-const { verificationSecurity } = require("@configs/security.config");
+const { AuthErrorTypes, VerificationPurpose } = require("@configs/enums.config");
 const { VerificationTemplateMapping } = require("@configs/verification-mapping.config");
 
 const resendVerificationService = async (user, device, purpose) => {
@@ -21,6 +20,23 @@ const resendVerificationService = async (user, device, purpose) => {
         };
     }
 
+
+    if (purpose === VerificationPurpose.EMAIL_VERIFICATION && user.isEmailVerified) {
+        return {
+            success: false,
+            type: AuthErrorTypes.ALREADY_VERIFIED,
+            message: "Email already verified. Verification is no longer required."
+        };
+    }
+    
+    if (purpose === VerificationPurpose.PHONE_VERIFICATION && user.isPhoneVerified) {
+        return {
+            success: false,
+            type: AuthErrorTypes.ALREADY_VERIFIED,
+            message: "Phone already verified. Verification is no longer required."
+        };
+    }
+
     const deviceDoc = await DeviceModel.findOneAndUpdate(
         { deviceUUID: device.deviceUUID },
         {
@@ -32,16 +48,12 @@ const resendVerificationService = async (user, device, purpose) => {
         { new: true, upsert: true }
     );
 
-    const security = verificationSecurity[purpose];
-
     // 🔑 SINGLE SOURCE OF TRUTH
     const verificationResult = await generateVerificationForUser(
         user,
         deviceDoc._id,   // ✅ correct ObjectId
         purpose,
-        contactMode,
-        security.MAX_ATTEMPTS,
-        security.LINK_EXPIRY_MINUTES * 60
+        contactMode
     );
 
     if (!verificationResult) {
@@ -83,7 +95,7 @@ const resendVerificationService = async (user, device, purpose) => {
     logAuthEvent(
         user,
         device,
-        "RESEND_VERIFICATION",
+        `SEND_${purpose}`,
         `Resent ${verificationResult.type} for ${purpose} via ${contactMode}.`,
         null
     );

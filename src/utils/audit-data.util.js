@@ -1,4 +1,5 @@
 const { AuditMode } = require("@configs/enums.config");
+const { auditMode } = require("@configs/security.config")
 
 /**
  * 📸 Audit Data Utility
@@ -11,6 +12,7 @@ const { AuditMode } = require("@configs/enums.config");
  * @param {Object} newEntity - Entity after changes
  * @returns {Object} { oldData, newData, changedFields }
  */
+
 const prepareAuditData = (oldEntity, newEntity) => {
   if (!oldEntity && !newEntity) {
     return { oldData: null, newData: null };
@@ -25,8 +27,6 @@ const prepareAuditData = (oldEntity, newEntity) => {
   delete oldObj._id;
   delete newObj.__v;
   delete newObj._id;
-
-  const auditMode = process.env.AUDIT_MODE;
 
   // Return based on mode
   if (auditMode === AuditMode.FULL) {

@@ -1,5 +1,5 @@
 const { VerifyMode, ContactModes } = require("@configs/enums.config");
-const { verificationMode } = require("@configs/security.config");
+const { verificationMode, verificationSecurity } = require("@configs/security.config");
 const { generateLinkToken, hashLinkToken } = require("../../utils/link.util");
 const { generateOTP, hashOTP } = require("../../utils/otp.util");
 const { logWithTime } = require("../../utils/time-stamps.util");
@@ -99,18 +99,23 @@ const generateVerificationForUser = async (
     user,
     deviceId,
     purpose,
-    contactMode,
-    maxAttempts,
-    expiryTime
+    contactMode
 ) => {
     try {
-        const expirationDate = new Date(Date.now() + expiryTime * 1000);
+        const securityConfig = verificationSecurity[purpose];
+        if (!securityConfig) {
+            logWithTime(`❌ No security config found for purpose: ${purpose}`);
+            return null;
+        }
+
+        const { MAX_ATTEMPTS, OTP_EXPIRY_MINUTES, LINK_EXPIRY_MINUTES } = securityConfig;
 
         const shouldGenerateLink =
             verificationMode === VerifyMode.LINK &&
             contactMode === ContactModes.EMAIL;
 
         let verificationResult;
+        let expirationDate = new Date();
 
         if (shouldGenerateLink) {
 
@@ -128,6 +133,8 @@ const generateVerificationForUser = async (
                     expiresAt: existingLink.expiresAt
                 };
             }
+
+            expirationDate = new Date(Date.now() + LINK_EXPIRY_MINUTES * 60 * 1000);
 
             verificationResult = await generateUserLink({
                 user,
@@ -154,12 +161,14 @@ const generateVerificationForUser = async (
                 };
             }
 
+            expirationDate = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
             verificationResult = await generateUserOTP({
                 user,
                 deviceId,
                 purpose,
                 contactMode,
-                maxAttempts,
+                maxAttempts: MAX_ATTEMPTS,
                 expiresAt: expirationDate
             });
         }

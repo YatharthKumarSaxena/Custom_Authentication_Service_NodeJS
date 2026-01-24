@@ -5,7 +5,9 @@ const { AuthErrorTypes } = require("@configs/enums.config");
 const {
     throwInternalServerError,
     throwTooManyRequestsError,
-    throwBadRequestError
+    throwBadRequestError,
+    throwSpecificInternalServerError,
+    throwConflictError
 } = require("@utils/error-handler.util");
 
 const { logWithTime } = require("@utils/time-stamps.util");
@@ -32,7 +34,11 @@ const resendVerification = async (req, res) => {
                 return throwBadRequestError(res, result.message);
             }
 
-            return throwInternalServerError(res, result.message);
+            if (result.type === AuthErrorTypes.ALREADY_VERIFIED) {
+                return throwConflictError(res, result.message);
+            }
+
+            return throwSpecificInternalServerError(res, result.message);
         }
 
         logWithTime(

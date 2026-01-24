@@ -15,6 +15,7 @@ module.exports = {
     TOGGLE_2FA: "toggle2FA"
   },
   authMode: process.env.AUTH_MODE,
+  auditMode: process.env.AUDIT_MODE,
   verificationMode: process.env.VERIFICATION_MODE,
   otp: {
     length: 6,                // digits in OTP
@@ -33,22 +34,37 @@ module.exports = {
   verificationSecurity: {
     [VerificationPurpose.FORGOT_PASSWORD]: {
       MAX_ATTEMPTS: 5,
+      OTP_EXPIRY_MINUTES: 5,
       LINK_EXPIRY_MINUTES: 10
     },
+
     [VerificationPurpose.EMAIL_VERIFICATION]: {
       MAX_ATTEMPTS: 3,
+      OTP_EXPIRY_MINUTES: 10,
       LINK_EXPIRY_MINUTES: 30
     },
+
     [VerificationPurpose.PHONE_VERIFICATION]: {
       MAX_ATTEMPTS: 3,
+      OTP_EXPIRY_MINUTES: 3,
       LINK_EXPIRY_MINUTES: 5
     },
+
     [VerificationPurpose.DEVICE_VERIFICATION]: {
       MAX_ATTEMPTS: 2,
+      OTP_EXPIRY_MINUTES: 2,
       LINK_EXPIRY_MINUTES: 15
+    },
+
+    [VerificationPurpose.REGISTRATION]: {
+      MAX_ATTEMPTS: 3,
+      OTP_EXPIRY_MINUTES: 5,
+      LINK_EXPIRY_MINUTES: 30
     }
   },
   AUTO_LOGIN_AFTER_VERIFICATION: process.env.AUTO_LOGIN_AFTER_VERIFICATION === 'true',
+  AUTO_EMAIL_VERIFICATION: process.env.AUTO_EMAIL_VERIFICATION === 'true',
+  AUTO_PHONE_VERIFICATION: process.env.AUTO_PHONE_VERIFICATION === 'true',
   IS_TWO_FA_FEATURE_ENABLED: process.env.IS_2FA_FEATURE_ENABLED === 'true',
   WHITELISTED_DEVICE_UUIDS: process.env.WHITELISTED_DEVICE_UUIDS ? process.env.WHITELISTED_DEVICE_UUIDS.split(',') : [],
   FIRST_NAME_SETTING: process.env.FIRST_NAME_SETTING,

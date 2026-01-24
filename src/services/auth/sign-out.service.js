@@ -1,5 +1,5 @@
 const ms = require("ms");
-const { logAuthEvent } = require("@utils/auth-log-util");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 

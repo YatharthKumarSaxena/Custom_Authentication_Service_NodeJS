@@ -1,6 +1,6 @@
 const { UserModel } = require("@models/user.model");
 const { verifyPasswordWithRateLimit } = require("@services/password-management/password-verification.service");
-const { logAuthEvent } = require("@utils/auth-log-util");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { IS_TWO_FA_FEATURE_ENABLED, SecurityContext } = require("@configs/security.config");

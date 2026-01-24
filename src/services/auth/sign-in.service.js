@@ -86,9 +86,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
                 user,
                 targetDeviceId,
                 VerificationPurpose.DEVICE_VERIFICATION,
-                contactMode,
-                verificationSecurity[VerificationPurpose.DEVICE_VERIFICATION].MAX_ATTEMPTS,
-                verificationSecurity[VerificationPurpose.DEVICE_VERIFICATION].LINK_EXPIRY_MINUTES * 60
+                contactMode
             );
 
         // ❌ system failure

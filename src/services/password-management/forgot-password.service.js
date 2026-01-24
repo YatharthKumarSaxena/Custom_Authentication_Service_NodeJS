@@ -42,9 +42,7 @@ const forgotPasswordService = async (user, deviceId) => {
         user,
         deviceId,
         VerificationPurpose.FORGOT_PASSWORD,
-        contactMode,
-        forgotPasswordSecurity.MAX_ATTEMPTS,
-        forgotPasswordSecurity.LINK_EXPIRY_MINUTES * 60
+        contactMode
     );
 
     if (!verificationResult) {
