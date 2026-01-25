@@ -1,5 +1,6 @@
 const { verifyVerification } = require("@services/account-verification/verification-validator.service");
 const { loginUserOnDevice } = require("../auth/auth-session.service");
+const { loginPolicyChecker } = require("../auth/login-policy-checker.service"); // Policy Checker
 const { createToken } = require("@utils/issue-token.util");
 const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
@@ -29,7 +30,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
 
     if (user[updateField]) {
         return {
-            success: false,
+            success: true,
             type: AuthErrorTypes.ALREADY_VERIFIED,
             message: `${type} already verified.`
         };
@@ -121,6 +122,20 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
 
         if (canLogin) {
             logWithTime(`🔄 Auto-login after ${type} verification for ${verifiedUser.userId}`);
+
+            // 🛡️ Login Policy Check
+            const policyCheck = await loginPolicyChecker({
+                user: verifiedUser,
+                deviceId: deviceDoc._id
+            });
+
+            if (!policyCheck.allowed) {
+                return {
+                    success: false,
+                    type: policyCheck.type,
+                    message: policyCheck.message
+                };
+            }
 
             const refreshToken = createToken(
                 verifiedUser.userId,
