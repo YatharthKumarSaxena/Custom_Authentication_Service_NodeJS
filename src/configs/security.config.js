@@ -2,7 +2,7 @@ const { VerificationPurpose } = require("./enums.config");
 
 module.exports = {
   SALT: Number(process.env.SALT),
-  usersPerDevice: 5,
+  usersPerDevice: 1,
   deviceThreshold: {
     ADMIN: 2,
     CUSTOMER: 5
@@ -85,5 +85,6 @@ module.exports = {
     algorithm: "sha256",
     encoding: "hex",
     secret: process.env.VERIFICATION_LINK_SECRET
-  }
+  },
+  ENABLE_DEVICE_SOFT_REPLACE: process.env.ENABLE_DEVICE_SOFT_REPLACE === 'true'
 };
