@@ -61,6 +61,16 @@ const verifyTokenMiddleware = async (req, res, next) => {
                 return throwAccessDeniedError(res, "Invalid access token");
             }
 
+            // 2. Validate session to get userDevice for token age check
+            const sessionResult = await validateSessionAndSyncDevice(accessDecoded.uid, device);
+            if (!sessionResult.success) {
+                logMiddlewareError("verifyToken", "Invalid session during token rotation", req);
+                return throwDBResourceNotFoundError(res, sessionResult.error);
+            }
+
+            userDevice = sessionResult.details.userDevice;
+
+            // 3. Token age validation
             const tokenAge = Date.now() - new Date(userDevice.jwtTokenIssuedAt).getTime();
             const buffer = 5 * 1000; // 5 seconds
 
@@ -69,6 +79,7 @@ const verifyTokenMiddleware = async (req, res, next) => {
                 return throwAccessDeniedError(res, "Invalid Access Token");
             }
 
+            // 4. Rotate refresh token
             const tokenRotated = await rotateRefreshToken(accessDecoded.uid, device);
 
             if (!tokenRotated.success) {
