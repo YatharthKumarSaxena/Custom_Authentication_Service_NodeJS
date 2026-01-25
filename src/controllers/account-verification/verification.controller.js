@@ -38,6 +38,13 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
         const { success } = result;
 
         if (success) {
+            // Handle specific error types
+            if (result.type === AuthErrorTypes.ALREADY_VERIFIED) {
+                return res.status(OK).json({
+                    success: true,
+                    message: `${result.message}`
+                });
+            }
             const { autoLoggedIn } = result;
 
             let additionalMessage = "";
@@ -70,8 +77,28 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
         }
 
         if (!success) {
-            if (result.type === AuthErrorTypes.ALREADY_VERIFIED) {
-                return throwConflictError(res, `${successMessageBase}. So no longer verification is required.`);
+            
+            // Handle device/session limit errors (when auto-login fails due to policy)
+            if (result.type === AuthErrorTypes.DEVICE_USER_LIMIT_REACHED) {
+                logWithTime(`⚠️ ${successMessageBase} completed but auto-login blocked: Device user limit reached for User ID: ${user.userId}`);
+                return res.status(OK).json({
+                    success: true,
+                    message: `${successMessageBase} successfully but login was not possible. ${result.message}`,
+                    isAutoLoggedIn: false,
+                    limitReached: true,
+                    limitType: "DEVICE_USER_LIMIT"
+                });
+            }
+            
+            if (result.type === AuthErrorTypes.SESSION_LIMIT_REACHED) {
+                logWithTime(`⚠️ ${successMessageBase} completed but auto-login blocked: Session limit reached for User ID: ${user.userId}`);
+                return res.status(OK).json({
+                    success: true,
+                    message: `${successMessageBase} successfully but login was not possible. ${result.message}`,
+                    isAutoLoggedIn: false,
+                    limitReached: true,
+                    limitType: "SESSION_LIMIT"
+                });
             }
         }
 
