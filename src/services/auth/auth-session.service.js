@@ -4,9 +4,7 @@ const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { syncDeviceData, syncUserDeviceMapping } = require("./device.service");
 const { errorMessage } = require("@utils/error-handler.util");
 const { UserDeviceModel } = require("@models/user-device.model");
-const { usersPerDevice, deviceThreshold } = require("@configs/security.config");
 const mongoose = require("mongoose");
-const { UserTypes } = require("@/configs/enums.config");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
@@ -173,48 +171,6 @@ const loginUserOnDevice = async (user, device, refreshToken, context = "standard
         // 2. Device Sync (Get Data + Audit Payload)
         const { deviceDoc, auditLogPayload: deviceLog } = await syncDeviceData( device, { session });
         if (deviceLog) logsToFire.push({ user, device: deviceDoc, ...deviceLog });
-
-        // 🛑 SECURITY CHECK: DEVICE LIMITS 
-         
-        // A. Users Per Device Limit Check
-        const validSessionSince = new Date(Date.now() - expiryTimeOfRefreshToken);
-
-        // Step B: Check Users Per Device (Unique users on THIS device)
-        const uniqueUsersOnDevice = await UserDeviceModel.distinct("userId", { 
-            deviceId: deviceDoc._id,
-            refreshToken: { $ne: null },
-            jwtTokenIssuedAt: { $gte: validSessionSince } 
-        }).session(session);
-
-        if (uniqueUsersOnDevice.length >= usersPerDevice) {
-            const isUserAlreadyOnDevice = uniqueUsersOnDevice.some(id => id.toString() === user._id.toString());
-            
-            if (!isUserAlreadyOnDevice) {
-                throw new Error(`Device limit reached. Max ${usersPerDevice} accounts allowed per device.`);
-            }
-        }
-
-        // B. Device Threshold Per User Check
-        // "How many devices is this user active on?"
-        const userRole = user.userType;
-        let allowedSessionLimit = 0;
-        if(userRole === UserTypes.ADMIN){
-            allowedSessionLimit = deviceThreshold.ADMIN;
-        }
-        else{
-            allowedSessionLimit = deviceThreshold.CUSTOMER;
-        }
-
-        const activeUserSessionsCount = await UserDeviceModel.countDocuments({
-            userId: user._id,
-            refreshToken: { $ne: null },
-            jwtTokenIssuedAt: { $gte: validSessionSince },
-            deviceId: { $ne: deviceDoc._id } 
-        }).session(session);
-
-        if (activeUserSessionsCount >= allowedSessionLimit) {
-            throw new Error(`Session limit reached. You can only be active on ${allowedSessionLimit} devices.`);
-        }
 
         // 3. Core Login
         const coreLoggedIn = await loginTheUserCore(user, deviceDoc._id, refreshToken, { session });
