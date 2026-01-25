@@ -13,22 +13,30 @@ const { auditMode } = require("@configs/security.config")
  * @returns {Object} { oldData, newData, changedFields }
  */
 
+const toPlainObject = (entity) => {
+  if (!entity) return null;
+  return entity.toObject ? entity.toObject() : { ...entity };
+};
+
 const prepareAuditData = (oldEntity, newEntity) => {
-  if (!oldEntity && !newEntity) {
+
+  const oldObj = toPlainObject(oldEntity);
+  const newObj = toPlainObject(newEntity);
+
+  if (!oldObj && !newObj) {
     return { oldData: null, newData: null };
   }
 
-  // Convert Mongoose docs to plain objects
-  const oldObj = oldEntity.toObject ? oldEntity.toObject() : { ...oldEntity };
-  const newObj = newEntity.toObject ? newEntity.toObject() : { ...newEntity };
+  if (oldObj) {
+    delete oldObj.__v;
+    delete oldObj._id;
+  }
 
-  // Remove Mongoose internal fields
-  delete oldObj.__v;
-  delete oldObj._id;
-  delete newObj.__v;
-  delete newObj._id;
+  if (newObj) {
+    delete newObj.__v;
+    delete newObj._id;
+  }
 
-  // Return based on mode
   if (auditMode === AuditMode.FULL) {
     return {
       oldData: oldObj,
@@ -36,20 +44,19 @@ const prepareAuditData = (oldEntity, newEntity) => {
     };
   }
 
-  // Find changed fields
   const changedFields = [];
-  for (const key in newObj) {
-    if (JSON.stringify(oldObj[key]) !== JSON.stringify(newObj[key])) {
+
+  for (const key in newObj || {}) {
+    if (JSON.stringify(oldObj?.[key]) !== JSON.stringify(newObj[key])) {
       changedFields.push(key);
     }
   }
 
-  // CHANGED_ONLY mode - filter to only changed fields
   const oldDataFiltered = {};
   const newDataFiltered = {};
 
   changedFields.forEach(field => {
-    oldDataFiltered[field] = oldObj[field];
+    oldDataFiltered[field] = oldObj?.[field];
     newDataFiltered[field] = newObj[field];
   });
 
