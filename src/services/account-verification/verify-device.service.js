@@ -1,12 +1,13 @@
 const { UserDeviceModel, DeviceModel } = require("@models/index");
 const { verifyVerification } = require("@services/account-verification/verification-validator.service");
-const { VerificationPurpose, VerifyMode, AuthModes } = require("@configs/enums.config");
+const { VerificationPurpose, VerifyMode, AuthModes, AuthErrorTypes } = require("@configs/enums.config");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { createToken } = require("@utils/issue-token.util");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { loginUserOnDevice } = require("../auth/auth-session.service");
+const { loginPolicyChecker } = require("../auth/login-policy-checker.service"); // Policy Checker
 const { verificationMode, authMode } = require("@configs/security.config");
 
 const {
@@ -24,6 +25,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
             message: "Two-factor authentication is not enabled for this account."
         };
     }
+
 
     const isOtpFlow =
         verificationMode === VerifyMode.OTP ||
@@ -57,6 +59,17 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
             return {
                 success: false,
                 message: "No verification code was issued for this device."
+            };
+        }
+
+        if (userDeviceMapping.twoFactorVerifiedAt) {
+            logWithTime(
+                `ℹ️  Device (${device.deviceUUID}) already verified for User (${user.userId})`
+            );
+            return {
+                success: true,
+                type: AuthErrorTypes.ALREADY_VERIFIED,
+                message: "This device is already verified."
             };
         }
 
@@ -121,6 +134,28 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
     // --------------------------------------------------
     // LOGIN SESSION
     // --------------------------------------------------
+    
+    // Ensure device doc exists for policy check
+    if (!deviceDoc) {
+        deviceDoc = await DeviceModel.findOne({
+            deviceUUID: device.deviceUUID
+        });
+    }
+
+    // 🛡️ Login Policy Check
+    const policyCheck = await loginPolicyChecker({
+        user,
+        deviceId: deviceDoc._id
+    });
+
+    if (!policyCheck.allowed) {
+        return {
+            success: false,
+            type: policyCheck.type,
+            message: policyCheck.message
+        };
+    }
+
     const refreshToken = createToken(
         user.userId,
         expiryTimeOfRefreshToken,
