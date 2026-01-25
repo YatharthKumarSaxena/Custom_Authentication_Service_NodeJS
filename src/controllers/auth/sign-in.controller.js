@@ -56,6 +56,14 @@ const signIn = async (req, res) => {
                 return throwBadRequestError(res, result.message);
             }
 
+            if (result.type === AuthErrorTypes.DEVICE_USER_LIMIT_REACHED) {
+                return throwBadRequestError(res, result.message);
+            }
+
+            if (result.type === AuthErrorTypes.SESSION_LIMIT_REACHED) {
+                return throwBadRequestError(res, result.message);
+            }
+
             return throwBadRequestError(res, result.message);
         }
 
