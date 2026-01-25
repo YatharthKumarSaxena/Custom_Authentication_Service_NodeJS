@@ -1,11 +1,11 @@
 const { UserDeviceModel } = require("@/models/user-device.model");
 const { DeviceModel } = require("@/models/device.model");
 const { loginUserOnDevice } = require("./auth-session.service"); // Login Service
+const { loginPolicyChecker } = require("./login-policy-checker.service"); // Policy Checker
 const { createToken } = require("@utils/issue-token.util");
 const { AuthErrorTypes, VerificationPurpose, VerifyMode } = require("@configs/enums.config");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
-const ms = require("ms");
 const { getUserContacts } = require("@/utils/contact-selector.util");
 const { verificationSecurity, IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
 const { verifyPasswordWithRateLimit } = require("../password-management/password-verification.service");
@@ -13,40 +13,14 @@ const { SecurityContext } = require('@configs/security.config');
 const { sendNotification } = require("@/utils/notification-dispatcher.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { logWithTime } = require("@utils/time-stamps.util");
 
 const performSignIn = async (user, deviceInput, plainPassword) => {
 
-    // ---------------------------------------------------------
-    // STEP 1: Already logged-in check
-    // ---------------------------------------------------------
-    const existingDevice = await DeviceModel.findOne({
-        deviceUUID: deviceInput.deviceUUID
-    });
-
-    if (existingDevice) {
-        const activeSession = await UserDeviceModel.findOne({
-            userId: user._id,
-            deviceId: existingDevice._id,
-            refreshToken: { $ne: null }
-        });
-
-        if (activeSession) {
-
-            const expiryMs = ms(expiryTimeOfRefreshToken);
-            const issuedAt = new Date(activeSession.jwtTokenIssuedAt).getTime();
-
-            if (Date.now() < issuedAt + expiryMs) {
-                return {
-                    success: false,
-                    type: AuthErrorTypes.ALREADY_LOGGED_IN,
-                    message: "You are already logged in on this device. Please logout first."
-                };
-            }
-        }
-    }
+    // Check User sessions per device and devices per user
 
     // ---------------------------------------------------------
-    // STEP 2: Password verification
+    // STEP 1: Password verification
     // ---------------------------------------------------------
     const passwordCheck = await verifyPasswordWithRateLimit(
         user,
@@ -58,28 +32,43 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
         return passwordCheck;
     }
 
-    // ---------------------------------------------------------
-    // STEP 3: 2FA FLOW
-    // ---------------------------------------------------------
+    let enable2FA = false;
+    let targetDeviceId = null;
+
     if (IS_TWO_FA_FEATURE_ENABLED && user.twoFactorEnabled) {
 
-        const { contactMode } = getUserContacts(user);
+        // Query or create device for 2FA
+        const deviceDoc = await DeviceModel.findOneAndUpdate(
+            { deviceUUID: deviceInput.deviceUUID },
+            {
+                deviceName: deviceInput.deviceName,
+                deviceType: deviceInput.deviceType
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-        let targetDeviceId;
+        const userDevice = await UserDeviceModel.findOne({
+            userId: user._id,
+            deviceId: deviceDoc._id,
+            twoFactorVerifiedAt: { $ne: null }
+        });
 
-        if (existingDevice) {
-            targetDeviceId = existingDevice._id;
-        } else {
-            const newDevice = await DeviceModel.findOneAndUpdate(
-                { deviceUUID: deviceInput.deviceUUID },
-                {
-                    deviceName: deviceInput.deviceName,
-                    deviceType: deviceInput.deviceType
-                },
-                { upsert: true, new: true, setDefaultsOnInsert: true }
+        if (userDevice && userDevice.twoFactorVerifiedAt) {
+            logWithTime(
+                `🔐 Trusted device login | user=${user.userId} | device=${deviceInput.deviceUUID}`
             );
-            targetDeviceId = newDevice._id;
+        } else {
+            enable2FA = true;
         }
+
+        targetDeviceId = deviceDoc._id;
+    }
+    // ---------------------------------------------------------
+    // STEP 2: 2FA FLOW
+    // ---------------------------------------------------------
+    if (enable2FA) {
+
+        const { contactMode } = getUserContacts(user);
 
         const verificationResult =
             await generateVerificationForUser(
@@ -152,8 +141,33 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
     }
 
     // ---------------------------------------------------------
-    // STEP 4: Normal Login
+    // STEP 3: Normal Login
     // ---------------------------------------------------------
+
+    // Get or create device for policy check
+    const deviceDoc = await DeviceModel.findOneAndUpdate(
+        { deviceUUID: deviceInput.deviceUUID },
+        {
+            deviceName: deviceInput.deviceName,
+            deviceType: deviceInput.deviceType
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // 🛡️ Login Policy Check
+    const policyCheck = await loginPolicyChecker({
+        user,
+        deviceId: deviceDoc._id
+    });
+
+    if (!policyCheck.allowed) {
+        return {
+            success: false,
+            type: policyCheck.type,
+            message: policyCheck.message
+        };
+    }
+
     const refreshToken = createToken(
         user.userId,
         expiryTimeOfRefreshToken,
