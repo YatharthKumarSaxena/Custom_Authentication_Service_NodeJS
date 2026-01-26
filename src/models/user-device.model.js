@@ -3,8 +3,8 @@ const { ObjectId } = mongoose.Schema.Types;
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 const userDeviceSchema = new mongoose.Schema({
-  userId: { type: ObjectId, ref: "User", required: true, index: true },
-  deviceId: { type: ObjectId, ref: "Device", required: true, index: true },
+  userId: { type: ObjectId, ref: DB_COLLECTIONS.USER, required: true, index: true },
+  deviceId: { type: ObjectId, ref: DB_COLLECTIONS.DEVICE, required: true, index: true },
   firstSeenAt: { type: Date, default: Date.now },
   lastLoginAt: { type: Date, default: null },
   lastLogoutAt: { type: Date, default: null },
