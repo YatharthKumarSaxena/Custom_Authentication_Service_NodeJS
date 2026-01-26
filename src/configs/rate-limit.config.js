@@ -96,7 +96,7 @@ module.exports = {
     },
 
     signOutDevice: {
-      maxRequests: 5,
+      maxRequests: 50,
       windowMs: 15 * 60 * 1000,
       prefix: "signout_device",
       reason: "Excessive device signout attempts",
