@@ -10,7 +10,7 @@ const getAuthLogService = async (user, page = 1, limit = 10) => {
 
         // 1. Parallel execution for Logs and Total Count (Performance boost)
         const [logs, totalCount] = await Promise.all([
-            AuthLogModel.find({ userId: user._id })
+            AuthLogModel.find({ userId: user.userId })
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -23,9 +23,7 @@ const getAuthLogService = async (user, page = 1, limit = 10) => {
             event: log.eventType,
             time: log.createdAt,
             device: log.deviceName || "Unknown Device",
-            type: log.deviceType || "Unknown",
-            // Security: Pure IP nahi dikhate, partially mask kar sakte ho
-            locationInfo: log.message || "" 
+            type: log.deviceType || "Unknown"
         }));
 
         return {
