@@ -37,8 +37,13 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
             // ✅ Logic 1: Stale-token detection (Replay Protection)
             const tokenAge = Date.now() - (accessDecoded.iat * 1000);
-            if (tokenAge > expiryTimeOfAccessToken) {
-                logMiddlewareError("verifyToken", "Expired access token presented beyond allowed age", req);
+
+            if (tokenAge > expiryTimeOfAccessToken * 1000) {
+                logMiddlewareError(
+                    "verifyToken",
+                    "Expired access token presented beyond allowed age",
+                    req
+                );
                 return throwAccessDeniedError(res, "Invalid or expired access token");
             }
 
@@ -70,13 +75,36 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
             userDevice = sessionResult.details.userDevice;
 
-            // 3. Token age validation
-            const tokenAge = Date.now() - new Date(userDevice.jwtTokenIssuedAt).getTime();
-            const buffer = 5 * 1000; // 5 seconds
+            // 3. Token issue-time validation (ORDER + PRACTICAL BUFFER)
 
-            if (tokenAge < -buffer || tokenAge > buffer) {
-                logMiddlewareError("verifyToken", "Invalid token age detected during access token failure", req);
-                return throwAccessDeniedError(res, "Invalid Access Token");
+            const accessTokenIssuedAt = accessDecoded.iat * 1000; // JWT iat (ms)
+            const refreshIssuedAt = new Date(userDevice.jwtTokenIssuedAt).getTime();
+
+            // Practical buffer for microservices (1 minute)
+            const MAX_ALLOWED_DELAY = 60 * 1000; // 60 seconds
+            
+            // Buffer to handle JWT second-flooring (JWT iat loses milliseconds)
+            const PRECISION_BUFFER = 2 * 1000; // 2 seconds
+
+            // ❌ Case 1: Access token issued BEFORE refresh token (with precision buffer)
+            // If access token is older than refresh token by more than 2 seconds, it's truly stale
+            if (accessTokenIssuedAt < (refreshIssuedAt - PRECISION_BUFFER)) {
+                logMiddlewareError(
+                    "verifyToken",
+                    `Access token issued before refresh token (stale token replay). Token iat: ${accessTokenIssuedAt}, DB: ${refreshIssuedAt}`,
+                    req
+                );
+                return throwAccessDeniedError(res, "Stale access token");
+            }
+
+            // ❌ Case 2: Access token issued TOO LATE after refresh token
+            if (accessTokenIssuedAt - refreshIssuedAt > MAX_ALLOWED_DELAY) {
+                logMiddlewareError(
+                    "verifyToken",
+                    "Access token issued too late after refresh token (possible forged token)",
+                    req
+                );
+                return throwAccessDeniedError(res, "Invalid access token");
             }
 
             // 4. Rotate refresh token
@@ -95,6 +123,10 @@ const verifyTokenMiddleware = async (req, res, next) => {
             // Populate user/device for next()
             user = tokenRotated.details.user;
             userDevice = tokenRotated.details.userDevice;
+
+            req.user = user;
+            req.userDevice = userDevice;
+            
             return next();
         }
 
@@ -110,25 +142,40 @@ const verifyTokenMiddleware = async (req, res, next) => {
 
             const tokenIssuedAt = new Date(userDevice.jwtTokenIssuedAt).getTime();
             const currentTime = Date.now();
-            const jwtTokenIssuedAt = userDevice.jwtTokenIssuedAt;
 
             // Extra Safety Check: Ensure Access Token is not stale
-            if (currentTime - tokenIssuedAt >= expiryTimeOfAccessToken) {
+            if (currentTime - tokenIssuedAt >= expiryTimeOfAccessToken * 1000) {
                 logMiddlewareError("verifyToken", "Access token is stale despite being valid", req);
                 return throwAccessDeniedError(res, "Stale access token detected");
             }
 
-            if (currentTime - jwtTokenIssuedAt >= expiryTimeOfRefreshToken) {
+            if (currentTime - tokenIssuedAt >= expiryTimeOfRefreshToken * 1000) {
                 logMiddlewareError("verifyToken", "Session expired during access token validation", req);
                 return throwSessionExpiredError(res, "Session has expired. Please login again.");
             }
 
-            const tokenAge = Date.now() - new Date(userDevice.jwtTokenIssuedAt).getTime();
-            const buffer = 5 * 1000; // 5 seconds
+            const accessIssuedAt = accessDecoded.iat * 1000;
+            const refreshIssuedAt = new Date(userDevice.jwtTokenIssuedAt).getTime();
 
-            if (tokenAge < -buffer || tokenAge > buffer) {
-                logMiddlewareError("verifyToken", "Invalid token age detected despite valid access token", req);
-                return throwAccessDeniedError(res, "Invalid Access Token");
+            const MAX_ALLOWED_DELAY = 60 * 1000;
+            
+            // Buffer to handle JWT second-flooring (JWT iat loses milliseconds)
+            const PRECISION_BUFFER = 2 * 1000; // 2 seconds
+
+            // stale token (issued before refresh with precision buffer)
+            // If access token is older than refresh token by more than 2 seconds, it's truly stale
+            if (accessIssuedAt < (refreshIssuedAt - PRECISION_BUFFER)) {
+                logMiddlewareError(
+                    "verifyToken",
+                    `Stale access token: Token iat ${accessIssuedAt} < DB ${refreshIssuedAt}`,
+                    req
+                );
+                return throwAccessDeniedError(res, "Stale access token");
+            }
+
+            // forged token (issued absurdly late)
+            if (accessIssuedAt - refreshIssuedAt > MAX_ALLOWED_DELAY) {
+                return throwAccessDeniedError(res, "Invalid access token");
             }
         }
 

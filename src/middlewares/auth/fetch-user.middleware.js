@@ -1,5 +1,5 @@
 const { fetchEntityFactory } = require("@middlewares/factory/fetch-entity.middleware-factory");
-const { fetchUser } = require("@utils/fetch-user.util");
+const { fetchUser } = require("@/services/common/fetch-user.util");
 
 /**
  * ✅ CASE 1: LOGIN / GET DETAILS
