@@ -41,7 +41,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
 
         deviceDoc = await DeviceModel.findOne({
             deviceUUID: device.deviceUUID
-        });
+        }).lean();
 
         if (!deviceDoc) {
             return {
@@ -53,7 +53,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
         userDeviceMapping = await UserDeviceModel.findOne({
             userId: user._id,
             deviceId: deviceDoc._id
-        });
+        }).lean();
 
         if (!userDeviceMapping) {
             return {
@@ -115,8 +115,10 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
     // --------------------------------------------------
     if (isOtpFlow) {
         await resetDeviceAttempts(userDeviceMapping);
-        userDeviceMapping.twoFactorVerifiedAt = new Date();
-        await userDeviceMapping.save();
+        await UserDeviceModel.updateOne(
+            { _id: userDeviceMapping._id },
+            { $set: { twoFactorVerifiedAt: new Date() } }
+        );
     }
 
     logAuthEvent(
@@ -139,7 +141,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
     if (!deviceDoc) {
         deviceDoc = await DeviceModel.findOne({
             deviceUUID: device.deviceUUID
-        });
+        }).lean();
     }
 
     // 🛡️ Login Policy Check

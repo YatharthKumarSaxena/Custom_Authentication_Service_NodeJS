@@ -15,7 +15,7 @@ const findActiveOTP = async ({ userId, deviceId, purpose }) => {
         isUsed: false,
         expiresAt: { $gt: new Date() },
         $expr: { $lt: ["$attemptCount", "$maxAttempts"] }
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 };
 
 const findActiveLink = async ({ userId, deviceId, purpose }) => {
@@ -25,7 +25,7 @@ const findActiveLink = async ({ userId, deviceId, purpose }) => {
         purpose,
         isUsed: false,
         expiresAt: { $gt: new Date() }
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 };
 
 /**

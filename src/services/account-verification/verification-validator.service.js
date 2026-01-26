@@ -18,7 +18,8 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
             expiresAt: { $gt: new Date() }
         })
         .sort({ createdAt: -1 })
-        .select("+otpHash +salt");
+        .select("+otpHash +salt")
+        .lean();
 
     // 2. Check if OTP exists
     if (!otpRecord) {
