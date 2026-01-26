@@ -11,7 +11,7 @@ const { AuthErrorTypes } = require("@configs/enums.config");
 const updateUserBlockStatusService = async (targetUserId, shouldBlock) => {
     
     // 1. Find the User
-    const user = await UserModel.findOne({ userId: targetUserId });
+    const user = await UserModel.findOne({ userId: targetUserId }).lean();
 
     if (!user) {
         throw { 
@@ -27,9 +27,11 @@ const updateUserBlockStatusService = async (targetUserId, shouldBlock) => {
         };
     }
 
-    // 2. Update Status
-    user.isBlocked = shouldBlock;
-    await user.save();
+    // 2. Update Status (Atomic Operation)
+    await UserModel.updateOne(
+        { _id: user._id },
+        { $set: { isBlocked: shouldBlock } }
+    );
 
     // 3. FORCE LOGOUT (If Blocking) 🛑
     // Agar hum user ko block kar rahe hain, to uske saare sessions invalidate karne honge.

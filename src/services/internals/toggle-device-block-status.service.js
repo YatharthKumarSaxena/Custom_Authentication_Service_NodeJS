@@ -9,7 +9,7 @@ const { WHITELISTED_DEVICE_UUIDS } = require("@configs/security.config");
 const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
     
     // 1. Find Device
-    const device = await DeviceModel.findOne({ deviceUUID: targetDeviceUUID });
+    const device = await DeviceModel.findOne({ deviceUUID: targetDeviceUUID }).lean();
     if (!device) {
         throw { type: AuthErrorTypes.RESOURCE_NOT_FOUND, message: "Device not found." };
     }
@@ -36,7 +36,7 @@ const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
     const activeAdminSession = await UserDeviceModel.findOne({
         deviceId: device._id,
         refreshToken: { $ne: null }
-    }).populate("userId", "userType");
+    }).populate("userId", "userType").lean();
 
     if (activeAdminSession && activeAdminSession.userId.userType === UserTypes.ADMIN) {
         
@@ -60,8 +60,10 @@ const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
     // ---------------------------------------------------------
     // ⚔️ EXECUTE BLOCK
     // ---------------------------------------------------------
-    device.isBlocked = true;
-    await device.save();
+    await DeviceModel.updateOne(
+        { _id: device._id },
+        { $set: { isBlocked: true } }
+    );
 
     await UserDeviceModel.updateMany(
         { deviceId: device._id },
@@ -93,7 +95,7 @@ const { logWithTime } = require("@utils/time-stamps.util");
 const unblockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
     
     // 1. Find Device
-    const device = await DeviceModel.findOne({ deviceUUID: targetDeviceUUID });
+    const device = await DeviceModel.findOne({ deviceUUID: targetDeviceUUID }).lean();
     
     if (!device) {
         throw { 
@@ -111,8 +113,10 @@ const unblockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
     }
 
     // 3. Unblock Logic
-    device.isBlocked = false;
-    await device.save();
+    await DeviceModel.updateOne(
+        { _id: device._id },
+        { $set: { isBlocked: false } }
+    );
 
     // 4. Logging
     logWithTime(`✅ Device (${targetDeviceUUID}) unblocked by Admin (${requestingAdminId}).`);
