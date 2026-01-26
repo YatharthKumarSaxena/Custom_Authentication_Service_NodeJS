@@ -5,7 +5,7 @@ const { syncDeviceData, syncUserDeviceMapping } = require("./device.service");
 const { errorMessage } = require("@utils/error-handler.util");
 const { UserDeviceModel } = require("@models/user-device.model");
 const mongoose = require("mongoose");
-const { expiryTimeOfRefreshToken } = require("@configs/token.config");
+const { UserModel } = require("@models/user.model");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
@@ -79,17 +79,20 @@ const logoutUserCompletelyCore = async (user, options = {}) => {
 
         logWithTime(`ℹ️ Cleared tokens for ${updateResult.modifiedCount} devices.`);
 
-        // ✅ Step 2: Update User Core Flags
-        user.refreshToken = null;
-        user.jwtTokenIssuedAt = null;
-        user.isVerified = false; // Logic retained as per your request
+        // ✅ Step 2: Update User Core Flags (Atomic Operation)
         
-        if (user.devices && user.devices.info) {
-            user.devices.info = [];
-        }
-
-        // ✅ Save User with Session
-        await user.save({ session });
+        await UserModel.updateOne(
+            { _id: user._id },
+            {
+                $set: {
+                    refreshToken: null,
+                    jwtTokenIssuedAt: null,
+                    isVerified: false,
+                    'devices.info': []
+                }
+            },
+            { session: session }
+        );
 
         logWithTime(`✅ User (${user.userId}) core flags reset successfully.`);
         return true;

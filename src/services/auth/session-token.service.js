@@ -14,33 +14,39 @@ const validateSessionAndSyncDevice = async (userId, device) => {
     const { deviceUUID, deviceName, deviceType } = device;
 
     // 1. Fetch User
-    const user = await UserModel.findById(userId).lean();
+    const user = await UserModel.findOne({ userId: userId }).lean();
     if (!user) return { error: `User with ID ${userId} not found`, success: false };
 
     // 2. Fetch Device
-    const deviceDoc = await DeviceModel.findOne({ deviceUUID });
+    const deviceDoc = await DeviceModel.findOne({ deviceUUID }).lean();
     if (!deviceDoc) return { error: `Device with UUID ${deviceUUID} not found`, success: false };
 
     // 3. Fetch User-Device Mapping
     const userDevice = await UserDeviceModel.findOne({
         userId: user._id,
         deviceId: deviceDoc._id
-    });
+    }).select("+refreshToken");
 
     if (!userDevice) return { error: `Session not found`, success: false };
 
+    if (!userDevice.refreshToken) {
+        return { error: `Session is terminated. Please login again.`, success: false };
+    }
     // 4. Sync Device Meta Data
     if (deviceName || deviceType) {
-        let isModified = false;
+        const updateFields = {};
         if (deviceName && deviceDoc.deviceName !== deviceName) {
-            deviceDoc.deviceName = deviceName;
-            isModified = true;
+            updateFields.deviceName = deviceName;
         }
         if (deviceType && deviceDoc.deviceType !== deviceType) {
-            deviceDoc.deviceType = deviceType;
-            isModified = true;
+            updateFields.deviceType = deviceType;
         }
-        if (isModified) await deviceDoc.save();
+        if (Object.keys(updateFields).length > 0) {
+            await DeviceModel.updateOne(
+                { _id: deviceDoc._id },
+                { $set: updateFields }
+            );
+        }
     }
 
     return { success: true, details: { user, userDevice } };
@@ -76,12 +82,12 @@ const rotateRefreshToken = async (userId, device) => {
     const tokenIssuedAt = new Date(userDevice.jwtTokenIssuedAt).getTime();
     const currentTime = Date.now();
 
-    if (currentTime - tokenIssuedAt <= expiryTimeOfAccessToken) {
+    if (currentTime - tokenIssuedAt <= expiryTimeOfAccessToken * 1000) {
         return { success: false, error: "STALE_ACCESS_TOKEN" };
     }
 
     // 4. Double Expiry Check
-    if (currentTime - tokenIssuedAt >= expiryTimeOfRefreshToken) {
+    if (currentTime - tokenIssuedAt >= expiryTimeOfRefreshToken * 1000) {
         return {
             success: false,
             error: "Session expired. Please login again."
@@ -109,9 +115,15 @@ const rotateRefreshToken = async (userId, device) => {
     );
 
     // 6. Update DB
-    userDevice.refreshToken = newRefreshToken;
-    userDevice.jwtTokenIssuedAt = new Date();
-    await userDevice.save();
+    await UserDeviceModel.updateOne(
+        { _id: userDevice._id },
+        {
+            $set: {
+                refreshToken: newRefreshToken,
+                jwtTokenIssuedAt: new Date()
+            }
+        }
+    );
 
     return {
         success: true,

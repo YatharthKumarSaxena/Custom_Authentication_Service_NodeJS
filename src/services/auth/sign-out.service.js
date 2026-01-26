@@ -2,6 +2,7 @@ const ms = require("ms");
 const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
+const { UserDeviceModel } = require("@models/user-device.model");
 
 const signOutService = async (user, device, userDevice) => {
 
@@ -25,10 +26,16 @@ const signOutService = async (user, device, userDevice) => {
     // --------------------------------------------------
     // 2️⃣ Invalidate session (CRITICAL)
     // --------------------------------------------------
-    userDevice.refreshToken = null;
-    userDevice.lastLogoutAt = now;
-
-    await userDevice.save();
+    
+    await UserDeviceModel.updateOne(
+        { _id: userDevice._id },
+        {
+            $set: {
+                refreshToken: null,
+                lastLogoutAt: now
+            }
+        }
+    );
 
     // --------------------------------------------------
     // 3️⃣ Audit log (always)

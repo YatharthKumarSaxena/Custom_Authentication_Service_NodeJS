@@ -51,7 +51,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
             userId: user._id,
             deviceId: deviceDoc._id,
             twoFactorVerifiedAt: { $ne: null }
-        });
+        }).lean();
 
         if (userDevice && userDevice.twoFactorVerifiedAt) {
             logWithTime(
