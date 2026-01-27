@@ -1,10 +1,16 @@
 const { logWithTime } = require("@utils/time-stamps.util");
 const { throwInternalServerError, logMiddlewareError, throwAccessDeniedError } = require("@utils/error-handler.util");
+const { DeviceModel } = require("@models/device.model");
 
 const isDeviceBlocked = async (req, res, next) => {
     try {
-        const device = req.device;
-        if (device.isBlocked === true) {
+        let device = req.device;
+        const dbDevice = await DeviceModel.findOne({ deviceUUID: req.device.deviceUUID }).lean();
+        if (dbDevice) {
+            device = dbDevice;
+            req.device = device;
+        }
+        if (dbDevice && device.isBlocked === true) {
             logMiddlewareError("isDeviceBlocked", "Device is blocked", req);
             return throwAccessDeniedError(
                 res, 
