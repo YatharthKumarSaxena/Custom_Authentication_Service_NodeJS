@@ -7,6 +7,8 @@ const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { SecurityContext } = require("@configs/security.config");
+const { UserModel } = require("@models/user.model");
+const { AuthErrorTypes } = require("@configs/enums.config");
 
 const deactivateAccountService = async (user, device, plainPassword) => {
 
@@ -49,6 +51,7 @@ const deactivateAccountService = async (user, device, plainPassword) => {
     if (!updatedUser) {
         return {
             success: false,
+            type: AuthErrorTypes.ALREADY_DEACTIVATED,
             message: "Account already deactivated."
         };
     }
