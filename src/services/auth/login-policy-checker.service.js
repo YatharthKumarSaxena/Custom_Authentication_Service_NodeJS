@@ -1,16 +1,21 @@
 const { UserDeviceModel } = require("@models/user-device.model");
-const { usersPerDevice, deviceThreshold, ENABLE_DEVICE_SOFT_REPLACE } = require("@configs/security.config");
+const {
+    usersPerDevice,
+    deviceThreshold,
+    ENABLE_DEVICE_SOFT_REPLACE
+} = require("@configs/security.config");
 const { UserTypes, AuthErrorTypes } = require("@configs/enums.config");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { logWithTime } = require("@/utils/time-stamps.util");
 
 const loginPolicyChecker = async ({ user, deviceId }) => {
 
-    const validSessionSince = new Date(Date.now() - expiryTimeOfRefreshToken);
+    const validSessionSince = new Date(Date.now() - expiryTimeOfRefreshToken*1000);
 
-    // -------------------------------------------------
-    // 1️⃣ USERS PER DEVICE LIMIT
-    // -------------------------------------------------
+    // =================================================
+    // 1️⃣ USERS PER DEVICE LIMIT (DEVICE → USER)
+    // =================================================
+
     const uniqueUsersOnDevice = await UserDeviceModel.distinct("userId", {
         deviceId,
         refreshToken: { $ne: null },
@@ -23,18 +28,50 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
             id => id.toString() === user._id.toString()
         );
 
+        // New user on same device
         if (!alreadyExists) {
-            return {
-                allowed: false,
-                type: AuthErrorTypes.DEVICE_USER_LIMIT_REACHED,
-                message: `Max ${usersPerDevice} accounts allowed on this device.`
-            };
+
+            // ❌ STRICT MODE
+            if (!ENABLE_DEVICE_SOFT_REPLACE) {
+                return {
+                    allowed: false,
+                    type: AuthErrorTypes.DEVICE_USER_LIMIT_REACHED,
+                    message: `Max ${usersPerDevice} accounts allowed on this device.`
+                };
+            }
+
+            // 🔁 SOFT REPLACE MODE (atomic & safe)
+            const replacedSession = await UserDeviceModel.findOneAndUpdate(
+                {
+                    deviceId,
+                    userId: { $ne: user._id },
+                    refreshToken: { $ne: null },
+                    jwtTokenIssuedAt: { $gte: validSessionSince }
+                },
+                {
+                    $set: {
+                        refreshToken: null,
+                        jwtTokenIssuedAt: null,
+                        lastLogoutAt: new Date()
+                    }
+                },
+                {
+                    sort: { jwtTokenIssuedAt: 1 } // oldest first
+                }
+            );
+
+            if (replacedSession) {
+                logWithTime(
+                    `🔁 Soft replaced user on device | oldUser=${replacedSession.userId}`
+                );
+            }
         }
     }
 
-    // -------------------------------------------------
-    // 2️⃣ DEVICE THRESHOLD PER USER
-    // -------------------------------------------------
+    // =================================================
+    // 2️⃣ DEVICE THRESHOLD PER USER (USER → DEVICE)
+    // =================================================
+
     const allowedLimit =
         user.userType === UserTypes.ADMIN
             ? deviceThreshold.ADMIN
@@ -45,13 +82,11 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
         refreshToken: { $ne: null },
         jwtTokenIssuedAt: { $gte: validSessionSince },
         deviceId: { $ne: deviceId }
-    }).sort({ jwtTokenIssuedAt: 1 }); // 👈 oldest first
+    }).sort({ jwtTokenIssuedAt: 1 }); // oldest first
 
     if (activeDevices.length + 1 > allowedLimit) {
 
-        // -------------------------------------------------
         // ❌ STRICT MODE
-        // -------------------------------------------------
         if (!ENABLE_DEVICE_SOFT_REPLACE) {
             return {
                 allowed: false,
@@ -60,9 +95,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
             };
         }
 
-        // -------------------------------------------------
         // 🔁 SOFT REPLACE MODE
-        // -------------------------------------------------
         const oldestSession = activeDevices[0];
 
         await UserDeviceModel.updateOne(
@@ -81,9 +114,10 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
         );
     }
 
-    // -------------------------------------------------
+    // =================================================
     // ✅ PASSED
-    // -------------------------------------------------
+    // =================================================
+
     logWithTime(`✅ Login policy check passed for user ${user.userId}.`);
 
     return { allowed: true };
