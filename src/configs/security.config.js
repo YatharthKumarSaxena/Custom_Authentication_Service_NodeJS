@@ -4,8 +4,8 @@ module.exports = {
   SALT: Number(process.env.SALT),
   usersPerDevice: 1,
   deviceThreshold: {
-    ADMIN: 2,
-    CUSTOMER: 5
+    ADMIN: 1,
+    CUSTOMER: 1
   },
   SecurityContext: {
     LOGIN: "login",

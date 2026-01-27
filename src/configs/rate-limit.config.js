@@ -104,7 +104,7 @@ module.exports = {
     },
 
     deactivateMyAccount: {
-      maxRequests: 2,
+      maxRequests: 20,
       windowMs: 60 * 60 * 1000,
       prefix: "deactivate_my_account",
       reason: "Account deactivation abuse",
@@ -112,7 +112,7 @@ module.exports = {
     },
 
     changePassword: {
-      maxRequests: 2,
+      maxRequests: 20,
       windowMs: 60 * 60 * 1000,
       prefix: "change_password",
       reason: "Change password abuse",
@@ -160,7 +160,7 @@ module.exports = {
     },
 
     disable2FA: {
-      maxRequests: 3,
+      maxRequests: 30,
       windowMs: 10 * 60 * 1000,
       prefix: "disable_2fa",
       reason: "Disable 2FA abuse",
