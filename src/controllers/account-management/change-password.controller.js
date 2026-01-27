@@ -50,6 +50,11 @@ const changePassword = async (req, res) => {
             }
         }
 
+        if (password === newPassword) {
+            logWithTime(`❌ Change Password failed because new password is same as old password for User ${user.userId}`);
+            return throwBadRequestError(res, "New Password cannot be same as Old Password");
+        }
+        
         // ---------------------------------------------------------
         // 3. Update Password (CRITICAL)
         // ---------------------------------------------------------
