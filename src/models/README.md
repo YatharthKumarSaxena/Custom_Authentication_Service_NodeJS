@@ -1,70 +1,36 @@
-# 🧬 `models/` — Schema Definitions & Data Contracts
+# 📁 Models
 
-> **I'm the `README.md` file of this folder — here to document the structural DNA of your backend.** 🧠
+> Welcome! I am the README file of this folder to assist you in understanding its structure and purpose.
 
----
+## 📋 Folder Purpose
+This folder contains MongoDB schema definitions using Mongoose. Each model file defines the database structure, validation rules, and data relationships for different entities in the authentication service.
 
-## 📖 **Introduction**
+## 📂 Folder Structure
 
-Welcome to the **models layer** — the **data blueprint** of your Custom Authentication Service.
+| File/Folder | Type | Description |
+|------------|------|-------------|
+| auth-logs.model.js | File | Authentication activity logging schema |
+| device.model.js | File | Device information and metadata schema |
+| id-generator.model.js | File | Counter schema for generating sequential IDs |
+| index.js | File | Central export file for all models |
+| link.model.js | File | Magic link and verification link schema |
+| otp.model.js | File | One-time password storage schema |
+| system-log.model.js | File | System event logging schema |
+| user-device.model.js | File | User-device association and session schema |
+| user.model.js | File | User account information schema |
 
-This folder contains all **MongoDB schema definitions** used across the system. These schemas represent your business contracts — how users are stored, how authentication logs are tracked, and how rate limiting is enforced.
+## 🔗 Key Files
+- **user.model.js**: Core user schema with authentication credentials and profile data
+- **user-device.model.js**: Manages user sessions and device associations
+- **auth-logs.model.js**: Tracks all authentication events for security monitoring
+- **otp.model.js**: Stores and validates one-time passwords for verification
+- **link.model.js**: Handles magic links and email verification tokens
+- **id-generator.model.js**: Generates unique sequential IDs with prefixes
+- **index.js**: Exports all models for easy importing in other modules
 
-Every field in these models is **carefully validated**, **tightly structured**, and **deeply integrated** with enums, regex patterns, length constraints, and logical flags to ensure:
-
-- 🔐 **Security**
-- 🔎 **Traceability**
-- 🧩 **Extendability**
-- ⚙️ **Functional Integrity**
-
----
-
-## 🧭 Table of Contents
-
-- 🗂️ [Folder Structure](#-folder-structure)
-- 🧠 [Design Principles & Patterns](#-design-principles--patterns)
-- 🎯 [Final Takeaway](#-final-takeaway)
-
----
-
-## 🗂️ **Folder Structure**
-
-> 📦 Total: **5 Mongoose model files**
-
-| 📄 File Name              | 🔍 Description |
-|---------------------------|----------------|
-| `user.model.js`           | 👤 Defines the core user document structure: identity, security flags, status toggles, device tracking, OTP logic |
-| `auth-logs.model.js`      | 📜 Stores auth events: login, logout, block, unblock — with rich metadata like who performed the action and on what device |
-| `device-rate-limit.model.js` | 🚦 Tracks unauthenticated rate limits using deviceID (sign-up, OTP, etc.) |
-| `rate-limit.model.js`     | 📊 Stores fine-grained rate limiting info per (deviceID + routeKey) — enables route-level analytics |
-| `id-generator.model.js`   | 🆔 Generic counter model for generating unique sequential IDs (used in registration, payments, orders, etc.) |
-
----
-
-## 🧠 **Design Principles & Patterns**
-
-| ✅ Principle / Pattern          | 💡 Where Applied                                                                 |
-|--------------------------------|----------------------------------------------------------------------------------|
-| **SRP (Single Responsibility)** | Each schema targets one entity (User, Auth Log, Rate Limit, etc.)                |
-| **DRY**                        | Common regex, enums, and length configs abstracted in centralized config files   |
-| **Validation at Schema Layer** | All inputs validated through regex, enums, and custom validators                 |
-| **Fail Fast**                  | Errors raised immediately if device duplication or invalid input is detected     |
-| **Open-Closed Principle (OCP)**| Schema allows safe addition of fields (e.g., `adminActions`, `devices.info`)     |
-| **Extensibility**              | OTP, device tracking, and logs can evolve without breaking legacy data           |
-| **Data Integrity First**       | Indexed fields (like `userID`, `fullPhoneNumber`, `deviceID`) avoid duplication  |
-
----
-
-## 🎯 **Final Takeaway**
-
-The `models/` folder acts as the **data backbone** of your service — defining the truth about every user, device, event, and rate-limiting decision.
-
-By designing **modular**, **strongly-typed**, and **responsibly validated** schemas, you've laid the groundwork for a service that is:
-
-- Easy to extend
-- Hard to corrupt
-- Ready for analytics and audit
-- Production-grade from day one
-
-> Engineered with structure by **Yatharth Kumar Saxena**  
-> Let this folder be the **ledger of truth** and the **guardian of data integrity** 🧬
+## 📝 Notes
+- All models use Mongoose ODM for MongoDB
+- Models include built-in validation and middleware hooks
+- Timestamps are automatically managed by Mongoose
+- Index definitions are included for optimized queries
+- Sensitive fields (passwords, tokens) are properly hashed or encrypted
