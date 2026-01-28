@@ -79,11 +79,30 @@ const updateMyAccount = async (req, res) => {
             }
         }
 
-        // ✅ Success response
+        // ✅ Success response with verification status
+        let message = result.message;
+        
+        // Build dynamic message based on what was updated
+        if (result.emailVerificationSent || result.phoneVerificationSent) {
+            const verificationMessages = [];
+            
+            if (result.emailVerificationSent) {
+                verificationMessages.push("Verification email sent to your new email address");
+            }
+            
+            if (result.phoneVerificationSent) {
+                verificationMessages.push("Verification code sent to your new phone number");
+            }
+            
+            message = `Profile updated successfully. ${verificationMessages.join(". ")}.`;
+        }
+        
         return res.status(OK).json({
             success: true,
-            message: result.message,
-            updatedFields: result.updatedFields
+            message,
+            updatedFields: result.updatedFields,
+            emailVerificationSent: result.emailVerificationSent || false,
+            phoneVerificationSent: result.phoneVerificationSent || false
         });
 
     } catch (err) {

@@ -11,7 +11,7 @@ const forgotPassword = async (req, res) => {
         const user = req.foundUser;
         const device = req.device;
 
-        const result = await forgotPasswordService(user, device.deviceUUID);
+        const result = await forgotPasswordService(user, device);
 
         if (!result.success) {
 
