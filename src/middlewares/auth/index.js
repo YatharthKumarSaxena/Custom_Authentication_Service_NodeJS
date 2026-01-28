@@ -3,6 +3,7 @@ const { validationMiddlewares } = require("./field-validation.middleware");
 const { presenceMiddlewares } = require("./validate-request-body.middleware");
 const { ensureUserExists, ensureUserNew } = require("./fetch-user.middleware");
 const { firstNameValidator } = require("./first-name.middleware");
+const { sanitizeAuthBody } = require("./sanitize-auth.middleware");
 
 const authMiddlewares = {
     authValidatorBody,
@@ -10,7 +11,8 @@ const authMiddlewares = {
     ...presenceMiddlewares,
     ensureUserExists,
     ensureUserNew,
-    firstNameValidator
+    firstNameValidator,
+    sanitizeAuthBody
 };
 
 module.exports = {

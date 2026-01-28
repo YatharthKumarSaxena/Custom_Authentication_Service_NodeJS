@@ -2,6 +2,7 @@ const { createAuthValidator } = require("./auth-mode-middleware.factory");
 const { validateBody, validateParams, validateQuery } = require("./field-validation.middleware-factory");
 const { checkBodyPresence, checkParamsPresence, checkQueryPresence } = require("./validate-request-body.middleware-factory");
 const { fetchEntityFactory } = require("./fetch-entity.middleware-factory");
+const { sanitizeAuthPayload } = require("./sanitize-auth-payload.middleware.factory");
 
 const factoryMiddlewares = {
     createAuthValidator,
@@ -11,7 +12,8 @@ const factoryMiddlewares = {
     checkBodyPresence,
     checkParamsPresence,
     checkQueryPresence,
-    fetchEntityFactory
+    fetchEntityFactory,
+    sanitizeAuthPayload
 };
 
 module.exports = {

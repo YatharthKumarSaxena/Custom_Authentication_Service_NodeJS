@@ -25,11 +25,7 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
             }
 
             // STEP 1: EXTRACT DATA DYNAMICALLY
-            let { email, countryCode, localNumber } = req[location];
-
-            email = email ? email.trim() : null;
-            countryCode = countryCode ? countryCode.trim() : null;
-            localNumber = localNumber ? localNumber.trim() : null;
+            const { email, countryCode, localNumber } = req[location];
             
             let missingFields = [];
             const validationErrors = [];
@@ -39,14 +35,6 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
                 if (!email){
                     logMiddlewareError("authModeValidator", "Email is required in EMAIL auth mode", req);
                     return throwMissingFieldsError(res, "email");
-                }
-                if(countryCode){
-                    logWithTime("⚠️ Removing countryCode field in EMAIL auth mode from device id: " + req.device.deviceUUID);
-                    delete req[location].countryCode;
-                }
-                if(localNumber){
-                    logWithTime("⚠️ Removing localNumber field in EMAIL auth mode from device id: " + req.device.deviceUUID);
-                    delete req[location].localNumber;
                 }
             }
             
@@ -61,10 +49,6 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
                 if (missingFields.length > 0) {
                     logMiddlewareError("authModeValidator", "Missing fields in PHONE auth mode", req);
                     return throwMissingFieldsError(res, missingFields.join(", "));
-                }
-                if(email){
-                    logWithTime("⚠️ Removing email field in PHONE auth mode from device id: " + req.device.deviceUUID);
-                    delete req[location].email;
                 }
             }
             
@@ -130,6 +114,7 @@ const createAuthValidator = (location = RequestLocation.BODY) => {
                 return throwValidationError(res, "Validation Failed", validationErrors.join(" | "));
             }
 
+            logWithTime("✅ Auth mode validation passed");
             return next();
 
         } catch (error) {
