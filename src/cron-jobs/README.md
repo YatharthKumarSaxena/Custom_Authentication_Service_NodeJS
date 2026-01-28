@@ -1,67 +1,34 @@
-# ⏰ `cron-jobs/` — Background Automation & Scheduled Cleanups
+# 📁 Cron Jobs
 
-> **I’m the `README.md` of this folder — documenting the silent janitor bots that keep your system lean and performant.** 🧹🧠
+> Welcome! I am the README file of this folder to assist you in understanding its structure and purpose.
 
----
+## 📋 Folder Purpose
+This folder contains scheduled background tasks that run automatically at specified intervals. These cron jobs handle database cleanup, session management, and data maintenance operations.
 
-## 📖 **Introduction**
+## 📂 Folder Structure
 
-Welcome to the `cron-jobs/` folder — the **automated task hub** of your authentication service.  
-These scripts run quietly in the background, performing periodic **cleanup operations** that protect system hygiene and resource efficiency.
+| File/Folder | Type | Description |
+|------------|------|-------------|
+| cleanup-auth-logs.job.js | File | Removes old authentication log entries |
+| cleanup-expired-sessions.job.js | File | Deletes expired user sessions |
+| cleanup-inactive-devices.job.js | File | Removes devices not used for extended periods |
+| cleanup-used-verifications.job.js | File | Deletes used OTPs and verification links |
+| delete-deactivated-users.job.js | File | Permanently removes deactivated user accounts |
+| index.js | File | Initializes and schedules all cron jobs |
 
-By using `node-cron`, each job is **timed, scoped, and modular** — with dynamic control via `cron.config.js`.
+## 🔗 Key Files
+- **cleanup-expired-sessions.job.js**: Maintains session hygiene by removing expired entries
+- **cleanup-auth-logs.job.js**: Prevents log table bloat by archiving old entries
+- **cleanup-inactive-devices.job.js**: Removes devices inactive beyond threshold
+- **cleanup-used-verifications.job.js**: Cleans up OTPs and links after use
+- **delete-deactivated-users.job.js**: Completes account deletion after grace period
+- **index.js**: Registers all jobs with the cron scheduler
 
-This ensures:
-- 🧼 **Old auth logs** don’t bloat your database.
-- 🪦 **Inactive users** are retired gracefully.
-- 🧠 Every deletion is **logged and auditable**.
-
----
-
-## 🧭 Table of Contents
-
-- 🗂️ [Folder Structure](#-folder-structure)
-- 🧠 [Design Principles & Patterns](#-design-principles--patterns)
-- 🎯 [Final Takeaway](#-final-takeaway)
-
----
-
-## 🗂️ **Folder Structure**
-
-> 📦 Total: **3 files**
-
-| 📄 File Name                     | 🧾 Description |
-|----------------------------------|----------------|
-| `index.js`                       | 🔁 Boots all cron jobs — imported in `server.js` to activate schedules |
-| `cleanup-auth-logs.job.js`      | 🗑️ Deletes old authentication logs older than `N` days (from `auth.logs`) |
-| `delete-deactivated-users.job.js` | ⚰️ Removes `isActive: false` users who’ve been deactivated beyond retention threshold |
-
----
-
-## 🧠 **Design Principles & Patterns**
-
-| ✅ Principle / Pattern            | 💡 Where Applied |
-|----------------------------------|------------------|
-| **Factory Control via Config**   | Jobs can be turned on/off via `cron.config.js` flags |
-| **Fail Fast**                    | Invalid configs (e.g., 0 days retention) halt execution early |
-| **SRP (Single Responsibility)**  | Each job manages only one cleanup operation |
-| **DRY**                          | Common utilities like `logAuthEvent` and `logWithTime` reused in both jobs |
-| **Auditable Design**            | Every deletion creates an `auth.logs` entry (SYSTEM tag) |
-| **TimeZone Safe**               | All jobs use `cron.schedule(..., { timezone })` for global compatibility |
-| **Resilient Error Handling**     | Wrapped in `try-catch` with structured error logs using `errorMessage()` |
-
----
-
-## 🎯 **Final Takeaway**
-
-The `cron-jobs/` folder represents **backend maturity** — enabling automatic, secure, and monitored background jobs without relying on manual triggers.
-
-Whether it’s:
-- ✂️ Shrinking deadweight logs,
-- 🪦 Retiring stale accounts,
-- 📖 Logging system-level events for audit,
-
-…you’ve built a self-healing backend powered by **scheduled intelligence**.
-
-> Engineered with foresight by **Yatharth Kumar Saxena**  
-> Let this folder be your backend’s **janitor & guardian** — working silently but effectively. ⏳🧹
+## 📝 Notes
+- All jobs run on schedules defined in cron.config.js
+- Jobs are executed using node-cron or similar scheduler
+- Each job logs its execution status for monitoring
+- Jobs handle errors gracefully to prevent crashes
+- Schedules should be configured for off-peak hours
+- Database operations are batched for performance
+- Jobs can be enabled/disabled via configuration
