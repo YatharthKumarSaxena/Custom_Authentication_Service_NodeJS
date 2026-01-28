@@ -1,12 +1,14 @@
 const { UserModel } = require("@models/user.model");
+const { DeviceModel } = require("@models/device.model");
 const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
-const { AuthErrorTypes } = require("@configs/enums.config");
+const { AuthErrorTypes, VerificationPurpose, VerifyMode, ContactModes } = require("@configs/enums.config");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const {
     validateLength,
     isValidRegex
@@ -85,6 +87,30 @@ const updateAccountService = async (user, device, updatePayload) => {
         updateSet.email = email;
         updateSet.isEmailVerified = false;
         updatedFields.push("Email");
+
+        // 📧 Send notification to OLD email about the change
+        const oldEmailContact = {
+            email: user.email,
+            phone: user.countryCode && user.localNumber ? user.countryCode + user.localNumber : null,
+            countryCode: user.countryCode,
+            localNumber: user.localNumber,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            contactMode: ContactModes.EMAIL // Force email notification
+        };
+
+        logWithTime(`🚨 Sending email change alert to OLD email: ${user.email} (new email: ${email})`);
+
+        sendNotification({
+            contactInfo: oldEmailContact,
+            emailTemplate: userTemplate.emailChangeAlert,
+            smsTemplate: null,
+            data: { 
+                name: user.firstName || "User",
+                new_email: email 
+            }
+        });
+
     }
 
     /* ---------------- Phone ---------------- */
@@ -135,6 +161,26 @@ const updateAccountService = async (user, device, updatePayload) => {
         updateSet.isPhoneVerified = false;
 
         updatedFields.push("Phone Number");
+
+        // 📱 Send notification to OLD phone number about the change
+        const oldPhoneContact = {
+            email: user.email,
+            phone: user.countryCode && user.localNumber ? user.countryCode + user.localNumber : null,
+            countryCode: user.countryCode,
+            localNumber: user.localNumber,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            contactMode: ContactModes.PHONE // Force SMS notification
+        };
+
+        logWithTime(`🚨 Sending phone change alert to OLD phone: ${user.countryCode}${user.localNumber} (new phone: ${unifiedPhone})`);
+
+        sendNotification({
+            contactInfo: oldPhoneContact,
+            emailTemplate: null,
+            smsTemplate: userSmsTemplate.phoneChangeAlert,
+            data: { name: user.firstName || "User" }
+        });
     }
 
     /* ---------------- No Change ---------------- */
@@ -172,20 +218,100 @@ const updateAccountService = async (user, device, updatePayload) => {
         null
     );
 
-    /* ---------------- Notifications ---------------- */
-    const contactInfo = getUserContacts(updatedUser);
+    /* ---------------- Send Verification to New Email/Phone ---------------- */
+    let emailVerificationSent = false;
+    let phoneVerificationSent = false;
 
-    sendNotification({
-        contactInfo,
-        emailTemplate: userTemplate.profileUpdated,
-        smsTemplate: userSmsTemplate.profileUpdated,
-        data: { name: updatedUser.firstName || "User" }
-    });
+    // Get or create device document for verification
+    const deviceDoc = await DeviceModel.findOneAndUpdate(
+        { deviceUUID: device.deviceUUID },
+        {
+            $set: {
+                deviceName: device.deviceName,
+                deviceType: device.deviceType
+            }
+        },
+        { new: true, upsert: true }
+    );
+
+    // 📧 Send verification to NEW email
+    if (updatedFields.includes("Email")) {
+        const newContactInfo = getUserContacts(updatedUser);
+        
+        const emailVerification = await generateVerificationForUser(
+            updatedUser,
+            deviceDoc._id,
+            VerificationPurpose.EMAIL_VERIFICATION,
+            newContactInfo.contactMode
+        );
+
+        if (emailVerification && !emailVerification.reused) {
+            const { type, token } = emailVerification;
+            
+            sendNotification({
+                contactInfo: newContactInfo,
+                emailTemplate: userTemplate.verifyNewEmail,
+                smsTemplate: null,
+                data: {
+                    name: updatedUser.firstName || "User",
+                    otp: type === VerifyMode.OTP ? token : undefined,
+                    link: type === VerifyMode.LINK ? token : undefined
+                }
+            });
+            
+            emailVerificationSent = true;
+            logWithTime(`📧 Email verification sent to new email: ${updatedUser.email}`);
+        }
+    }
+
+    // 📱 Send verification to NEW phone
+    if (updatedFields.includes("Phone Number")) {
+        const newContactInfo = getUserContacts(updatedUser);
+        
+        const phoneVerification = await generateVerificationForUser(
+            updatedUser,
+            deviceDoc._id,
+            VerificationPurpose.PHONE_VERIFICATION,
+            newContactInfo.contactMode
+        );
+
+        if (phoneVerification && !phoneVerification.reused) {
+            const { type, token } = phoneVerification;
+            
+            sendNotification({
+                contactInfo: newContactInfo,
+                emailTemplate: null,
+                smsTemplate: userSmsTemplate.verifyNewPhone,
+                data: {
+                    name: updatedUser.firstName || "User",
+                    otp: token
+                }
+            });
+            
+            phoneVerificationSent = true;
+            logWithTime(`📱 Phone verification sent to new number: ${updatedUser.phone}`);
+        }
+    }
+
+    /* ---------------- General Profile Update Notification ---------------- */
+    // Only send if firstName was updated (not email/phone)
+    if (updatedFields.includes("First Name") && updatedFields.length === 1) {
+        const contactInfo = getUserContacts(updatedUser);
+        
+        sendNotification({
+            contactInfo,
+            emailTemplate: userTemplate.profileUpdated,
+            smsTemplate: userSmsTemplate.profileUpdated,
+            data: { name: updatedUser.firstName || "User" }
+        });
+    }
 
     return {
         success: true,
         message: "Profile updated successfully.",
-        updatedFields
+        updatedFields,
+        emailVerificationSent,
+        phoneVerificationSent
     };
 };
 

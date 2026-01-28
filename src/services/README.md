@@ -1,106 +1,45 @@
-# 🧠 `services/` — Logical Command Center of the Auth System
+# 📁 Services
 
-> **I'm the README.md file of this folder, here to guide you step-by-step!** 🚀
+> Welcome! I am the README file of this folder to assist you in understanding its structure and purpose.
 
----
+## 📋 Folder Purpose
+This folder contains the business logic layer of the authentication service. Services handle complex operations, coordinate between models and controllers, and implement the core functionality for authentication, account management, and user verification.
 
-## 📖 **Introduction**
+## 📂 Folder Structure
 
-Welcome to the **`services/` folder**, the **intelligence layer** of this authentication ecosystem. These files don't just handle requests — they **enforce rules**, **generate identities**, and **control access velocity** with clean, scalable logic.
+| File/Folder | Type | Description |
+|------------|------|-------------|
+| account-management/ | Folder | User account CRUD and profile management services |
+| account-verification/ | Folder | Email and phone verification services |
+| audit/ | Folder | Audit logging and tracking services |
+| auth/ | Folder | Login, logout, and session management services |
+| bootstrap/ | Folder | Application initialization services |
+| common/ | Folder | Shared service utilities |
+| counter-rollback.service.js | File | ID counter rollback on failed operations |
+| factories/ | Folder | Service factory patterns |
+| internals/ | Folder | Internal administrative services |
+| mail.service.js | File | Email sending service wrapper |
+| password-management/ | Folder | Password reset and change services |
+| sms.service.js | File | SMS sending service wrapper |
+| system/ | Folder | System-level operations |
+| templates/ | Folder | Email and SMS template services |
+| userId.service.js | File | User ID generation and validation service |
 
-Think of this folder as the **bridge between raw logic and real-world flow** — whether it’s generating userIDs that never collide, limiting brute-force attempts using rate-limiting thresholds, or signing tokens seamlessly with logging — everything here is **stateless**, **composable**, and **design-pattern-rich**.
+## 🔗 Key Files
+- **auth/**: Core authentication services (login, logout, token refresh)
+- **account-management/**: User account creation, updates, and deletion
+- **account-verification/**: Email and phone number verification workflows
+- **password-management/**: Password reset and change functionality
+- **mail.service.js**: Sends emails via configured email provider
+- **sms.service.js**: Sends SMS messages via configured SMS provider
+- **userId.service.js**: Generates unique user IDs with prefixes
+- **counter-rollback.service.js**: Ensures ID counter consistency
 
-All services inside this folder are carefully modularized following **SRP**, and several of them use **Factory**, **Singleton**, and **Open-Closed** principles to future-proof the entire system.
-
----
-
-## 🧭 Table of Contents
-
-- 🗂️ [Folder Overview](#-folder-overview)
-- 📄 [Detailed File-Wise Breakdown](#-detailed-file-wise-breakdown)
-- 🧠 [Design Principles & Patterns](#-design-principles--patterns)
-- 🎯 [Final Takeaway](#-final-takeaway)
-
----
-
-## 🗂️ **Folder Overview**
-
-> 📦 Total: **3 files**
-
-| 📄 File Name              | 📋 Purpose Summary |
-|--------------------------|---------------------|
-| `rate-limiter.service.js`| 🛑 Tracks request frequency using `deviceID` + `routeKey` combo |
-| `token.service.js`       | 🔐 Generates refresh tokens when login happens via token |
-| `userID.service.js`      | 🆔 Factory + Singleton driven logic for safe User ID generation |
-
----
-
-## 📄 **Detailed File-Wise Breakdown**
-
-### 🛑 `rate-limiter.service.js`
-
-- **Purpose**: Implements per-device-per-route rate limiting (typically 5 requests/minute).
-- `getRateLimitMeta()`: Reads existing request count and last request time
-- `shouldBlockRequest()`: Applies business logic to decide if request is blocked
-- `incrementRateLimitCount()`: Atomically increments request count and timestamps
-
-> 🔄 Used in sensitive APIs like `/not-found` or account actions to avoid abuse.
-
----
-
-### 🔐 `token.service.js`
-
-- **Purpose**: Handles token-based login logic
-- `signInWithToken(req, res)`:  
-  - Logs login type (`refresh`, `re-auth`, etc.)  
-  - Creates refresh token using `makeTokenWithMongoID()` from `utils/`
-  - Automatically logs and returns the token
-
-> 🔒 Keeps `services/` clean by outsourcing JWT creation logic to the utility layer.
-
----
-
-### 🆔 `userID.service.js`
-
-- **Purpose**: Generates unique userID using:
-  - MongoDB counter (`seq`)
-  - Machine code (`IP_Address_Code`)
-  - User role prefix (`CUS`, etc.)
-
-#### 🏭 Uses 3 Main Sub-Functions:
-
-- `increaseCustomerCounter(res)`  
-  - Increments MongoDB counter  
-  - Ensures thread-safe userID creation  
-  - **Follows SRP & Singleton** (1 document = 1 counter)
-
-- `createCustomerCounter(res)`  
-  - Initializes counter if missing (only once per machine)
-
-- `makeUserID(res)`  
-  - **Factory** for creating userID → combines counter + prefix + machine code  
-  - Respects machine limit (`userRegistrationCapacity`)  
-  - Logs every important stage
-
----
-
-## 🧠 **Design Principles & Patterns**
-
-| ✅ Principle / Pattern         | 💡 Where Applied |
-|-------------------------------|------------------|
-| **SRP** (Single Responsibility Principle) | All 3 services do 1 focused job |
-| **Factory Pattern**           | `makeUserID()` creates unique structured IDs |
-| **Singleton Pattern**         | `createCustomerCounter()` ensures 1 MongoDB counter per role |
-| **OCP** (Open-Closed Principle) | `makeUserID()` can evolve for admins/devices without rewriting |
-| **KISS**                      | Token login and rate-limiter logic is minimal and clean |
-| **DRY**                       | DB operations and logging reused via imported utils |
-
----
-
-## 🎯 **Final Takeaway**
-
-This `services/` folder is where **core backend intelligence resides**. Every time a user signs up, logs in, or sends too many requests — these services **decide what happens next**, and **how it should happen**.
-
-> Whether it's **creating a globally unique userID**, **signing tokens** silently, or **stopping abuse** through rate-limits — this folder is the decision engine.  
-> Designed with care by **Yatharth Kumar Saxena** 🧠  
-> Let logic scale, securely and smartly — one service at a time.
+## 📝 Notes
+- Services encapsulate business logic and keep controllers thin
+- Each service folder contains related functionality
+- Services interact with models but don't handle HTTP directly
+- Factories provide flexible service creation patterns
+- Bootstrap services run on application startup
+- Internal services are for administrative operations
+- Audit services track all important system events

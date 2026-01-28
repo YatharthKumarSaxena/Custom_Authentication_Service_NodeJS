@@ -1,46 +1,33 @@
 const { SendNotificationFactory } = require("@services/factories/notification.factory"); 
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const { getUserContacts } = require("@utils/contact-selector.util");
-
+const { DeviceModel } = require("@models/device.model");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { FRONTEND_ROUTES } = require("@configs/frontend-routes.config");
-const { VerifyMode, VerificationPurpose, ContactModes, AuthErrorTypes } = require("@configs/enums.config");
-const { verificationSecurity } = require("@configs/security.config")
+const { VerificationPurpose, AuthErrorTypes } = require("@configs/enums.config");
 
-const forgotPasswordService = async (user, deviceId) => {
+const forgotPasswordService = async (user, device) => {
 
     const { email, phone, contactMode } = getUserContacts(user);
-
-    const expectedType =
-        contactMode === ContactModes.SMS
-            ? VerifyMode.OTP
-            : VerifyMode.LINK;
-
-    // 1️⃣ Re-send protection
-    const canSend = await CheckExistingTokenFactory(
-        user._id,
-        expectedType,
-        VerificationPurpose.FORGOT_PASSWORD
-    );
-
-    if (!canSend) {
-        return {
-            success: false,
-            type: AuthErrorTypes.ALREADY_SENT,
-            message:
-                expectedType === VerifyMode.OTP
-                    ? "A valid OTP is already sent. Please check your SMS."
-                    : "A reset link is already sent. Please check your Email."
-        };
-    }
-
-    const forgotPasswordSecurity = verificationSecurity[VerificationPurpose.FORGOT_PASSWORD];
     
+    const { deviceUUID, deviceName, deviceType } = device;
+    const deviceDoc = await DeviceModel.findOneAndUpdate({
+        deviceUUID: deviceUUID
+    }, {
+        $set: {
+            deviceName: deviceName,
+            deviceType: deviceType
+        }
+    }, {
+        new: true,
+        upsert: true
+    });
+
     // 2️⃣ Generate token
     const verificationResult = await generateVerificationForUser(
         user,
-        deviceId,
+        deviceDoc._id,
         VerificationPurpose.FORGOT_PASSWORD,
         contactMode
     );
