@@ -1,69 +1,53 @@
-# 🛠️ `configs/` — Environment-Aware Configurations for Secure & Dynamic System Behavior
+# 📁 Configs
 
-> **I’m the `README.md` for the brain of your backend.** Every config here adapts the system to run across environments, manage limits, enforce rules, and follow best practices without touching core code.
+> Welcome! I am the README file of this folder to assist you in understanding its structure and purpose.
 
----
+## 📋 Folder Purpose
+This folder contains all configuration files for the authentication service. Each file defines constants, settings, and configuration parameters used throughout the application for database connections, security, validation, and various service features.
 
-## 📖 **Introduction**
+## 📂 Folder Structure
 
-This folder acts as the **central nervous system** of the custom authentication service — from cookies to cron jobs, rate limits to regex. All reusable configuration values and control switches live here.
+| File/Folder | Type | Description |
+|------------|------|-------------|
+| admin-id.config.js | File | Admin user ID configuration |
+| app-limits.config.js | File | Application-level limits and thresholds |
+| auth-log-events.config.js | File | Authentication logging event definitions |
+| cookies.config.js | File | Cookie settings and configuration |
+| cron.config.js | File | Cron job schedules and settings |
+| db-collections.config.js | File | Database collection names |
+| db.config.js | File | Database connection configuration |
+| device-headers.config.js | File | Device identification header mappings |
+| email.config.js | File | Email service configuration |
+| enums.config.js | File | Enumeration definitions used across the app |
+| fields-length.config.js | File | Field length validation constraints |
+| frontend-routes.config.js | File | Frontend route definitions |
+| http-status.config.js | File | HTTP status code constants |
+| id-prefixes.config.js | File | Prefix patterns for generated IDs |
+| ip-address.config.js | File | IP address handling configuration |
+| rate-limit.config.js | File | Rate limiting settings |
+| redis.config.js | File | Redis connection and cache configuration |
+| regex.config.js | File | Regular expression patterns for validation |
+| required-fields.config.js | File | Required field definitions per endpoint |
+| security.config.js | File | Security settings and encryption keys |
+| server.config.js | File | Server port and environment settings |
+| system-log-events.config.js | File | System logging event definitions |
+| token.config.js | File | JWT token configuration |
+| uri.config.js | File | URI and endpoint path definitions |
+| validation-sets.config.js | File | Field validation rule sets |
+| validation.config.js | File | General validation configuration |
+| verification-mapping.config.js | File | Verification method mappings |
 
-By externalizing logic into modular config files, this service becomes:
+## 🔗 Key Files
+- **db.config.js**: Database connection parameters and MongoDB setup
+- **security.config.js**: Encryption keys, salting rounds, and security parameters
+- **token.config.js**: JWT token expiration times and secret keys
+- **server.config.js**: Server port, environment, and base URL configuration
+- **rate-limit.config.js**: API rate limiting thresholds
+- **redis.config.js**: Redis cache configuration
+- **enums.config.js**: Centralized enumeration values used throughout the application
 
-* 🔁 **Flexible across environments** (local, staging, production)
-* 🔐 **More secure** (less hardcoding)
-* 🧠 **Easier to maintain and scale** (centralized updates)
-
----
-
-## 🗂️ **Folder Structure**
-
-> 📦 Total: **16 files**
-
-| 🧩 Config File                   | 📄 Purpose                                                                   |
-| -------------------------------- | ---------------------------------------------------------------------------- |
-| `auth-log-events.config.js`      | 🔐 Enum list of all allowed auth events (e.g., LOGIN, LOGOUT, etc.)          |
-| `cookies.config.js`              | 🍪 Config for cookie security settings (httpOnly, secure, domain, sameSite)  |
-| `cron.config.js`                 | ⏰ Schedules for cron jobs like user & log cleanup                            |
-| `db.config.js`                   | 🛢️ DB name and connection URL — injected from `.env`                        |
-| `error-handler.config.js`        | 🚨 Reusable functions for error messaging (internal, invalid, blocked, etc.) |
-| `field-length.config.js`         | ✍️ Minimum and maximum allowed lengths for form fields                       |
-| `http-status.config.js`          | 🌐 HTTP status codes used across the app                                     |
-| `id-prefixes.config.js`          | 🪪 Prefixes for Customer (CUS) and Admin (ADM) IDs                           |
-| `ip-address.config.js`           | 🌍 Stores a unique code per machine (used in userID generation)              |
-| `rate-limit.config.js`           | 🧃 Per-device and per-user-device rate-limiting policies                     |
-| `regex.config.js`                | 🔎 Regex patterns for phone, email, name, UUID, and passwords                |
-| `server-error-handler.config.js` | 🔥 Global error catchers and malformed JSON handler middleware               |
-| `server.config.js`               | 🎛️ Exports PORT number from env (used in `server.listen`)                   |
-| `uri.config.js`                  | 📌 All API base paths and route strings — centralized for DRY routing        |
-| `user-enums.config.js`           | 🧬 Immutable fields, device types, user types, block/unblock enums           |
-| `user-id.config.js`              | 🧠 Advanced admin setup, access tokens, action enums, and limits             |
-
----
-
-## 🧠 **Design Principles & Patterns**
-
-| 🧱 Principle / Pattern               | ✅ Where Applied                                                         |
-| ------------------------------------ | ----------------------------------------------------------------------- |
-| **DRY** (Don’t Repeat Yourself)      | Error messages, URI constants, rate limits                              |
-| **YAGNI** (You Aren’t Gonna Need It) | Only essential enums and fields kept                                    |
-| **KISS** (Keep It Simple, Stupid)    | Logical grouping of each config by domain                               |
-| **SOLID**                            | SRP in each config file: one job, done well                             |
-| **Environment-Driven Configs**       | `.env` used extensively for all sensitive/tunable values                |
-| **Enum-Based Design**                | Block/unblock reasons, actions, user types — to avoid hardcoded strings |
-
----
-
-## 🎯 **Final Takeaway**
-
-The `configs/` folder is your project’s **foundation of maintainability** and **operational intelligence**.
-
-> Instead of scattering logic across code, you’ve centralized control, making your system:
->
-> * Highly **adaptable**
-> * Easy to **scale or patch**
-> * Much **safer to operate**
-
-🎓 *That’s how professionals build for the real world, Sir.*
-
-— Engineered precisely by **Yatharth Kumar Saxena** 🧠
+## 📝 Notes
+- All configuration files are centralized here for easy maintenance
+- Environment-specific values should be loaded from environment variables
+- Modifying these files may require server restart
+- Keep sensitive data (secrets, keys) in environment variables, not hardcoded

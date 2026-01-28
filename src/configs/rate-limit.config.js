@@ -31,7 +31,7 @@ module.exports = {
       message: "Too many account activation attempts."
     },
     resetPassword: {
-      maxRequests: 5,
+      maxRequests: 50,
       windowMs: 10 * 60 * 1000,
       prefix: "reset_password",
       reason: "Reset password abuse",
@@ -144,7 +144,7 @@ module.exports = {
     },
 
     updateMyAccount: {
-      maxRequests: 3,
+      maxRequests: 30,
       windowMs: 10 * 60 * 1000,
       prefix: "update_my_account",
       reason: "Profile update abuse",
