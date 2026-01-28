@@ -20,6 +20,7 @@ const {
 passwordManagementRouter.post(FORGOT_PASSWORD, [
     rateLimiters.forgetPasswordRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.sanitizeAuthBody,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
@@ -31,6 +32,7 @@ passwordManagementRouter.post(FORGOT_PASSWORD, [
 passwordManagementRouter.post(RESET_PASSWORD, [
     rateLimiters.resetPasswordRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.sanitizeAuthBody,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,

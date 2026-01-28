@@ -18,6 +18,7 @@ const {
 authRouter.post(SIGNUP, [
     rateLimiters.signUpRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.sanitizeAuthBody,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserNew,
     authMiddlewares.firstNameValidator,
@@ -29,6 +30,7 @@ authRouter.post(SIGNUP, [
 authRouter.post(SIGNIN, [
     rateLimiters.signInRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.sanitizeAuthBody,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,

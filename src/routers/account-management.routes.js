@@ -23,6 +23,7 @@ const {
 accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     rateLimiters.activateAccountRateLimiter,
     ...baseMiddlewares,
+    authMiddlewares.sanitizeAuthBody,
     authMiddlewares.authValidatorBody,
     authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
@@ -53,7 +54,8 @@ accountManagementRouter.post(DISABLE_2FA, [
 // 📌 Update Account Details
 accountManagementRouter.patch(UPDATE_ACCOUNT_DETAILS, [
     rateLimiters.updateMyAccountRateLimiter,
-    ...baseAuthMiddlewares
+    ...baseAuthMiddlewares,
+    authMiddlewares.sanitizeAuthBody,
 ], accountManagementControllers.updateMyAccount);
 
 // 📌 Change Password
