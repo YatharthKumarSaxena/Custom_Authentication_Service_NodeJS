@@ -5,7 +5,7 @@ const accountManagementRouter = express.Router();
 const { ACCOUNT_MANAGEMENT_ROUTES } = require("../configs/uri.config");
 const { accountManagementControllers } = require("@controllers/account-management/index");
 const { accountManagementMiddlewares } = require("@middlewares/account-management/index");
-const { baseAuthMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
+const { baseAuthMiddlewares, authRequestMiddlewares } = require("./middleware.gateway.routes");
 const { authMiddlewares } = require("@middlewares/auth/index");
 const { rateLimiters } = require("@rate-limiters/index");
 const { commonMiddlewares } = require("@middlewares/common/index");
@@ -22,10 +22,7 @@ const {
 // 📌 Activate Account
 accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     rateLimiters.activateAccountRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
+    ...authRequestMiddlewares,
     commonMiddlewares.isUserAccountBlocked,
     accountManagementMiddlewares.activateAccountFieldPresenceMiddleware
 ], accountManagementControllers.activateMyAccount);

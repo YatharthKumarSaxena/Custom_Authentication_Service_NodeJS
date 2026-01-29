@@ -6,7 +6,7 @@ const { ACCOUNT_VERIFICATION_ROUTES } = require("@configs/uri.config");
 const { accountVerificationController } = require("@controllers/account-verification/index");
 const { accountVerificationMiddlewares } = require("@middlewares/account-verification/index");
 const { authMiddlewares } = require("@middlewares/auth/index");
-const { baseMiddlewares } = require("./middleware.gateway.routes");
+const { baseMiddlewares, authRequestMiddlewares } = require("./middleware.gateway.routes");
 const { rateLimiters } = require("@rate-limiters/index");
 const { commonMiddlewares } = require("@middlewares/common/index");
 
@@ -20,10 +20,7 @@ const {
 // 📌 Resend Verification Link (Email)
 accountVerificationRouter.post(RESEND_VERIFICATION, [
     rateLimiters.resendVerificationRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
+    ...authRequestMiddlewares,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     accountVerificationMiddlewares.verifyPurposeFieldPresenceMiddleware,
@@ -57,11 +54,8 @@ accountVerificationRouter.post(VERIFY_PHONE, [
 // 📌 Verify Device (2FA)
 accountVerificationRouter.post(VERIFY_DEVICE, [
     rateLimiters.verifyDeviceRateLimiter,
-    ...baseMiddlewares,
+    ...authRequestMiddlewares,
     accountVerificationMiddlewares.validateVerificationInput,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyDevice);

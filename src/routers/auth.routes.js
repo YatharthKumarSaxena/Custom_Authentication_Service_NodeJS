@@ -5,7 +5,7 @@ const authRouter = express.Router();
 const { AUTH_ROUTES } = require("../configs/uri.config");
 const { authController } = require("@controllers/auth/index");
 const { authMiddlewares } = require("@middlewares/auth/index");
-const { baseAuthMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
+const { baseAuthMiddlewares, authNewUserMiddlewares, authExistingUserMiddlewares } = require("./middleware.gateway.routes");
 const { rateLimiters } = require("@rate-limiters/index");
 const { commonMiddlewares } = require("@middlewares/common/index");
 
@@ -17,10 +17,7 @@ const {
 // 📌 User Sign Up
 authRouter.post(SIGNUP, [
     rateLimiters.signUpRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserNew,
+    ...authNewUserMiddlewares,
     authMiddlewares.firstNameValidator,
     authMiddlewares.signupFieldPresenceMiddleware,
     authMiddlewares.signupFieldValidationMiddleware
@@ -29,10 +26,7 @@ authRouter.post(SIGNUP, [
 // 📌 User Sign In
 authRouter.post(SIGNIN, [
     rateLimiters.signInRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
+    ...authExistingUserMiddlewares,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     commonMiddlewares.checkUserIsVerified,

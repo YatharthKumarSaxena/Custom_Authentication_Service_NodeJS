@@ -5,9 +5,8 @@ const passwordManagementRouter = express.Router();
 const { PASSWORD_MANAGEMENT_ROUTES } = require("@configs/uri.config");
 const { passwordManagementController } = require("@controllers/password-management/index");
 const { passwordManagementMiddlewares } = require("@middlewares/password-management/index");
-const { authMiddlewares } = require("@middlewares/auth/index");
 const { accountVerificationMiddlewares } = require("@middlewares/account-verification/index");
-const { baseMiddlewares } = require("./middleware.gateway.routes");
+const { authExistingUserMiddlewares } = require("./middleware.gateway.routes");
 const { rateLimiters } = require("@rate-limiters/index");
 const { commonMiddlewares } = require("@middlewares/common/index");
 
@@ -19,10 +18,7 @@ const {
 // 📌 Forgot Password (Send OTP/Link)
 passwordManagementRouter.post(FORGOT_PASSWORD, [
     rateLimiters.forgetPasswordRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
+    ...authExistingUserMiddlewares,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     commonMiddlewares.checkUserIsVerified
@@ -31,10 +27,7 @@ passwordManagementRouter.post(FORGOT_PASSWORD, [
 // 📌 Reset Password (Verify OTP/Token & Change Password)
 passwordManagementRouter.post(RESET_PASSWORD, [
     rateLimiters.resetPasswordRateLimiter,
-    ...baseMiddlewares,
-    authMiddlewares.sanitizeAuthBody,
-    authMiddlewares.authValidatorBody,
-    authMiddlewares.ensureUserExists,
+    ...authExistingUserMiddlewares,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     commonMiddlewares.checkUserIsVerified,
