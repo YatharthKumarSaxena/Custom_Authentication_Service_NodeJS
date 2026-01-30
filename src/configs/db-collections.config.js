@@ -6,7 +6,8 @@ const DB_COLLECTIONS = {
   OTP: "otps",
   USER: "users",
   LINK: "links",
-  SYSTEM_LOG: "system_logs"
+  SYSTEM_LOG: "system_logs",
+  SERVICE_TOKENS: "service_tokens"
 };
 
 module.exports = { DB_COLLECTIONS };

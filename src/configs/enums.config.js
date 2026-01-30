@@ -49,7 +49,17 @@ const AuthErrorTypes = Object.freeze({
     BAD_REQUEST: "AUTH_BAD_REQUEST",
     ALREADY_VERIFIED: "AUTH_ALREADY_VERIFIED",
     DEVICE_USER_LIMIT_REACHED: "AUTH_DEVICE_USER_LIMIT_REACHED",
-    SESSION_LIMIT_REACHED: "AUTH_SESSION_LIMIT_REACHED"
+    SESSION_LIMIT_REACHED: "AUTH_SESSION_LIMIT_REACHED",
+    INVALID_TOKEN: "AUTH_INVALID_TOKEN",
+    SESSION_NOT_FOUND: "AUTH_SESSION_NOT_FOUND",
+    UNAUTHORIZED: "AUTH_UNAUTHORIZED",
+    TOKEN_REFRESH: "AUTH_TOKEN_REFRESH"
+});
+
+const ServiceNames = Object.freeze({
+    AUTH_SERVICE: "auth-service",
+    ADMIN_PANEL_SERVICE: "admin-panel-service",
+    SOFTWARE_MANAGEMENT_SERVICE: "software-management-service"
 });
 
 const AuditMode = Object.freeze({
@@ -94,5 +104,6 @@ module.exports = {
     AuthErrorTypes,
     RequestLocation,
     FirstNameFieldSetting,
-    AuditMode
+    AuditMode,
+    ServiceNames
 }

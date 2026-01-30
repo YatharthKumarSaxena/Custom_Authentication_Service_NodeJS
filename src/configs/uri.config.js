@@ -37,7 +37,8 @@ module.exports = {
         SIGNOUT_FROM_SPECIFIC_DEVICE: `/signout-device`, // POST /custom-auth-service/api/v1/auth/signout-device
         GET_ACTIVE_SESSIONS: `/active-sessions`,   // GET  /custom-auth-service/api/v1/auth/active-sessions
         GET_MY_ACCOUNT_DETAILS: `/me`,                     // GET  /custom-auth-service/api/v1/auth/me
-        GET_MY_AUTH_LOGS: `/auth-logs`                      // GET  /custom-auth-service/api/v1/auth/auth-logs
+        GET_MY_AUTH_LOGS: `/auth-logs`,                    // GET  /custom-auth-service/api/v1/auth/auth-logs
+        POST_REFRESH: `/post-refresh`               // POST /custom-auth-service/api/v1/auth/post-refresh
     },
     ACCOUNT_MANAGEMENT_ROUTES: {
         ACTIVATE_ACCOUNT: `/activate`,
