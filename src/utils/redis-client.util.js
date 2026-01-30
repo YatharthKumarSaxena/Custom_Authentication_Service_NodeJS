@@ -27,4 +27,19 @@ redisClient.on("error", (error) => {
   errorMessage(error);
 });
 
-module.exports = { redisClient };
+/**
+ * Get Redis client instance
+ * @returns {Redis} Redis client instance
+ * @throws {Error} If Redis client is not initialized
+ */
+const getRedisClient = () => {
+  if (!redisClient) {
+    throw new Error("Redis client not initialized");
+  }
+  return redisClient;
+};
+
+module.exports = { 
+  redisClient,
+  getRedisClient 
+};
