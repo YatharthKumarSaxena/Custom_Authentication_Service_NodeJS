@@ -11,7 +11,8 @@ const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
     SIGNUP, SIGNIN, SIGNOUT, SIGNOUT_FROM_SPECIFIC_DEVICE,
-    GET_ACTIVE_SESSIONS, GET_MY_ACCOUNT_DETAILS, GET_MY_AUTH_LOGS
+    GET_ACTIVE_SESSIONS, GET_MY_ACCOUNT_DETAILS, GET_MY_AUTH_LOGS,
+    POST_REFRESH
 } = AUTH_ROUTES;
 
 // 📌 User Sign Up
@@ -62,6 +63,12 @@ authRouter.get(GET_MY_AUTH_LOGS, [
     rateLimiters.getUserAuthLogsRateLimiter,
     ...baseAuthMiddlewares
 ], authController.getMyAuthLogs);
+
+// 📌 Post-Refresh Token (Microservice Mode)
+authRouter.post(POST_REFRESH, [
+    rateLimiters.signInRateLimiter, // Reuse sign-in rate limiter
+    ...baseAuthMiddlewares
+], authController.postRefresh);
 
 module.exports = {
     authRouter
