@@ -6,6 +6,7 @@ const { getMyActiveSessions } = require("./view-my-active-devices.controller");
 const { signUp } = require("./sign-up.controller");
 const { getMyAuthLogs } = require("./view-auth-logs.controller");
 const { refreshToken } = require("./refresh-token.controller");
+const { postRefresh } = require("./post-refresh.controller");
 
 const authController = {
     signUp,
@@ -15,7 +16,8 @@ const authController = {
     getMyAccount,
     getMyActiveSessions,
     getMyAuthLogs,
-    refreshToken
+    refreshToken,
+    postRefresh
 }
 
 module.exports = { 

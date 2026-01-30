@@ -13,7 +13,8 @@ const {
     throwValidationError,
     throwBadRequestError,
     getLogIdentifiers,
-    throwTooManyRequestsError
+    throwTooManyRequestsError,
+    throwSpecificInternalServerError
 } = require("@utils/error-handler.util");
 
 const signIn = async (req, res) => {
@@ -90,7 +91,7 @@ const signIn = async (req, res) => {
         const headers = buildAccessTokenHeaders(accessToken);
 
         if (!accessToken || !headers) {
-            throw new Error("Failed to generate access token");
+            return throwSpecificInternalServerError(res, "Failed to generate access token");
         }
 
         res.set(headers);
