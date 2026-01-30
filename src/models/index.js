@@ -6,6 +6,7 @@ const { UserModel } = require("./user.model");
 const { UserDeviceModel } = require("./user-device.model");
 const { CounterModel } = require("./id-generator.model");
 const { SystemLogModel } = require("./system-log.model");
+const { ServiceToken } = require("./service-token.model");
 
 const models = {
     AuthLogModel,
@@ -15,7 +16,8 @@ const models = {
     UserModel,
     UserDeviceModel,
     CounterModel,
-    SystemLogModel
+    SystemLogModel,
+    ServiceToken
 }
 
 module.exports = {
