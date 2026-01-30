@@ -3,7 +3,7 @@ const { DeviceModel } = require("@models/device.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { deviceCleanup } = require("@configs/cron.config");
 const { errorMessage } = require("@utils/error-handler.util");
-const { logCronExecution, logCronFailure } = require("@/services/system/system-log.util");
+const { logCronExecution, logCronFailure } = require("@/services/system/system-log.service");
 
 const cleanInactiveDevices = async () => {
   try {
