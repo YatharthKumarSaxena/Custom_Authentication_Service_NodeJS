@@ -3,6 +3,7 @@ const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { UserDeviceModel } = require("@models/user-device.model");
+const { deleteAuthSession } = require("@services/integration/session-integration.helper");
 
 const signOutService = async (user, device, userDevice) => {
 
@@ -36,6 +37,9 @@ const signOutService = async (user, device, userDevice) => {
             }
         }
     );
+
+    // 2.5 💾 DELETE REDIS SESSION (MICROSERVICE MODE)
+    await deleteAuthSession(user.userId, device.deviceUUID);
 
     // --------------------------------------------------
     // 3️⃣ Audit log (always)

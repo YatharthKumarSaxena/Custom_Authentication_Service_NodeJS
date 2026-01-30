@@ -10,6 +10,8 @@ const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { storeAuthSession, deleteAllAuthSessions } = require("@services/integration/session-integration.helper");
+const { microserviceConfig } = require("@/configs/microservice.config");
 
 
 /**
@@ -44,14 +46,14 @@ const loginTheUserCore = async (user, deviceObjectId, refreshToken, options = {}
         } else {
             logWithTime(`🔁 Token refreshed for user (${user.userId}) on existing device.`);
         }
-        
+
         return deviceMapping;
 
     } catch (err) {
         logWithTime(`❌ Error inside loginTheUserCore for User (${user.userId})`);
         errorMessage(err);
         // Throw error to trigger Transaction Rollback in parent
-        throw err; 
+        throw err;
     }
 };
 
@@ -67,20 +69,20 @@ const logoutUserCompletelyCore = async (user, options = {}) => {
         // Sare devices jahan token null nahi hai, unhe null kar do
         const updateResult = await UserDeviceModel.updateMany(
             { userId: user._id, refreshToken: { $ne: null } },
-            { 
-                $set: { 
-                    refreshToken: null, 
-                    jwtTokenIssuedAt: null, 
-                    lastLogoutAt: new Date() 
-                } 
+            {
+                $set: {
+                    refreshToken: null,
+                    jwtTokenIssuedAt: null,
+                    lastLogoutAt: new Date()
+                }
             },
             { session: session } // ✅ Session Passed
         );
 
-        logWithTime(`ℹ️ Cleared tokens for ${updateResult.modifiedCount} devices.`);
+        logWithTime(`ℹ️  Cleared tokens for ${updateResult.modifiedCount} devices.`);
 
         // ✅ Step 2: Update User Core Flags (Atomic Operation)
-        
+
         await UserModel.updateOne(
             { _id: user._id },
             {
@@ -103,12 +105,12 @@ const logoutUserCompletelyCore = async (user, options = {}) => {
         // Return false or Throw error based on preference. 
         // Returning false causes manual rollback in parent. Throwing handles it automatically.
         // Here we return false to match your existing flow check.
-        return false; 
+        return false;
     }
 };
 
 const logoutUserCompletely = async (user, device, context = "general sign out all devices") => {
-    
+
     // Safety: Device exist karta hai ya nahi check kar lo
     const deviceUUID = device.deviceUUID;
 
@@ -119,7 +121,7 @@ const logoutUserCompletely = async (user, device, context = "general sign out al
     try {
         // 2. Core Logout Logic (Database Operations)
         const coreLoggedOut = await logoutUserCompletelyCore(user, { session });
-        
+
         if (!coreLoggedOut) {
             throw new Error("Core logout operation failed");
         }
@@ -130,16 +132,19 @@ const logoutUserCompletely = async (user, device, context = "general sign out al
 
         logWithTime(`👋 User (${user.userId}) fully logged out from ALL devices via ${deviceUUID}.`);
 
+        // 4.5 💾 DELETE ALL REDIS SESSIONS (MICROSERVICE MODE)
+        await deleteAllAuthSessions(user.userId);
+
         // 5. 🚀 FIRE LOGS (After Commit)
         // "Logout All" ek bada event hai, isliye await karna safe hai
         logAuthEvent(
-            user, 
+            user,
             device, // Pura object pass kar do, log util handle kar lega
-            AUTH_LOG_EVENTS.LOGOUT_ALL_DEVICE, 
-            `User ID ${user.userId} logged out completely during ${context}.`, 
+            AUTH_LOG_EVENTS.LOGOUT_ALL_DEVICE,
+            `User ID ${user.userId} logged out completely during ${context}.`,
             null
         );
-        
+
         // 6. Send Notification
         const contactInfo = getUserContacts(user);
         sendNotification({
@@ -148,7 +153,7 @@ const logoutUserCompletely = async (user, device, context = "general sign out al
             smsTemplate: userSmsTemplate.logoutAllDevices,
             data: { name: user.firstName || "User" }
         });
-        
+
         return true;
 
     } catch (error) {
@@ -172,7 +177,7 @@ const loginUserOnDevice = async (user, device, refreshToken, context = "standard
 
     try {
         // 2. Device Sync (Get Data + Audit Payload)
-        const { deviceDoc, auditLogPayload: deviceLog } = await syncDeviceData( device, { session });
+        const { deviceDoc, auditLogPayload: deviceLog } = await syncDeviceData(device, { session });
         if (deviceLog) logsToFire.push({ user, device: deviceDoc, ...deviceLog });
 
         // 3. Core Login
@@ -183,15 +188,26 @@ const loginUserOnDevice = async (user, device, refreshToken, context = "standard
         const { mappingDoc, auditLogPayload: mappingLog } = await syncUserDeviceMapping(user, deviceDoc, { session });
         if (mappingLog) logsToFire.push({ user, device: deviceDoc, ...mappingLog });
 
+        // --------------------------------------------------
+        // 💾 STORE SESSION IN REDIS (MICROSERVICE MODE)
+        // --------------------------------------------------
+
         // 5. ✅ COMMIT TRANSACTION (Data Safe Now)
         await session.commitTransaction();
         session.endSession(); // Close session immediately
+
+        // Store session in Redis (only in microservice mode)
+        await storeAuthSession(
+            user.userId,
+            device.deviceUUID,
+            refreshToken
+        );
         
         logWithTime(`✅ Transaction committed successfully for user ${user.userId}`);
 
         // 6. 🚀 FIRE LOGS (After Commit - Safe Zone)
         // Ab DB rollback ka dar nahi, aur logs async chalenge
-        
+
         // A. Pending Audit Logs (Device/Mapping changes)
         for (const log of logsToFire) {
             // Await lagana hai lagao, nahi to background me chhod do (User requirement ke hisab se)
@@ -208,10 +224,10 @@ const loginUserOnDevice = async (user, device, refreshToken, context = "standard
         // Rollback
         await session.abortTransaction();
         session.endSession();
-        
+
         logWithTime(`❌ Transaction aborted: ${error.message}`);
         errorMessage(error);
-        
+
         // Optional: Fail hone ka log alag se record kar sakte ho (without transaction)
         return false;
     }
