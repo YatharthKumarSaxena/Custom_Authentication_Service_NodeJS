@@ -1,18 +1,90 @@
+/**
+ * 📋 System Log Events Configuration
+ * 
+ * Defines all system-level events that should be logged.
+ * These are different from AUTH_LOG_EVENTS (user actions).
+ * 
+ * SYSTEM_LOG_EVENTS = Server operations, cron jobs, bootstrap, internal API calls
+ * AUTH_LOG_EVENTS = User-initiated authentication/authorization actions
+ */
+
 const SYSTEM_LOG_EVENTS = {
+    // ========================================
+    // 🔷 CRON & SCHEDULED TASKS
+    // ========================================
     CRON_EXECUTION: "CRON_EXECUTION",
+    SCHEDULED_TASK: "SCHEDULED_TASK",
+    
+    // ========================================
+    // 🔷 BOOTSTRAP & INITIALIZATION
+    // ========================================
+    BOOTSTRAP_ADMIN: "BOOTSTRAP_ADMIN",
+    MICROSERVICE_INIT: "MICROSERVICE_INIT",
+    SERVICE_STARTUP: "SERVICE_STARTUP",
+    SERVICE_SHUTDOWN: "SERVICE_SHUTDOWN",
+    
+    // ========================================
+    // 🔷 INTERNAL API CALLS (Microservices)
+    // ========================================
     INTERNAL_API_CALL: "INTERNAL_API_CALL",
-    BOOTSTRAP_ADMIN: "BOOTSTRAP_ADMIN"
+    SERVICE_TO_SERVICE: "SERVICE_TO_SERVICE",
+    
+    // ========================================
+    // 🔷 TOKEN & SESSION OPERATIONS
+    // ========================================
+    TOKEN_REFRESH: "TOKEN_REFRESH",
+    TOKEN_VERIFICATION_FAILED: "TOKEN_VERIFICATION_FAILED",
+    TOKEN_REUSE_DETECTED: "TOKEN_REUSE_DETECTED",
+    SESSION_CREATED: "SESSION_CREATED",
+    SESSION_ROTATED: "SESSION_ROTATED",
+    SESSION_DELETED: "SESSION_DELETED",
+    SESSION_NOT_FOUND: "SESSION_NOT_FOUND",
+    
+    // ========================================
+    // 🔷 REDIS & CACHE OPERATIONS
+    // ========================================
+    REDIS_CONNECTION: "REDIS_CONNECTION",
+    REDIS_ERROR: "REDIS_ERROR",
+    CACHE_HIT: "CACHE_HIT",
+    CACHE_MISS: "CACHE_MISS",
+    
+    // ========================================
+    // 🔷 DATABASE OPERATIONS
+    // ========================================
+    DB_TRANSACTION_START: "DB_TRANSACTION_START",
+    DB_TRANSACTION_COMMIT: "DB_TRANSACTION_COMMIT",
+    DB_TRANSACTION_ROLLBACK: "DB_TRANSACTION_ROLLBACK",
+    DB_MIGRATION: "DB_MIGRATION",
+    
+    // ========================================
+    // 🔷 SECURITY & VALIDATION
+    // ========================================
+    DEVICE_MISMATCH: "DEVICE_MISMATCH",
+    INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
+    RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
+    SUSPICIOUS_ACTIVITY: "SUSPICIOUS_ACTIVITY",
+    
+    // ========================================
+    // 🔷 SYSTEM ERRORS
+    // ========================================
+    SYSTEM_ERROR: "SYSTEM_ERROR",
+    SERVICE_ERROR: "SERVICE_ERROR",
+    CRITICAL_ERROR: "CRITICAL_ERROR"
 };
 
 const STATUS_TYPES = {
     SUCCESS: "SUCCESS",
     FAILURE: "FAILURE",
-    PENDING: "PENDING"
+    PENDING: "PENDING",
+    WARNING: "WARNING",
+    ERROR: "ERROR"
 };
 
 const SERVICE_NAMES = {
     AUTH_SERVICE: "AUTH_SERVICE",
     ADMIN_PANEL_SERVICE: "ADMIN_PANEL_SERVICE",
+    SOFTWARE_MANAGEMENT_SERVICE: "SOFTWARE_MANAGEMENT_SERVICE",
+    SYSTEM: "SYSTEM" // For system-level operations (cron, bootstrap, etc.)
 };
 
 module.exports = {
