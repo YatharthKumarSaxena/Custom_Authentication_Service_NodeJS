@@ -29,6 +29,17 @@ db.once("open", async () => {
         errorMessage(err);
     }
 
+    // Initialize Microservice Components (if enabled)
+    try {
+        const { initializeMicroservice, setupTokenRotationScheduler } = require("@services/bootstrap/microservice-init.service");
+        await initializeMicroservice();
+        setupTokenRotationScheduler();
+    } catch (err) {
+        logWithTime("⚠️ Error during Microservice Initialization");
+        errorMessage(err);
+        // Don't stop server if microservice init fails in monolithic mode
+    }
+
     // Start server after DB is ready
     app.listen(PORT_NUMBER, () => {
         logWithTime(`🚀 Server running on port ${PORT_NUMBER}`);

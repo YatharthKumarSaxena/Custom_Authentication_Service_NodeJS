@@ -13,7 +13,8 @@
       "@controllers/*": ["src/controllers/*"],
       "@routes/*": ["src/routers/*"],
       "@models/*": ["src/models/*"],
-      "@cron-jobs/*": ["src/cron-jobs/*"]
+      "@cron-jobs/*": ["src/cron-jobs/*"],
+      "@internals/*": ["src/internals/*"]
     }
   },
   "exclude": ["node_modules"]
