@@ -1,5 +1,5 @@
 /**
- * 📧 Email Template Testing Suite
+ * Email Template Testing Suite
  * Tests all email templates using sendEmail service
  */
 

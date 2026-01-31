@@ -1,11 +1,8 @@
 /**
- * 📊 System Log Service
+ * System Log Service
  * 
  * Handles system-level logging for cron jobs, bootstrap, internal API calls,
  * and distributed system tracking.
- * 
- * @author Custom Auth Service Team
- * @date 2026-01-30
  */
 
 const { SystemLogModel } = require("@models/system-log.model");

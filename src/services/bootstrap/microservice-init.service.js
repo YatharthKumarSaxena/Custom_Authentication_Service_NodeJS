@@ -1,11 +1,9 @@
 /**
- * 🚀 Microservice Initializer
+ * Microservice Initializer
  * 
  * Initializes microservice-specific components on application startup.
  * Only runs when MAKE_IT_MICROSERVICE=true
  * 
- * @author Custom Auth Service Team
- * @date 2026-01-29
  */
 
 const { microserviceConfig, logMicroserviceStatus } = require('@configs/microservice.config');

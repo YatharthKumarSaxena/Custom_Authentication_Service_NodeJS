@@ -1,5 +1,5 @@
 /**
- * 🔌 Admin Panel Service Client
+ * Admin Panel Service Client
  * 
  * Internal API client for communicating with Admin Panel Service.
  * Handles identity bootstrapping, sync operations, and state management.

@@ -1,5 +1,5 @@
 /**
- * 🧪 Complete Notification Testing Suite
+ * Complete Notification Testing Suite
  * Tests both Email and SMS templates using notification-dispatcher
  */
 

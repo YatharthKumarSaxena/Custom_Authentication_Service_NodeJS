@@ -18,9 +18,7 @@ const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
         return { success: false, message: "Device is already blocked." };
     }
 
-    // ---------------------------------------------------------
-    // 🛡️ SAFETY CHECK 1: Config Whitelist (Hardcoded VIPs)
-    // ---------------------------------------------------------
+    // SAFETY CHECK 1: Config Whitelist (Hardcoded VIPs)
     if (WHITELISTED_DEVICE_UUIDS.includes(targetDeviceUUID)) {
         throw { 
             type: AuthErrorTypes.FORBIDDEN, 
@@ -28,11 +26,9 @@ const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
         };
     }
 
-    // ❌ Removed: isTrusted DB Check (Kyunki ab ye field exist nahi karta)
+    // Removed: isTrusted DB Check (Kyunki ab ye field exist nahi karta)
 
-    // ---------------------------------------------------------
-    // 🛡️ SAFETY CHECK 2: Active Admin Session (Dynamic & Smart) 🔥
-    // ---------------------------------------------------------
+    // SAFETY CHECK 2: Active Admin Session (Dynamic & Smart)
     const activeAdminSession = await UserDeviceModel.findOne({
         deviceId: device._id,
         refreshToken: { $ne: null }
@@ -57,9 +53,7 @@ const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
         }
     }
 
-    // ---------------------------------------------------------
-    // ⚔️ EXECUTE BLOCK
-    // ---------------------------------------------------------
+    // EXECUTE BLOCK
     await DeviceModel.updateOne(
         { _id: device._id },
         { $set: { isBlocked: true } }

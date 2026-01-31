@@ -43,7 +43,7 @@ const cleanInactiveDevices = async () => {
   }
 };
 
-// ⏰ Run on schedule
+// Run on schedule
 cron.schedule(deviceCleanup.cronSchedule, cleanInactiveDevices, {
   timezone: deviceCleanup.timezone
 });

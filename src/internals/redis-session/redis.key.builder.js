@@ -1,5 +1,5 @@
 /**
- * 🔑 Redis Key Builder
+ * Redis Key Builder
  * 
  * Cryptographically secure key generation for Redis storage.
  * Prevents userId and deviceUUID discovery if Redis is compromised.

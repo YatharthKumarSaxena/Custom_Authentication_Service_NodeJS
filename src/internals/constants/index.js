@@ -1,5 +1,5 @@
 /**
- * 📦 Internal Constants Barrel Export
+ * Internal Constants Barrel Export
  * 
  * @author Custom Auth Service Team
  * @date 2026-01-29

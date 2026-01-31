@@ -1,5 +1,5 @@
 /**
- * 📦 Redis Session Module Exports
+ * Redis Session Module Exports
  * 
  * @author Custom Auth Service Team
  * @date 2026-01-29

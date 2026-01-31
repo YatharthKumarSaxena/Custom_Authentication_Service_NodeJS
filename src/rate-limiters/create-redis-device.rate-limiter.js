@@ -3,7 +3,7 @@
 const rateLimit = require("express-rate-limit");
 const { RedisStore } = require("rate-limit-redis");
 const { redisClient } = require("@utils/redis-client.util");
-const { DEVICE_HEADERS } = require("@configs/device-headers.config");
+const { DEVICE_HEADERS } = require("@/configs/headers.config");
 const { errorMessage, throwTooManyRequestsError } = require("@utils/error-handler.util");
 
 const createRedisDeviceRateLimiter = ({ maxRequests, windowMs, prefix, reason, message }) => {

@@ -40,7 +40,7 @@ const deleteDeactivatedUsers = async () => {
   }
 };
 
-// ⏰ Run on schedule
+// Run on schedule
 cron.schedule(userCleanup.cronSchedule, deleteDeactivatedUsers, {
   timezone: userCleanup.timezone
 });

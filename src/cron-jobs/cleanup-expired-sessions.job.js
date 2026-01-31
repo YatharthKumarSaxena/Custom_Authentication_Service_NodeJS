@@ -34,7 +34,7 @@ const cleanExpiredSessions = async () => {
   }
 };
 
-// ⏰ Run on schedule
+// Run on schedule
 cron.schedule(sessionCleanup.cronSchedule, cleanExpiredSessions, {
   timezone: sessionCleanup.timezone
 });

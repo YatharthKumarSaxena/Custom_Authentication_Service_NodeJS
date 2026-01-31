@@ -1,5 +1,5 @@
 /**
- * 🛡️ Verify Service Token Middleware
+ * Verify Service Token Middleware
  * 
  * Validates x-service-token header for internal API calls.
  * Rejects user JWTs, and refresh tokens.

@@ -1,5 +1,5 @@
 /**
- * 📱 SMS Template Testing Suite
+ * SMS Template Testing Suite
  * Tests all SMS templates using sendSMS service
  */
 

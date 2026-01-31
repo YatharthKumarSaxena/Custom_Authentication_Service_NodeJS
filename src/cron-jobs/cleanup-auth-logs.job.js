@@ -40,7 +40,7 @@ const cleanAuthLogs = async () => {
   }
 };
 
-// ⏰ Run on schedule
+// Run on schedule
 cron.schedule(authLogCleanup.cronSchedule, cleanAuthLogs, {
   timezone: authLogCleanup.timezone
 });

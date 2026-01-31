@@ -57,7 +57,7 @@ const cleanUsedVerifications = async () => {
   }
 };
 
-// ⏰ Run on schedule
+// Run on schedule
 cron.schedule(verificationCleanup.cronSchedule, cleanUsedVerifications, {
   timezone: verificationCleanup.timezone
 });

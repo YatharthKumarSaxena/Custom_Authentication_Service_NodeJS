@@ -1,5 +1,5 @@
 /**
- * 🔌 Software Management Service Client
+ * Software Management Service Client
  * 
  * Internal API client for communicating with Software Management Service.
  * Handles license management, software registration, and related operations.

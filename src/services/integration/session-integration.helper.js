@@ -1,5 +1,5 @@
 /**
- * 🔌 Session Integration Helper
+ * Session Integration Helper
  * 
  * Helper functions to integrate Redis sessions in microservice mode
  * without breaking monolithic mode functionality.

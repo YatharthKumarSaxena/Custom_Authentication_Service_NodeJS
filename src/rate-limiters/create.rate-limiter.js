@@ -3,6 +3,7 @@ const { RedisStore } = require("rate-limit-redis");
 const { redisClient } = require("@utils/redis-client.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage, throwTooManyRequestsError } = require("@utils/error-handler.util");
+const { INTERNAL_ERROR } = require("@/configs/http-status.config");
 
 /**
  * Redis-backed Admin & Device-based rate limiter
@@ -62,7 +63,7 @@ const createRateLimiter = ({ maxRequests, windowMs, message }) => {
 
       } catch (err) {
         errorMessage(err);
-        return res.status(500).json({ 
+        return res.status(INTERNAL_ERROR).json({ 
             success: false, 
             message: "Internal Server Error in Rate Limiter" 
         });

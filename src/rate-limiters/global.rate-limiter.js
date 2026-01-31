@@ -22,7 +22,7 @@ function createGlobalLimiter() {
             standardHeaders: true,
             legacyHeaders: false,
 
-            // 👇 UPDATED HANDLER
+            // UPDATED HANDLER
             handler: (req, res, next, options) => {
                 try {
                     const ip = req.ip || req.headers["x-forwarded-for"] || "UNKNOWN_IP";
@@ -37,7 +37,7 @@ function createGlobalLimiter() {
                     // 2. Logging
                     logWithTime(`🚫 Global Rate Limit Triggered | IP: ${ip} | Path: ${path}`);
                     
-                    // 3. 🔥 Use Standard Error Handler
+                    // 3. Use Standard Error Handler
                     return throwTooManyRequestsError(res, options.message.message, retryAfterSeconds);
 
                 } catch (err) {

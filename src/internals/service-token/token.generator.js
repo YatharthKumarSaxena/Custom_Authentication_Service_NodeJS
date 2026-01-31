@@ -1,5 +1,5 @@
 /**
- * 🎫 Service Token Generator
+ * Service Token Generator
  * 
  * Generates JWT-based service tokens for service-to-service communication.
  * These tokens are short-lived and distinct from user authentication tokens.

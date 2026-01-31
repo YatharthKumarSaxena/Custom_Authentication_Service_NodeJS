@@ -1,5 +1,5 @@
 /**
- * 📦 Internal Module - Main Export
+ * Internal Module - Main Export
  * 
  * This is the main entry point for all internal microservice functionality.
  * When MAKE_IT_MICROSERVICE=false, this entire module returns null,

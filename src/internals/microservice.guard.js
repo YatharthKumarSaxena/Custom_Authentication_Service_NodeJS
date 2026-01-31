@@ -1,5 +1,5 @@
 /**
- * 🛡️ Microservice Guard
+ * Microservice Guard
  * 
  * This guard ensures that the entire /internal module returns null
  * when MAKE_IT_MICROSERVICE is disabled.

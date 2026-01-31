@@ -1,5 +1,5 @@
 /**
- * 🔄 Service Token Rotator
+ * Service Token Rotator
  * 
  * Handles automatic token rotation based on threshold.
  * Ensures service tokens are refreshed before expiration.

@@ -2,9 +2,9 @@ const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage } = require("@utils/error-handler.util");
 
 /**
- * 🏭 Factory function to fetch any entity (Admin/User) from database
+ * Factory function to fetch any entity (Admin/User) from database
  * 
- * ⚠️ IMPORTANT: This util does NOT validate auth mode or required fields
+ * IMPORTANT: This util does NOT validate auth mode or required fields
  * Validation is middleware's responsibility - this util ONLY does database query
  * 
  * @param {Object} Model - Mongoose model (AdminModel or UserModel)

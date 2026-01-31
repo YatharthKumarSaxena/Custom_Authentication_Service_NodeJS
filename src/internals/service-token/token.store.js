@@ -1,5 +1,5 @@
 /**
- * 💾 Service Token Store
+ * Service Token Store
  * 
  * Database operations for service token management.
  * Handles CRUD operations with hashed token storage.

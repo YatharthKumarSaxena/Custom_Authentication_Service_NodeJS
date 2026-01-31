@@ -1,5 +1,5 @@
 /**
- * 🔧 Service Constants
+ * Service Constants
  * 
  * Central configuration for microservice architecture.
  * These constants define service names, token lifetimes, and operational parameters.

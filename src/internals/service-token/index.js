@@ -1,5 +1,5 @@
 /**
- * 📦 Service Token Module Exports
+ * Service Token Module Exports
  * 
  * @author Custom Auth Service Team
  * @date 2026-01-29

@@ -33,7 +33,7 @@ const updateUserBlockStatusService = async (targetUserId, shouldBlock) => {
         { $set: { isBlocked: shouldBlock } }
     );
 
-    // 3. FORCE LOGOUT (If Blocking) 🛑
+    // 3. FORCE LOGOUT (If Blocking)
     // Agar hum user ko block kar rahe hain, to uske saare sessions invalidate karne honge.
     if (shouldBlock) {
         await UserDeviceModel.updateMany(

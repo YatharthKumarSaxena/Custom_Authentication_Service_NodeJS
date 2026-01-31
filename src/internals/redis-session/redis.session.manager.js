@@ -1,5 +1,5 @@
 /**
- * 💾 Redis Session Manager
+ * Redis Session Manager
  * 
  * Manages distributed session storage with token versioning.
  * Enforces one refresh token per device policy.

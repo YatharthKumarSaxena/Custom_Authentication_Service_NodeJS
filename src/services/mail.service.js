@@ -2,14 +2,14 @@ const nodemailer = require("nodemailer");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 /**
- * 📧 Core Mail Service
+ * Core Mail Service
  */
 const createTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail", // 'host' aur 'port' ki jagah simple 'service' use karo Gmail ke liye
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS, // ⚠️ Note: .env mein check karna ye SMTP_PASS hai ya SMTP_PASSWORD
+      pass: process.env.SMTP_PASS, // Note: .env mein check karna ye SMTP_PASS hai ya SMTP_PASSWORD
     },
   });
 };
@@ -17,7 +17,7 @@ const createTransporter = () => {
 const transporter = createTransporter();
 
 /**
- * 🚀 Email Sender with Await Support
+ * Email Sender with Await Support
  * @param {string} to - Recipient email
  * @param {string} subject - Email Subject
  * @param {string} htmlContent - Final HTML String
@@ -36,7 +36,7 @@ const sendEmail = async (to, subject, htmlContent) => {
   };
 
   try {
-    // ✅ Yahan hum AWAIT kar rahe hain taaki process kill na ho jaye
+    // Yahan hum AWAIT kar rahe hain taaki process kill na ho jaye
     const info = await transporter.sendMail(emailConfig);
     
     logWithTime(`✅ [Email Sent] Message ID: ${info.messageId} to ${to}`);

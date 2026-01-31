@@ -2,7 +2,7 @@ const { UserModel } = require("@models/user.model");
 const { fetchEntity } = require("./fetch-entity.util");
 
 /**
- * 🔍 Fetches a user from the database based on auth mode or userId
+ * Fetches a user from the database based on auth mode or userId
  * @param {string|null} email - User's email address
  * @param {string|null} phone - User's full phone number
  * @param {string|null} userId - User's custom userId

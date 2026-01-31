@@ -14,9 +14,7 @@ const { sendNotification } = require("@/utils/notification-dispatcher.util");
 async function bootstrapSuperAdmin() {
   try {
 
-    // ---------------------------------------------------------
     // 1. CHECK EXISTENCE
-    // ---------------------------------------------------------
     const existingAdmin = await UserModel.findOne({ userType: UserTypes.ADMIN }).lean();
     if (existingAdmin) {
       logWithTime("ℹ️  Admin Bootstrap Skipped: Super Admin User already exists in the system.");
@@ -26,9 +24,7 @@ async function bootstrapSuperAdmin() {
     let missingCreds = false;
     let passwordHash = null;
 
-    // ---------------------------------------------------------
     // 2. DYNAMIC VALIDATION: Check .env based on Configs
-    // ---------------------------------------------------------
     if (!ADMIN.PASSWORD) {
       logWithTime("⚠️ Super Admin Password is not set in Security Configs. Skipping Super Admin Creation.");
       missingCreds = true;
@@ -36,9 +32,7 @@ async function bootstrapSuperAdmin() {
       passwordHash = await hashPassword(ADMIN.PASSWORD);
     }
 
-    // ---------------------------------------------------------
     // 3. PREPARE PAYLOAD
-    // ---------------------------------------------------------
 
 
     const newAdminPayload = {
@@ -48,9 +42,7 @@ async function bootstrapSuperAdmin() {
       isActive: true
     };
 
-    // ---------------------------------------------------------
     // 4. AUTH MODE STRICT ENFORCEMENT
-    // ---------------------------------------------------------
 
     if (authMode === AuthModes.EMAIL) {
 
@@ -172,9 +164,7 @@ async function bootstrapSuperAdmin() {
       `🔐 Super Admin Security Policy → 2FA: ${IS_TWO_FA_FEATURE_ENABLED ? "ENABLED" : "DISABLED"}`
     );
     
-    // ---------------------------------------------------------
     // 5. CREATE ADMIN
-    // ---------------------------------------------------------
 
     const createdAdmin = await UserModel.create(newAdminPayload);
 

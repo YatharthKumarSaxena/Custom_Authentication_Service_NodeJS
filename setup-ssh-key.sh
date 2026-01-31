@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🔑 Automated SSH Key Setup for Termux
+# Automated SSH Key Setup for Termux
 # This will enable passwordless SMS sending
 
 echo "🔑 Setting up passwordless SSH to Termux..."

@@ -3,9 +3,9 @@ const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage } = require("@utils/error-handler.util");
 
 /**
- * 🔐 Logs an authentication event (fire-and-forget)
+ * Logs an authentication event (fire-and-forget)
  */
-const logAuthEvent = (user, device, eventType, description, logOptions = {}) => {
+const logAuthEvent = (user, device, requestId, eventType, description, logOptions = {}) => {
     (async () => {
         try {
             const userId = user.userId;
@@ -14,7 +14,8 @@ const logAuthEvent = (user, device, eventType, description, logOptions = {}) => 
                 userId: userId,
                 eventType: eventType,
                 description: description,
-                deviceId: device.deviceUUID
+                deviceId: device.deviceUUID,
+                requestId: requestId
             };
 
             if (device.deviceName) baseLog.deviceName = device.deviceName;
@@ -25,7 +26,7 @@ const logAuthEvent = (user, device, eventType, description, logOptions = {}) => 
             }
             const result = new AuthLogModel(baseLog);
             await result.save();
-            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${userId} | device: ${device.deviceUUID}`);
+            logWithTime(`📘 AuthLog saved successfully: ${eventType} | user: ${userId} | device: ${device.deviceUUID} | requestId: ${requestId}`);
         } catch (err) {
             logWithTime(`❌ Internal Error saving AuthLog for event: ${eventType}`);
             errorMessage(err);
