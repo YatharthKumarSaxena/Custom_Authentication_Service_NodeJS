@@ -1,14 +1,14 @@
 /**
- * 🎨 UI Configuration
+ * UI Configuration
  * Defines colors and status mappings (Design Tokens)
  */
 const uiConfig = {
     colors: {
-        success: '#4caf50', // 🟢 Green
-        warning: '#f59e0b', // 🟡 Amber
-        danger: '#ef4444',  // 🔴 Red
-        neutral: '#6b7280', // ⚪ Grey
-        primary: '#007bff'  // 🔵 Brand Color
+        success: '#4caf50', // Green
+        warning: '#f59e0b', // Amber
+        danger: '#ef4444',  // Red
+        neutral: '#6b7280', // Grey
+        primary: '#007bff'  // Brand Color
     },
     status_categories: {
         success: ['Approved', 'Success', 'Activated', 'Unblocked', 'Completed', 'Verified'],
@@ -18,7 +18,7 @@ const uiConfig = {
 };
 
 /**
- * 📄 Master HTML Template
+ * Master HTML Template
  */
 const masterEmailTemplate = `
 <!DOCTYPE html>
@@ -60,7 +60,7 @@ const masterEmailTemplate = `
 `;
 
 /**
- * 🎯 Default Template Configuration
+ * Default Template Configuration
  * Merged UI + Branding + Defaults
  */
 const defaultConfig = {

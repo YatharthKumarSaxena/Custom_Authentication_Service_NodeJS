@@ -4,7 +4,7 @@ const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { FRONTEND_ROUTES } = require("@configs/frontend-routes.config");
 
 /**
- * 🗺️ Verification Mapping
+ * Verification Mapping
  * Maps each purpose to its respective templates and routes.
  */
 const VerificationTemplateMapping = Object.freeze({

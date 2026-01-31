@@ -1,9 +1,7 @@
 /**
- * ===============================================
- * 🔹 VALIDATION SETS CONFIG (Auto-Generated)
- * ===============================================
+ * VALIDATION SETS CONFIG (Auto-Generated)
  * 
- * ⚠️ DO NOT MANUALLY EDIT THIS FILE!
+ * DO NOT MANUALLY EDIT THIS FILE!
  * 
  * These validation sets are automatically derived from:
  * @see field-definitions.config.js (Single Source of Truth)
@@ -15,9 +13,7 @@
 
 const { FieldDefinitions, getValidationSet } = require("./field-definitions.config");
 
-// ========================================
-// 🔹 AUTO-GENERATED VALIDATION SETS
-// ========================================
+// AUTO-GENERATED VALIDATION SETS
 
 const validationSets = {
   signUp: getValidationSet(FieldDefinitions.SIGN_UP),

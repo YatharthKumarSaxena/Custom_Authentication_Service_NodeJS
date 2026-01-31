@@ -1,4 +1,4 @@
-// 📁 configs/field-lengths.config.js
+// configs/field-lengths.config.js
 
 module.exports = {
   passwordLength: {

@@ -1,14 +1,12 @@
 /**
- * ===============================================
- * 🔹 CENTRALIZED FIELD DEFINITIONS CONFIG
- * ===============================================
+ * CENTRALIZED FIELD DEFINITIONS CONFIG
  * 
  * Single Source of Truth for:
  * - Required fields per endpoint/action
  * - Validation rules mapping
  * - Field-level metadata
  * 
- * ✅ Benefits:
+ * Benefits:
  * 1. Ek jagah change karein, sab jagah reflect ho
  * 2. Type-safe through enum-like structure
  * 3. Automatic derivation of required-fields arrays
@@ -27,9 +25,7 @@ const { validationRules } = require("./validation.config");
  * }
  */
 
-// ========================================
-// 🔹 AUTH ENDPOINTS FIELD DEFINITIONS
-// ========================================
+// AUTH ENDPOINTS FIELD DEFINITIONS
 
 const FieldDefinitions = {
   
@@ -152,9 +148,7 @@ const FieldDefinitions = {
   }
 };
 
-// ========================================
-// 🔹 HELPER: Get Required Fields Array
-// ========================================
+// HELPER: Get Required Fields Array
 
 /**
  * Extracts required field names from a definition object
@@ -165,15 +159,14 @@ const FieldDefinitions = {
  * getRequiredFields(FieldDefinitions.CHANGE_PASSWORD) 
  * => ['password', 'newPassword', 'confirmPassword']
  */
+
 const getRequiredFields = (definition) => {
   return Object.values(definition)
     .filter(fieldMeta => fieldMeta.required)
     .map(fieldMeta => fieldMeta.field);
 };
 
-// ========================================
-// 🔹 HELPER: Get Validation Set
-// ========================================
+// HELPER: Get Validation Set
 
 /**
  * Extracts validation rules mapped to field names
@@ -184,6 +177,7 @@ const getRequiredFields = (definition) => {
  * getValidationSet(FieldDefinitions.VERIFY_PHONE)
  * => { phone: validationRules.phone }
  */
+
 const getValidationSet = (definition) => {
   return Object.values(definition).reduce((acc, fieldMeta) => {
     if (fieldMeta.validation) {
@@ -193,9 +187,7 @@ const getValidationSet = (definition) => {
   }, {});
 };
 
-// ========================================
-// 🔹 EXPORTS
-// ========================================
+// EXPORTS
 
 module.exports = {
   FieldDefinitions,

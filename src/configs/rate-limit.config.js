@@ -1,4 +1,4 @@
-// 📦 configs/rate-limit.config.js
+// configs/rate-limit.config.js
 
 module.exports = {
   perDevice: {

@@ -8,20 +8,20 @@ const API_VERSION = "/api/v1";
 const API_PREFIX = `${BASE_PATH}${API_VERSION}`;
 
 /* 
-  ⚙️ What is `${}` and `` ?
+    What is `${}` and `` ?
   - These are part of JavaScript's Template Literals (introduced in ES6).
   - Backticks (``) allow multi-line strings and variable interpolation.
   - `${}` is used to insert variables inside strings dynamically.
 */
 
-// 👇 Defining major base segments once to avoid repetition (DRY Principle)
+//  Defining major base segments once to avoid repetition (DRY Principle)
 const AUTH_BASE = `${API_PREFIX}/auth`;                         // /custom-auth-service/api/v1/auth
 const ACCOUNT_BASE = `${API_PREFIX}/account`;
 const VERIFICATION_BASE = `${API_PREFIX}/verification`;
 const PASSWORD_BASE = `${API_PREFIX}/password`;
 const INTERNAL_BASE = `${API_PREFIX}/internal`                  // /custom-auth-service/api/v1/internal
 
-// 🔁 Exporting all route constants, grouped by modules (Auth, User, Admin, Category)
+//  Exporting all route constants, grouped by modules (Auth, User, Admin, Category)
 module.exports = {
     AUTH_BASE: AUTH_BASE,
     ACCOUNT_BASE: ACCOUNT_BASE,
@@ -29,7 +29,7 @@ module.exports = {
     PASSWORD_BASE: PASSWORD_BASE,
     INTERNAL_BASE: INTERNAL_BASE,
 
-    // 🧾 Routes related to user authentication & account management
+    // Routes related to user authentication & account management
     AUTH_ROUTES: {
         SIGNUP: `/signup`,                          // POST /custom-auth-service/api/v1/auth/signup
         SIGNIN: `/signin`,                          // POST /custom-auth-service/api/v1/auth/signin
@@ -58,6 +58,6 @@ module.exports = {
         FORGOT_PASSWORD: `/forgot-password`,
         RESET_PASSWORD: `/reset-password`
     },
-    // 🛠️ Admin-specific routes (e.g. category creation, update, delete)
+    // Admin-specific routes (e.g. category creation, update, delete)
 
 }

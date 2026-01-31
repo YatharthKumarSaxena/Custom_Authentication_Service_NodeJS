@@ -1,10 +1,7 @@
 /**
- * ⚙️ Microservice Configuration
+ * Microservice Configuration
  * 
  * Central configuration for microservice mode settings.
- * 
- * @author Custom Auth Service Team
- * @date 2026-01-29
  */
 
 const microserviceConfig = {

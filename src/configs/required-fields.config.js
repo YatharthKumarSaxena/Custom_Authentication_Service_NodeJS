@@ -1,9 +1,7 @@
 /**
- * ===============================================
- * 🔹 REQUIRED FIELDS CONFIG (Auto-Generated)
- * ===============================================
+ * REQUIRED FIELDS CONFIG (Auto-Generated)
  * 
- * ⚠️ DO NOT MANUALLY EDIT THIS FILE!
+ * DO NOT MANUALLY EDIT THIS FILE!
  * 
  * These arrays are automatically derived from:
  * @see field-definitions.config.js (Single Source of Truth)
@@ -15,9 +13,7 @@
 
 const { FieldDefinitions, getRequiredFields } = require("./field-definitions.config");
 
-// ========================================
-// 🔹 AUTO-GENERATED REQUIRED FIELDS
-// ========================================
+// AUTO-GENERATED REQUIRED FIELDS
 
 const signUpField = getRequiredFields(FieldDefinitions.SIGN_UP);
 const signInField = getRequiredFields(FieldDefinitions.SIGN_IN);
