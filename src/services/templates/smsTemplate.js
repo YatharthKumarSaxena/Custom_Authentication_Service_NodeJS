@@ -1,12 +1,10 @@
 /**
- * 📱 User SMS Templates
+ * User SMS Templates
  * Short, concise messages with {{otp}} placeholders.
  */
 const userSmsTemplate = {
 
-    // ==========================================
-    // 1️⃣ REGISTRATION & VERIFICATION
-    // ==========================================
+    // REGISTRATION & VERIFICATION
 
     verification: {
         message: "Your verification code for [App Name] is {{otp}}. Valid for 10 minutes. Do not share this code.",
@@ -19,7 +17,7 @@ const userSmsTemplate = {
     },
 
     welcome_super_admin: {
-        message: "👑 Super Admin Access Granted for [App Name]. Your account is active. Please login and secure your account immediately.",
+        message: "Super Admin Access Granted for [App Name]. Your account is active. Please login and secure your account immediately.",
         dlt_template_id: "1007XXXXXXX" // Note: Admin templates usually require separate DLT approval
     },
     
@@ -28,9 +26,7 @@ const userSmsTemplate = {
         dlt_template_id: "1007XXXXXXX"
     },
 
-    // ==========================================
-    // 2️⃣ PASSWORD & SECURITY EVENTS
-    // ==========================================
+    // PASSWORD & SECURITY EVENTS
 
     forgotPassword: {
         message: "Use code {{otp}} to reset your [App Name] password. If you didn't request this, ignore this message.",
@@ -53,24 +49,20 @@ const userSmsTemplate = {
         dlt_template_id: "1007XXXXXXX"
     },
 
-    // ==========================================
-    // 3️⃣ ACCOUNT STATUS EVENTS
-    // ==========================================
+    // ACCOUNT STATUS EVENTS
 
     accountDeactivated: {
         message: "Your [App Name] account has been deactivated. You can reactivate it by logging in within 30 days.",
         dlt_template_id: "1007XXXXXXX"
     },
 
-    // 🔹 Account Reactivated 
+    // Account Reactivated
     accountReactivated: {
         message: "Welcome back! Your [App Name] account has been reactivated successfully.",
         dlt_template_id: "1007XXXXXXX"
     },
 
-    // ==========================================
-    // 4️⃣ ACCOUNT UPDATES & 2FA
-    // ==========================================
+    // ACCOUNT UPDATES & 2FA
 
     verifyNewPhone: {
         message: "Verify your new phone number. Your code is {{otp}}. Do not share it.",
@@ -88,7 +80,7 @@ const userSmsTemplate = {
         dlt_template_id: "1007XXXXXXX"
     },
 
-    // 🔹 2FA Enabled (Added)
+    // 2FA Enabled (Added)
     twoFactorEnabled: {
         message: "Security: Two-Factor Authentication (2FA) is now enabled on your [App Name] account.",
         dlt_template_id: "1007XXXXXXX"

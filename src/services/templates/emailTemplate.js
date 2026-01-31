@@ -1,16 +1,14 @@
 const { defaultConfig } = require("@configs/email.config");
 
 /**
- * 👤 User Email Templates
+ * User Email Templates
  * Covers Registration, Login, Security, and Profile Updates
  */
 const userTemplate = {
 
-    // ==========================================
-    // 1️⃣ REGISTRATION & VERIFICATION EVENTS
-    // ==========================================
+    // REGISTRATION & VERIFICATION EVENTS
 
-    // 🔹 Verification (Sign Up / New Email)
+    // Verification (Sign Up / New Email)
     verification: {
         ...defaultConfig,
         subject: "🔐 Verify Your Email Address",
@@ -26,10 +24,10 @@ const userTemplate = {
         details: {} // OTP, Expiry
     },
 
-    // 🔹 Registration Successful (Sent immediately after signup)
+    // Registration Successful (Sent immediately after signup)
     registrationSuccess: {
         ...defaultConfig,
-        subject: "🎉 Registration Successful - Verify Your Account",
+        subject: "Registration Successful - Verify Your Account",
         event_name: "Account Created",
         action: "Verification Required",
         status: "Pending", // 🟡 Yellow Badge
@@ -38,10 +36,10 @@ const userTemplate = {
         details: {} 
     },
 
-    // 🔹 Welcome Super Admin (Used during Bootstrap or Manual Creation)
+    // Welcome Super Admin (Used during Bootstrap or Manual Creation)
     welcome_super_admin: {
         ...defaultConfig,
-        subject: "👑 Welcome, Super Admin - Access Granted",
+        subject: "Welcome, Super Admin - Access Granted",
         event_name: "System Initialization",
         action: "Privileged Access",
         status: "Authorized", // 🔴 Red or 🔵 Blue Badge (Unique for Admin)
@@ -54,10 +52,10 @@ const userTemplate = {
         details: {} // Pass: Email, Generated Time
     },
     
-    // 🔹 Welcome Email (After Successful Verification)
+    // Welcome Email (After Successful Verification)
     welcome: {
         ...defaultConfig,
-        subject: "🎉 Welcome to our Platform!",
+        subject: "Welcome to our Platform!",
         event_name: "Registration Successful",
         action: "Account Active",
         status: "Activated", // 🟢 Green Badge
@@ -70,14 +68,12 @@ const userTemplate = {
         details: {} // User Name, Member Since
     },
 
-    // ==========================================
-    // 2️⃣ PASSWORD & SECURITY EVENTS
-    // ==========================================
+    // PASSWORD & SECURITY EVENTS
 
-    // 🔹 Forgot Password Request
+    // Forgot Password Request
     forgotPassword: {
         ...defaultConfig,
-        subject: "🔑 Reset Your Password",
+        subject: "Reset Your Password",
         event_name: "Password Reset Request",
         action: "Reset Password",
         status: "Pending",
@@ -90,10 +86,10 @@ const userTemplate = {
         details: {} // IP Address, Time
     },
 
-    // 🔹 Password Changed Confirmation
+    // Password Changed Confirmation
     passwordChanged: {
         ...defaultConfig,
-        subject: "✅ Password Changed Successfully",
+        subject: "Password Changed Successfully",
         event_name: "Password Updated",
         action: "Security Update",
         status: "Success",
@@ -102,10 +98,10 @@ const userTemplate = {
         details: {} // Device, IP, Time
     },
 
-    // 🔹 New Device / Suspicious Login Alert
+    // New Device / Suspicious Login Alert
     newDeviceLogin: {
         ...defaultConfig,
-        subject: "⚠️ New Login Detected",
+        subject: "New Login Detected",
         event_name: "New Device Login",
         action: "Security Alert",
         status: "Warning", // 🟡 Yellow/Orange
@@ -114,10 +110,10 @@ const userTemplate = {
         details: {} // Browser, OS, IP Address, Location, Time
     },
 
-    // 🔹 Logout All Devices
+    // Logout All Devices
     logoutAllDevices: {
         ...defaultConfig,
-        subject: "🔒 Logged Out From All Devices",
+        subject: "Logged Out From All Devices",
         event_name: "Security Action",
         action: "Global Logout",
         status: "Success",
@@ -129,14 +125,12 @@ const userTemplate = {
         details: {} // Time, IP
     },
 
-    // ==========================================
-    // 3️⃣ ACCOUNT STATUS EVENTS (Activate/Deactivate)
-    // ==========================================
+    // ACCOUNT STATUS EVENTS (Activate/Deactivate)
 
-    // 🔹 Account Deactivated (By User)
+    // Account Deactivated (By User)
     accountDeactivated: {
         ...defaultConfig,
-        subject: "👋 Your Account Has Been Deactivated",
+        subject: "Your Account Has Been Deactivated",
         event_name: "Account Deactivation",
         action: "Deactivated",
         status: "Deactivated", // 🔴 Red Badge
@@ -145,10 +139,10 @@ const userTemplate = {
         details: {} // Deactivated At
     },
 
-    // 🔹 Account Reactivated (Welcome Back)
+    // Account Reactivated (Welcome Back)
     accountReactivated: {
         ...defaultConfig,
-        subject: "🎉 Welcome Back! Account Reactivated",
+        subject: "Welcome Back! Account Reactivated",
         event_name: "Account Reactivation",
         action: "Reactivated",
         status: "Activated",
@@ -161,14 +155,12 @@ const userTemplate = {
         details: {} // Reactivated At
     },
 
-    // ==========================================
-    // 4️⃣ UPDATE ACCOUNT DETAILS (Email/Phone Change)
-    // ==========================================
+    // UPDATE ACCOUNT DETAILS (Email/Phone Change)
 
-    // 🔹 Verify New Email (When email is updated)
+    // Verify New Email (When email is updated)
     verifyNewEmail: {
         ...defaultConfig,
-        subject: "📧 Verify Your New Email Address",
+        subject: "Verify Your New Email Address",
         event_name: "Email Update Verification",
         action: "Verify Change",
         status: "Pending",
@@ -181,10 +173,10 @@ const userTemplate = {
         details: {} // Old Email (masked), New Email
     },
 
-    // 🔹 Profile Details Updated (Name, Bio, etc. - No Verify needed)
+    // Profile Details Updated (Name, Bio, etc. - No Verify needed)
     profileUpdated: {
         ...defaultConfig,
-        subject: "📝 Account Details Updated",
+        subject: "Account Details Updated",
         event_name: "Profile Update",
         action: "Details Updated",
         status: "Success",
@@ -192,10 +184,10 @@ const userTemplate = {
         notes: "If you did not make these changes, please secure your account.",
         details: {} // Updated Fields (e.g., "Name, Address"), Time
     },
-    // 🔹 2FA Login OTP (Jab banda login kare aur 2FA ON ho)
+    // 2FA Login OTP (Jab banda login kare aur 2FA ON ho)
     twoFactorLoginOTP: {
         ...defaultConfig,
-        subject: "🔐 Login Verification Code",
+        subject: "Login Verification Code",
         event_name: "2FA Login Attempt",
         action: "Login Verification",
         status: "Pending", // 🟡 Yellow Badge
@@ -213,14 +205,12 @@ const userTemplate = {
         details: {} // IP Address, Browser, Location, Time
     },
 
-    // ==========================================
-    // 2️⃣ 2FA SETTINGS EVENTS (Enable/Disable)
-    // ==========================================
+    // 2FA SETTINGS EVENTS (Enable/Disable)
 
-    // 🔹 2FA Enabled Successfully
+    // 2FA Enabled Successfully
     twoFactorEnabled: {
         ...defaultConfig,
-        subject: "🛡️ Two-Factor Authentication Enabled",
+        subject: "Two-Factor Authentication Enabled",
         event_name: "Security Update",
         action: "2FA Enabled",
         status: "Success", // 🟢 Green Badge
@@ -229,10 +219,10 @@ const userTemplate = {
         details: {} // Method (Email/App), Enabled At
     },
 
-    // 🔹 2FA Disabled (High Risk Alert!)
+    // 2FA Disabled (High Risk Alert!)
     twoFactorDisabled: {
         ...defaultConfig,
-        subject: "⚠️ Two-Factor Authentication Disabled",
+        subject: "Two-Factor Authentication Disabled",
         event_name: "Security Alert",
         action: "2FA Disabled",
         status: "Deactivated", // 🔴 Red Badge
@@ -246,10 +236,10 @@ const userTemplate = {
         details: {} // Disabled By (IP), Time
     },
 
-    // 🔹 Email Change Notification (Sent to OLD Email)
+    // Email Change Notification (Sent to OLD Email)
     emailChangeAlert: {
         ...defaultConfig,
-        subject: "⚠️ Security Alert: Email Address Changed",
+        subject: "Security Alert: Email Address Changed",
         event_name: "Email Change Alert",
         action: "Security Warning",
         status: "Warning",
@@ -260,14 +250,12 @@ const userTemplate = {
         notes: "If you authorized this change, you can safely ignore this email. If not, click the button above immediately to lock your account.",
         details: {} // Time, IP, New Email
     },
-    // ==========================================
-    // 🛡️ DEVICE & MFA VERIFICATION
-    // ==========================================
+    // DEVICE & MFA VERIFICATION
 
-    // 🔹 Device Verification (New Device Authorization)
+    // Device Verification (New Device Authorization)
     deviceVerification: {
         ...defaultConfig,
-        subject: "💻 Authorize New Device",
+        subject: "Authorize New Device",
         event_name: "Device Authorization",
         action: "Verify Device",
         status: "Pending", // 🟡 Yellow Badge
