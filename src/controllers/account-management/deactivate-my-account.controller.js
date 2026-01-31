@@ -52,6 +52,7 @@ const deactivateMyAccount = async (req, res) => {
         const isLoggedOut = await logoutUserCompletely(
             user,
             device,
+            requestId,
             "Account Deactivation"
         );
 

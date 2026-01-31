@@ -69,8 +69,8 @@ const updateMyAccount = async (req, res) => {
             const isLoggedOut = await logoutUserCompletely(
                 user,
                 device,
-                "Account Update: Email/Phone Change",
-                requestId
+                requestId,
+                "Account Update: Email/Phone Change"
             );
 
             if (isLoggedOut) {
