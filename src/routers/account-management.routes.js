@@ -23,6 +23,7 @@ const {
 accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     rateLimiters.activateAccountRateLimiter,
     ...authRequestMiddlewares,
+    authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
     accountManagementMiddlewares.activateAccountFieldPresenceMiddleware
 ], accountManagementControllers.activateMyAccount);

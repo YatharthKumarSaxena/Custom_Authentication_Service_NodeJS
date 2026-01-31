@@ -21,6 +21,7 @@ const {
 accountVerificationRouter.post(RESEND_VERIFICATION, [
     rateLimiters.resendVerificationRateLimiter,
     ...authRequestMiddlewares,
+    authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     accountVerificationMiddlewares.verifyPurposeFieldPresenceMiddleware,
@@ -56,6 +57,7 @@ accountVerificationRouter.post(VERIFY_DEVICE, [
     rateLimiters.verifyDeviceRateLimiter,
     ...authRequestMiddlewares,
     accountVerificationMiddlewares.validateVerificationInput,
+    authMiddlewares.ensureUserExists,
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyDevice);
