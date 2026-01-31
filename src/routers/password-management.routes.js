@@ -1,4 +1,4 @@
-// ========== 🔑 PASSWORD MANAGEMENT ROUTES ==========
+// ========== PASSWORD MANAGEMENT ROUTES ==========
 
 const express = require("express");
 const passwordManagementRouter = express.Router();
@@ -15,7 +15,7 @@ const {
     RESET_PASSWORD
 } = PASSWORD_MANAGEMENT_ROUTES;
 
-// 📌 Forgot Password (Send OTP/Link)
+// Forgot Password (Send OTP/Link)
 passwordManagementRouter.post(FORGOT_PASSWORD, [
     rateLimiters.forgetPasswordRateLimiter,
     ...authExistingUserMiddlewares,
@@ -24,7 +24,7 @@ passwordManagementRouter.post(FORGOT_PASSWORD, [
     commonMiddlewares.checkUserIsVerified
 ], passwordManagementController.forgotPassword);
 
-// 📌 Reset Password (Verify OTP/Token & Change Password)
+// Reset Password (Verify OTP/Token & Change Password)
 passwordManagementRouter.post(RESET_PASSWORD, [
     rateLimiters.resetPasswordRateLimiter,
     ...authExistingUserMiddlewares,

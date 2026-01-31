@@ -1,4 +1,4 @@
-// ========== 👤 ACCOUNT MANAGEMENT ROUTES ==========
+// ACCOUNT MANAGEMENT ROUTES
 
 const express = require("express");
 const accountManagementRouter = express.Router();
@@ -19,7 +19,7 @@ const {
     CHANGE_PASSWORD
 } = ACCOUNT_MANAGEMENT_ROUTES;
 
-// 📌 Activate Account
+// Activate Account
 accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     rateLimiters.activateAccountRateLimiter,
     ...authRequestMiddlewares,
@@ -27,35 +27,35 @@ accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     accountManagementMiddlewares.activateAccountFieldPresenceMiddleware
 ], accountManagementControllers.activateMyAccount);
 
-// 📌 Deactivate Account
+// Deactivate Account
 accountManagementRouter.post(DEACTIVATE_ACCOUNT, [
     rateLimiters.deactivateAccountRateLimiter,
     ...baseAuthMiddlewares,
     accountManagementMiddlewares.deactivateAccountFieldPresenceMiddleware
 ], accountManagementControllers.deactivateMyAccount);
 
-// 📌 Enable 2FA
+// Enable 2FA
 accountManagementRouter.post(ENABLE_2FA, [
     rateLimiters.enable2FARateLimiter,
     ...baseAuthMiddlewares,
     accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.enable2FA);
 
-// 📌 Disable 2FA
+// Disable 2FA
 accountManagementRouter.post(DISABLE_2FA, [
     rateLimiters.disable2FARateLimiter,
     ...baseAuthMiddlewares,
     accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.disable2FA);
 
-// 📌 Update Account Details
+// Update Account Details
 accountManagementRouter.patch(UPDATE_ACCOUNT_DETAILS, [
     rateLimiters.updateMyAccountRateLimiter,
     ...baseAuthMiddlewares,
     authMiddlewares.sanitizeAuthBody,
 ], accountManagementControllers.updateMyAccount);
 
-// 📌 Change Password
+// Change Password
 accountManagementRouter.post(CHANGE_PASSWORD, [
     rateLimiters.changePasswordRateLimiter,
     ...baseAuthMiddlewares,

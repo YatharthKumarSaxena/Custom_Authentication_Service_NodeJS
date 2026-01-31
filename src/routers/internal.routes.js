@@ -1,5 +1,5 @@
 /**
- * 🔐 Internal API Routes
+ * Internal API Routes
  * 
  * Routes for internal service-to-service communication.
  * Protected by service token authentication.
@@ -27,7 +27,7 @@ if (!microserviceConfig.enabled) {
     } else {
         const { verifyAnyService } = internal.middlewares;
 
-        // 🏥 Health check endpoint
+        // Health check endpoint
         internalRouter.get('/health', verifyAnyService, (req, res) => {
             res.status(200).json({
                 success: true,
@@ -37,7 +37,7 @@ if (!microserviceConfig.enabled) {
             });
         });
 
-        // 🔍 Service token status
+        // Service token status
         internalRouter.get('/token-status', verifyAnyService, async (req, res) => {
             try {
                 const { getTokenStatus } = internal.serviceToken;

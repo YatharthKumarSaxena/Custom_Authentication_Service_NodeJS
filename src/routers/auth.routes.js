@@ -1,4 +1,4 @@
-// ========== 🔐 AUTHENTICATION ROUTES ==========
+// AUTHENTICATION ROUTES
 
 const express = require("express");
 const authRouter = express.Router();
@@ -15,7 +15,7 @@ const {
     POST_REFRESH
 } = AUTH_ROUTES;
 
-// 📌 User Sign Up
+// User Sign Up
 authRouter.post(SIGNUP, [
     rateLimiters.signUpRateLimiter,
     ...authNewUserMiddlewares,
@@ -24,7 +24,7 @@ authRouter.post(SIGNUP, [
     authMiddlewares.signupFieldValidationMiddleware
 ], authController.signUp);
 
-// 📌 User Sign In
+// User Sign In
 authRouter.post(SIGNIN, [
     rateLimiters.signInRateLimiter,
     ...authExistingUserMiddlewares,
@@ -34,37 +34,37 @@ authRouter.post(SIGNIN, [
     authMiddlewares.signinFieldPresenceMiddleware
 ], authController.signIn);
 
-// 📌 User Sign Out (Current Device)
+// User Sign Out (Current Device)
 authRouter.post(SIGNOUT, [
     rateLimiters.signOutRateLimiter,
     ...baseAuthMiddlewares
 ], authController.signOutAllDevices);
 
-// 📌 User Sign Out From Specific Device
+// User Sign Out From Specific Device
 authRouter.post(SIGNOUT_FROM_SPECIFIC_DEVICE, [
     rateLimiters.signOutDeviceRateLimiter,
     ...baseAuthMiddlewares
 ], authController.signOut);
 
-// 📌 Get Active Sessions
+// Get Active Sessions
 authRouter.get(GET_ACTIVE_SESSIONS, [
     rateLimiters.getMyActiveDevicesRateLimiter,
     ...baseAuthMiddlewares
 ], authController.getMyActiveSessions);
 
-// 📌 Get My Account Details
+// Get My Account Details
 authRouter.get(GET_MY_ACCOUNT_DETAILS, [
     rateLimiters.getMyAccountRateLimiter,
     ...baseAuthMiddlewares
 ], authController.getMyAccount);
 
-// 📌 Get My Auth Logs
+// Get My Auth Logs
 authRouter.get(GET_MY_AUTH_LOGS, [
     rateLimiters.getUserAuthLogsRateLimiter,
     ...baseAuthMiddlewares
 ], authController.getMyAuthLogs);
 
-// 📌 Post-Refresh Token (Microservice Mode)
+// Post-Refresh Token (Microservice Mode)
 authRouter.post(POST_REFRESH, [
     rateLimiters.signInRateLimiter, // Reuse sign-in rate limiter
     ...baseAuthMiddlewares

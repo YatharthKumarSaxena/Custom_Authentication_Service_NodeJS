@@ -2,9 +2,11 @@ const { commonMiddlewares } = require("@middlewares/common/index");
 const { authMiddlewares } = require("@middlewares/auth/index");
 
 const baseMiddlewares = [
+    commonMiddlewares.requestIdMiddleware,
     commonMiddlewares.verifyDeviceField,
     commonMiddlewares.isDeviceBlocked
 ];
+
 const baseAuthMiddlewares = [
     ...baseMiddlewares,
     commonMiddlewares.verifyTokenMiddleware,

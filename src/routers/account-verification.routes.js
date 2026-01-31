@@ -1,4 +1,4 @@
-// ========== ✅ ACCOUNT VERIFICATION ROUTES ==========
+// ACCOUNT VERIFICATION ROUTES
 
 const express = require("express");
 const accountVerificationRouter = express.Router();
@@ -17,7 +17,7 @@ const {
     VERIFY_PHONE
 } = ACCOUNT_VERIFICATION_ROUTES;
 
-// 📌 Resend Verification Link (Email)
+// Resend Verification Link (Email)
 accountVerificationRouter.post(RESEND_VERIFICATION, [
     rateLimiters.resendVerificationRateLimiter,
     ...authRequestMiddlewares,
@@ -27,7 +27,7 @@ accountVerificationRouter.post(RESEND_VERIFICATION, [
     accountVerificationMiddlewares.verifyPurposeFieldValidationMiddleware
 ], accountVerificationController.resendVerification);
 
-// 📌 Verify Email
+// Verify Email
 accountVerificationRouter.post(VERIFY_EMAIL, [
     rateLimiters.verifyEmailRateLimiter,
     ...baseMiddlewares,
@@ -39,7 +39,7 @@ accountVerificationRouter.post(VERIFY_EMAIL, [
     commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyEmail);
 
-// 📌 Verify Phone
+// Verify Phone
 accountVerificationRouter.post(VERIFY_PHONE, [
     rateLimiters.verifyPhoneRateLimiter,
     ...baseMiddlewares,
@@ -51,7 +51,7 @@ accountVerificationRouter.post(VERIFY_PHONE, [
     commonMiddlewares.isUserAccountActive
 ], accountVerificationController.verifyPhone);
 
-// 📌 Verify Device (2FA)
+// Verify Device (2FA)
 accountVerificationRouter.post(VERIFY_DEVICE, [
     rateLimiters.verifyDeviceRateLimiter,
     ...authRequestMiddlewares,
