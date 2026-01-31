@@ -18,7 +18,7 @@ const {
 } = require("@configs/regex.config");
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
-/* ------------------ 👤 User Schema ------------------ */
+/* User Schema */
 
 const userSchema = new mongoose.Schema({
     userId: {
@@ -180,7 +180,7 @@ const userSchema = new mongoose.Schema({
 
 }, { timestamps: true, versionKey: false });
 
-/* ------------------ 🔐 Centralized AUTH_MODE Validation ------------------ */
+/* Centralized AUTH_MODE Validation */
 
 userSchema.pre("validate", function (next) {
 
@@ -239,7 +239,7 @@ userSchema.pre("validate", function (next) {
     next();
 });
 
-/* ------------------ 📦 Export ------------------ */
+/* Export */
 
 module.exports = {
     UserModel: mongoose.model(DB_COLLECTIONS.USER, userSchema)

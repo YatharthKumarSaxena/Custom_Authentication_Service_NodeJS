@@ -52,6 +52,13 @@ const authLogSchema = new mongoose.Schema({
     type: String,
     enum: Object.values(DeviceTypes),
     default: null
+  },
+
+  requestId: {
+    type: String,
+    match: UUID_V4_REGEX,
+    index: true,
+    required: true
   }
 }, { timestamps: true, versionKey: false });
 

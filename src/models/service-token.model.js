@@ -3,7 +3,7 @@ const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 const { ServiceNames } = require("@/configs/enums.config");
 
 /**
- * 🔐 Service Token Schema
+ * Service Token Schema
  *
  * Stores metadata for service-to-service authentication tokens.
  * Raw tokens are NEVER stored — only hashed versions.
@@ -62,9 +62,9 @@ const serviceTokenSchema = new mongoose.Schema(
 }
 );
 
-/* ------------------ 📊 Indexes ------------------ */
+/* ------------------ Indexes ------------------ */
 
-// ✅ only ONE active token allowed per service instance
+// only ONE active token allowed per service instance
 serviceTokenSchema.index(
   { serviceInstanceId: 1, isActive: 1 },
   {
@@ -73,7 +73,7 @@ serviceTokenSchema.index(
   }
 );
 
-/* ------------------ 🗑 TTL Index ------------------ */
+/* ------------------ TTL Index ------------------ */
 
 serviceTokenSchema.index(
   { expiresAt: 1 },
@@ -81,7 +81,7 @@ serviceTokenSchema.index(
 );
 
 
-/* ------------------ 🔧 Static Methods ------------------ */
+/* ------------------ Static Methods ------------------ */
 
 serviceTokenSchema.statics.findActiveByServiceInstance = function (
     serviceInstanceId

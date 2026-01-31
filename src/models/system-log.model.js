@@ -3,9 +3,7 @@ const { SYSTEM_LOG_EVENTS, STATUS_TYPES, SERVICE_NAMES } = require("@configs/sys
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 const systemLogSchema = new mongoose.Schema({
-    // ========================================
-    // 🔷 SERVER & SERVICE IDENTITY
-    // ========================================
+    // SERVER & SERVICE IDENTITY
     
     // 1. Which service performed the action?
     serviceName: { 
@@ -34,9 +32,7 @@ const systemLogSchema = new mongoose.Schema({
         default: null
     },
 
-    // ========================================
-    // 🔷 EVENT DETAILS
-    // ========================================
+    // EVENT DETAILS
     
     // 5. Event Type (What kind of action?)
     eventType: { 
@@ -66,9 +62,7 @@ const systemLogSchema = new mongoose.Schema({
         required: true
     },
 
-    // ========================================
-    // 🔷 TARGET & ACTOR
-    // ========================================
+    // TARGET & ACTOR
     
     // 9. Target (What was affected? userId, deviceId, etc.)
     targetId: { 
@@ -84,9 +78,7 @@ const systemLogSchema = new mongoose.Schema({
         index: true
     },
 
-    // ========================================
-    // 🔷 REQUEST CONTEXT (For HTTP-triggered events)
-    // ========================================
+    // REQUEST CONTEXT (For HTTP-triggered events)
     
     // 11. IP Address
     ipAddress: {
@@ -100,9 +92,7 @@ const systemLogSchema = new mongoose.Schema({
         default: null
     },
 
-    // ========================================
-    // 🔷 METADATA
-    // ========================================
+    // METADATA
     
     // 13. Additional data (minimal, structured)
     metadata: { 
@@ -113,9 +103,7 @@ const systemLogSchema = new mongoose.Schema({
     timestamps: true 
 });
 
-// ========================================
-// 🔍 INDEXES FOR PERFORMANCE
-// ========================================
+// INDEXES FOR PERFORMANCE
 
 // Compound index for service + event type queries
 systemLogSchema.index({ serviceName: 1, eventType: 1, createdAt: -1 });

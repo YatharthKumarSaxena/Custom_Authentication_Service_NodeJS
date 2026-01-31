@@ -54,7 +54,7 @@ verificationLinkSchema.index({
   isUsed: 1
 });
 
-/* 🔥 Auto delete after expiry */
+/* Auto delete after expiry */
 verificationLinkSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = {
