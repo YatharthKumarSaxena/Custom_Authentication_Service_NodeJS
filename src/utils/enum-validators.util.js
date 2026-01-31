@@ -1,4 +1,4 @@
-// ✅ Enum Helpers using Factory Design Pattern
+// Enum Helpers using Factory Design Pattern
 const { isValidEnumValue, getEnumKeyByValue } = require("./validators-factory.util");
 const { logWithTime } = require("./time-stamps.util");
 
@@ -10,7 +10,7 @@ const {
 } = require("@configs/enums.config");
 
 /**
- * 🏭 Factory to create enum helper with boolean returns
+ * Factory to create enum helper with boolean returns
  * Returns true/false only - caller decides response handling
  * This allows collecting multiple validation errors
  * 
@@ -35,7 +35,7 @@ const createEnumHelper = (enumObj, name) => ({
   getName: () => name
 });
 
-// 🧩 Enum-specific helpers
+// Enum-specific helpers
 const DeviceTypeHelper = createEnumHelper(DeviceTypes, "DeviceType");
 const UserTypeHelper = createEnumHelper(UserTypes, "UserType");
 const AuthModesHelper = createEnumHelper(AuthModes, "AuthModes");

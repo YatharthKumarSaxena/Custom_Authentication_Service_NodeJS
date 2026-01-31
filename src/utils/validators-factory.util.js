@@ -1,5 +1,5 @@
 /**
- * ✅ Pure Validation Functions (Industry Standard)
+ * Pure Validation Functions (Industry Standard)
  * These functions return boolean/data only, NO response handling
  * Middleware handles logging and HTTP responses
  */
@@ -25,7 +25,7 @@ const isValidRegex = (str, regex) => {
 };
 
 /**
- * 🏭 Smart Error Message Generator for Length Validation
+ * Smart Error Message Generator for Length Validation
  * Auto-generates "exactly X" vs "between X and Y" messages
  */
 const generateLengthErrorMessage = (name, length, customMessage) => {

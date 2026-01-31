@@ -1,5 +1,5 @@
 /**
- * ✅ Pure ID Validation Functions (Industry Standard)
+ * Pure ID Validation Functions (Industry Standard)
  * These functions return boolean only, NO response handling
  * Middleware handles logging and HTTP responses
  */

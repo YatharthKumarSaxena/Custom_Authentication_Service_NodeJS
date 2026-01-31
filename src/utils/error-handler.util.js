@@ -1,7 +1,7 @@
 // This file will include the most common messages
 
 /*
-  ✅ DRY Principle: 
+  DRY Principle: 
   This utility function is reused to print detailed error logs.
   Helps avoid repeating error console logic multiple times.
 */
@@ -19,7 +19,7 @@ const errorMessage = (err) => {
 }
 
 /*
-  ✅ SRP + DRY: 
+  SRP + DRY: 
   Handles cases where required fields are missing in the request.
 */
 
@@ -35,7 +35,7 @@ const throwMissingFieldsError = (res,resource) =>{
 }
 
 /*
-  ✅ SRP + DRY: 
+  SRP + DRY: 
   Handles all credentials failure responses.
 */
 
@@ -53,7 +53,7 @@ const throwInvalidResourceError = (res,resource,reason) => {
 }
 
 /*
-  ✅ SRP + DRY: 
+  SRP + DRY: 
   Handles Access Denied or Blocked Account responses.
 */
 
@@ -68,7 +68,7 @@ const throwAccessDeniedError = (res, reason = "Access Denied") => {
 }
 
 /*
-  ✅ SRP + DRY:
+  SRP + DRY: 
   Handles generic bad request responses (invalid/malformed request payloads).
 */
 
@@ -137,7 +137,7 @@ const throwValidationError = (res, errors) => {
 };
 
 /*
-  ✅ SRP + DRY: 
+  SRP + DRY: 
   Handles all internal server failure responses.
 */
 

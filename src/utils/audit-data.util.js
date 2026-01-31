@@ -2,7 +2,7 @@ const { AuditMode } = require("@configs/enums.config");
 const { auditMode } = require("@configs/security.config")
 
 /**
- * 📸 Audit Data Utility
+ * Audit Data Utility
  * Simple approach - pass full objects, get filtered data based on ENV
  */
 

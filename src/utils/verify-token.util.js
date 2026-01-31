@@ -11,7 +11,7 @@ const getSecret = (tokenType) => {
 }
 
 /**
- * ✅ Verifies and Decodes a JWT Token.
+ * Verifies and Decodes a JWT Token.
  * @param {string} token - The JWT string to verify.
  * @param {string} type - Enum: Token.ACCESS or Token.REFRESH (Default: ACCESS)
  * @returns {object} - Decoded payload (uid, did, iat, exp)
@@ -36,9 +36,9 @@ const verifyToken = (token, type = Token.ACCESS) => {
 };
 
 /**
- * 👁️ Decodes a token WITHOUT verifying signature.
+ * Decodes a token WITHOUT verifying signature.
  * Useful ONLY to extract info (like checking expiry time) even if token is invalid.
- * ⚠️ WARNING: Do not use this for Authentication checks!
+ * WARNING: Do not use this for Authentication checks!
  */
 
 const decodeTokenUnsafe = (token) => {

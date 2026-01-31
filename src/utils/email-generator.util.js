@@ -2,7 +2,7 @@ const { logWithTime } = require("@utils/time-stamps.util");
 const { defaultConfig, masterEmailTemplate } = require("@configs/email.config");
 
 /**
- * 🎨 Helper: Get color based on status
+ * Helper: Get color based on status
  */
 const getStatusColor = (status) => {
     const { ui } = defaultConfig;
@@ -20,7 +20,7 @@ const getStatusColor = (status) => {
 };
 
 /**
- * 📧 Generator Function (FIXED - OTP Priority)
+ * Generator Function (FIXED - OTP Priority)
  */
 const generateEmailHtml = (templateConfig, data = {}) => {
 
@@ -44,7 +44,7 @@ const generateEmailHtml = (templateConfig, data = {}) => {
         <p>${templateConfig.message_intro}</p>
     `;
 
-    // --- 🟢 FIXED: OTP PRIORITY CHECK ---
+    // --- FIXED: OTP PRIORITY CHECK ---
     // PRIORITY 1: OTP (agar otp field hai)
     if (data.otp) {
         innerContent += `

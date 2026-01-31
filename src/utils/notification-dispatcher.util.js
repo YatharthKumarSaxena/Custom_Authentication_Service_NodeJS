@@ -8,7 +8,7 @@ const { generateSmsMessage } = require("./sms-generator.util");
 const { logWithTime } = require("./time-stamps.util");
 
 /**
- * 🚀 Flexible Notification Dispatcher
+ * Flexible Notification Dispatcher
  * - Use WITHOUT await: Fire-and-forget (signup, verification generation)
  * - Use WITH await: Wait for confirmation (resend verification, critical flows)
  * 
@@ -30,7 +30,7 @@ const sendNotification = async ({
         let emailSent = false;
         let smsSent = false;
 
-        // 1️⃣ Flag Logic
+        // Flag Logic
         const shouldSendEmail = (
             (contactMode === ContactModes.EMAIL || contactMode === ContactModes.BOTH) && 
             email && 
@@ -43,7 +43,7 @@ const sendNotification = async ({
             smsTemplate
         );
 
-        // 2️⃣ EMAIL - Execute and track
+        // EMAIL - Execute and track
         if (shouldSendEmail) {
             const emailContent = generateEmailHtml(emailTemplate, { name: data.name, ...data });
             if (emailContent) {
@@ -57,7 +57,7 @@ const sendNotification = async ({
             }
         }
 
-        // 3️⃣ SMS - Execute and track
+        // SMS - Execute and track
         if (shouldSendSMS) {
             const smsMessage = generateSmsMessage(smsTemplate, data.otp);
             if (smsMessage) {

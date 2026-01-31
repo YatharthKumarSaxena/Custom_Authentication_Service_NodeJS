@@ -1,11 +1,8 @@
 /**
- * 🖥️ Server Instance Utility
+ * Server Instance Utility
  * 
  * Provides server instance identification for distributed system tracking.
  * Helps identify which server/process handled a particular operation.
- * 
- * @author Custom Auth Service Team
- * @date 2026-01-30
  */
 
 const os = require('os');

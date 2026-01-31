@@ -1,5 +1,5 @@
 const extractAccessToken = (req) => {
-    //🔐 Bearer Token Handling	✅ Added	Supports frontend standards, avoids malformed headers.
+    // Bearer Token Handling , Added Supports frontend standards, avoids malformed headers.
     const authHeader = req.headers["authorization"] || req.headers["x-access-token"]; // Check if the token is present in the Header
     const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
     if(token)return token;
