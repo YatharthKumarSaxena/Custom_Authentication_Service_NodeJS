@@ -17,10 +17,12 @@ const resendVerification = async (req, res) => {
         const { purpose } = req.body;
         const user = req.foundUser;
         const device = req.device;
-
+        const requestId = req.requestId;
+        
         const result = await resendVerificationService(
             user,
             device,
+            requestId,
             purpose
         );
 

@@ -19,28 +19,29 @@ const activateMyAccount = async (req, res) => {
         const user = req.foundUser;
         const device = req.device;
         const { password } = req.body;
+        const requestId = req.requestId;
 
-        // 🚫 Admin protection
+        // Admin protection
         if (isAdminId(user.userId)) {
             logWithTime(`❌ Admin activation blocked: ${user.userId}`);
             return throwAccessDeniedError(res, "Admin accounts cannot be activated manually.");
         }
 
-        const result = await activateAccountService(user, device, password);
+        const result = await activateAccountService(user, device, password, requestId);
 
         if (!result.success) {
 
-            // 🔐 Rate limit / lock
+            // Rate limit / lock
             if (result.type === AuthErrorTypes.LOCKED) {
                 return throwTooManyRequestsError(res, result.message);
             }
 
-            // ❌ Invalid password
+            // Invalid password
             if (result.type === AuthErrorTypes.INVALID_PASSWORD) {
                 return throwInvalidResourceError(res, "Password", result.message);
             }
 
-            // ⚠ Already active
+            // Already active
             if (result.type === AuthErrorTypes.ALREADY_ACTIVE) {
                 return throwConflictError(res, result.message);
             }

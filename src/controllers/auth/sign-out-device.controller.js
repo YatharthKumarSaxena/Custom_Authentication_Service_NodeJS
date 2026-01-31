@@ -16,8 +16,9 @@ const signOut = async (req, res) => {
         const user = req.user;
         const device = req.device;
         const userDevice = req.userDevice;
+        const requestId = req.requestId;
 
-        const result = await signOutService(user, device, userDevice);
+        const result = await signOutService(user, device, userDevice, requestId);
 
         if (!result.success) {
             logWithTime(`❌ Sign-out failed for User (${user.userId}) on device (${device.deviceUUID}): ${result.message}`);

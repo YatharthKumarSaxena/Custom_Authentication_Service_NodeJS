@@ -8,9 +8,10 @@ const signOutAllDevices = async (req, res) => {
     try {
         const user = req.user;
         const device = req.device;
+        const requestId = req.requestId;
 
         // 1. Service Call
-        const isUserLoggedOut = await logoutUserCompletely(user, device);
+        const isUserLoggedOut = await logoutUserCompletely(user, device, requestId);
 
         // 2. Handle Failure 
         if (!isUserLoggedOut) {

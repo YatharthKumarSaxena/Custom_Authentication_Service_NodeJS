@@ -27,9 +27,8 @@ const postRefresh = async (req, res) => {
             return throwInvalidResourceError(res, "Device", "Device not found");
         }
 
-        // ---------------------------------------------------------
         // 1. INPUT VALIDATION
-        // ---------------------------------------------------------
+        
         if (!refreshToken) {
             return throwBadRequestError(res, "Refresh token is required");
         }
@@ -37,15 +36,13 @@ const postRefresh = async (req, res) => {
         if (!device || !device.deviceUUID) {
             return throwBadRequestError(res, "Device information is required");
         }
-
-        // ---------------------------------------------------------
+ 
         // 2. CALL SERVICE
-        // ---------------------------------------------------------
+        
         const result = await performPostRefresh(refreshToken, device);
-
-        // ---------------------------------------------------------
+ 
         // 3. HANDLE FAILURES
-        // ---------------------------------------------------------
+        
         if (!result.success) {
             
             // Case A: Invalid/Expired/Mismatch Token
@@ -70,9 +67,8 @@ const postRefresh = async (req, res) => {
             return throwBadRequestError(res, result.message);
         }
 
-        // ---------------------------------------------------------
         // 4. SUCCESS RESPONSE
-        // ---------------------------------------------------------
+        
         const mode = microserviceConfig.enabled ? 'microservice' : 'monolithic';
         
         logWithTime(

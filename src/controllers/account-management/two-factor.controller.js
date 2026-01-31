@@ -19,8 +19,9 @@ const handleTwoFactorToggle = async (req, res, shouldEnable) => {
         const user = req.user;
         const device = req.device;
         const { password } = req.body;
+        const requestId = req.requestId;
 
-        // 🚫 Admin protection
+        // Admin protection
         if (isAdminId(user.userId)) {
             return throwAccessDeniedError(
                 res,
@@ -28,15 +29,16 @@ const handleTwoFactorToggle = async (req, res, shouldEnable) => {
             );
         }
 
-        // ✅ Call service
+        // Call service
         const result = await toggleTwoFactorService(
             user,
             device,
             password,
+            requestId,
             shouldEnable
         );
 
-        // ❌ Business failures handled HERE
+        // Business failures handled HERE
         if (!result.success) {
 
             if (result.type === AuthErrorTypes.LOCKED) {
@@ -54,14 +56,14 @@ const handleTwoFactorToggle = async (req, res, shouldEnable) => {
             return throwBadRequestError(res, result.message);
         }
 
-        // ✅ Success
+        // Success
         return res.status(OK).json({
             success: true,
             message: result.message
         });
 
     } catch (err) {
-        // 🚨 Only unexpected errors
+        // Only unexpected errors
         const identifiers = getLogIdentifiers(req);
         const action = shouldEnable ? "enable" : "disable";
 

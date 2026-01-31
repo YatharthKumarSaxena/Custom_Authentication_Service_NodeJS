@@ -15,6 +15,7 @@ const updateMyAccount = async (req, res) => {
     try {
         const user = req.user;
         const device = req.device;
+        const requestId = req.requestId;
 
         const updatePayload = {
             firstName: req.body.firstName,
@@ -23,14 +24,15 @@ const updateMyAccount = async (req, res) => {
             localNumber: req.body.localNumber
         };
 
-        // 1️⃣ Call service
+        // Call service
         const result = await updateAccountService(
             user,
             device,
+            requestId,
             updatePayload
         );
 
-        // ❌ Business failure handling
+        // Business failure handling
         if (!result.success) {
 
             // Validation errors
@@ -54,7 +56,7 @@ const updateMyAccount = async (req, res) => {
             });
         }
 
-        // 🔐 Logout if sensitive info changed
+        // Logout if sensitive info changed
         const sensitiveFieldsChanged =
             result.updatedFields.includes("Email") ||
             result.updatedFields.includes("Phone Number");
@@ -67,7 +69,8 @@ const updateMyAccount = async (req, res) => {
             const isLoggedOut = await logoutUserCompletely(
                 user,
                 device,
-                "Account Update: Email/Phone Change"
+                "Account Update: Email/Phone Change",
+                requestId
             );
 
             if (isLoggedOut) {
@@ -79,7 +82,7 @@ const updateMyAccount = async (req, res) => {
             }
         }
 
-        // ✅ Success response with verification status
+        // Success response with verification status
         let message = result.message;
         
         // Build dynamic message based on what was updated

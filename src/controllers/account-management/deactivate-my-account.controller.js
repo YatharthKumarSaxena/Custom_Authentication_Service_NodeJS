@@ -19,6 +19,7 @@ const deactivateMyAccount = async (req, res) => {
         const user = req.user;
         const device = req.device;
         const { password } = req.body;
+        const requestId = req.requestId;
 
         if (isAdminId(user.userId)) {
             return throwAccessDeniedError(
@@ -27,8 +28,8 @@ const deactivateMyAccount = async (req, res) => {
             );
         }
 
-        // 1️⃣ Call service
-        const result = await deactivateAccountService(user, device, password);
+        // Call service
+        const result = await deactivateAccountService(user, device, password, requestId);
 
         if (!result.success) {
 
@@ -47,7 +48,7 @@ const deactivateMyAccount = async (req, res) => {
             return throwInternalServerError(res, result.message);
         }
 
-        // 2️⃣ Best-effort logout
+        // Best-effort logout
         const isLoggedOut = await logoutUserCompletely(
             user,
             device,
@@ -62,7 +63,7 @@ const deactivateMyAccount = async (req, res) => {
             );
         }
 
-        // 3️⃣ Response
+        // Response
         return res.status(OK).json({
             success: true,
             message: result.message,

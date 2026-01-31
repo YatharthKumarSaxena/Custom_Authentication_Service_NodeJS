@@ -8,8 +8,7 @@ const { AuthErrorTypes } = require("@configs/enums.config");
 const {
     throwInternalServerError,
     throwBadRequestError,
-    getLogIdentifiers,
-    throwConflictError
+    getLogIdentifiers
 } = require("@utils/error-handler.util");
 
 // Services Import
@@ -18,7 +17,7 @@ const { verifyDeviceService } = require("@services/account-verification/verify-d
 const { getUserContacts } = require("@utils/contact-selector.util");
 
 /**
- * 🏭 CORE CONTROLLER LOGIC (Factory)
+ * CORE CONTROLLER LOGIC (Factory)
  * Yeh function Email aur Phone dono ke liye same logic chalayega.
  */
 const handleContactVerification = async (req, res, serviceFunction, successMessageBase) => {
@@ -27,13 +26,14 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
         const user = req.foundUser;
         const { code } = req.body;
         const device = req.device;
+        const requestId = req.requestId;
 
         // Get contactMode from getUserContacts (instead of req.body.type)
         const { contactMode } = getUserContacts(user);
 
         logWithTime(`🔍 Initiating ${successMessageBase} process for User ID: ${user.userId} via ${contactMode}`);
         // 1. Dynamic Service Call
-        const result = await serviceFunction(user, device, code, contactMode);
+        const result = await serviceFunction(user, device, requestId, code, contactMode);
 
         const { success } = result;
 
@@ -113,9 +113,7 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
     }
 };
 
-// ==========================================
-// 🚀 EXPORTED CONTROLLERS (Tiny Wrappers)
-// ==========================================
+// EXPORTED CONTROLLERS (Tiny Wrappers)
 
 const verifyEmail = async (req, res) => {
     return await handleContactVerification(

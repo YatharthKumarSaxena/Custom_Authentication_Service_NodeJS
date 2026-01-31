@@ -46,9 +46,7 @@ const handleBlockToggle = async (req, res, shouldBlock) => {
     }
 };
 
-// ==========================================
-// 🚀 EXPORTED CONTROLLERS
-// ==========================================
+// EXPORTED CONTROLLERS
 
 const blockUser = async (req, res) => {
     return await handleBlockToggle(req, res, true);

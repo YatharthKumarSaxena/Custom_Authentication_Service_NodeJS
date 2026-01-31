@@ -23,21 +23,18 @@ const refreshToken = async (req, res) => {
         const { refreshToken } = req.body;
         const device = req.device;
 
-        // ---------------------------------------------------------
         // 1. VALIDATION
-        // ---------------------------------------------------------
+        
         if (!refreshToken) {
             return throwBadRequestError(res, "Refresh token is required");
         }
-
-        // ---------------------------------------------------------
+      
         // 2. ORCHESTRATION (Call Service)
-        // ---------------------------------------------------------
+        
         const result = await performRefreshToken(refreshToken, device);
-
-        // ---------------------------------------------------------
+        
         // 3. ACCESS TOKEN GENERATION (Response Header)
-        // ---------------------------------------------------------
+        
         // New access token received from service
         const headers = buildAccessTokenHeaders(result.newAccessToken);
 
@@ -47,10 +44,9 @@ const refreshToken = async (req, res) => {
 
         // Set Headers
         res.set(headers);
-
-        // ---------------------------------------------------------
+        
         // 4. SUCCESS RESPONSE
-        // ---------------------------------------------------------
+        
         logWithTime(`✅ Token refreshed successfully for user (${result.userId}) on device (${device.deviceUUID}).`);
 
         return res.status(OK).json({
@@ -59,10 +55,9 @@ const refreshToken = async (req, res) => {
         });
 
     } catch (err) {
-        // ---------------------------------------------------------
-        // ERROR HANDLING
-        // ---------------------------------------------------------
         
+        // ERROR HANDLING
+                
         // 1. Unauthorized Errors (Invalid/Expired Token)
         if (err.message === "INVALID_REFRESH_TOKEN" || 
             err.message === "REFRESH_TOKEN_MISMATCH" ||

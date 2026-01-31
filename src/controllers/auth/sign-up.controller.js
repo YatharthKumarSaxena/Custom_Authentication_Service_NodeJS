@@ -15,11 +15,12 @@ const signUp = async (req, res) => {
     try {
         const deviceInput = req.device;
         const userPayload = req.body;
+        const requestId = req.requestId;
 
-        // 1️⃣ Call service
-        const result = await signUpService(deviceInput, userPayload);
+        // Call service
+        const result = await signUpService(deviceInput, userPayload, requestId);
 
-        // ❌ Business failures handled HERE
+        // Business failures handled HERE
         if (!result.success) {
 
             if (result.type === AuthErrorTypes.RESOURCE_EXISTS) {
@@ -37,7 +38,7 @@ const signUp = async (req, res) => {
             return throwBadRequestError(res, result.message);
         }
 
-        // ✅ Success
+        // Success
         logWithTime(
             `✅ SignUp Initialized: User (${result.userId}) on device (${deviceInput.deviceUUID})`
         );
@@ -53,7 +54,7 @@ const signUp = async (req, res) => {
         });
 
     } catch (err) {
-        // 🚨 Only unexpected crashes
+        // Only unexpected crashes
         logWithTime(`❌ Fatal SignUp Error: ${err.message}`);
         return throwInternalServerError(res, err);
     }

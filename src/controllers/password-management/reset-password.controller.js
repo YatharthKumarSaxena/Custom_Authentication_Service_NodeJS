@@ -13,6 +13,7 @@ const resetPassword = async (req, res) => {
         const user = req.foundUser; 
         const device = req.device;
         const { newPassword, confirmPassword } = req.body;
+        const requestId = req.requestId;
 
         // 1. Validation
         if (!newPassword || !confirmPassword) {
@@ -24,7 +25,7 @@ const resetPassword = async (req, res) => {
         }
 
         // 2. Call Service
-        const result = await resetPasswordService(user, device, newPassword);
+        const result = await resetPasswordService(user, device, newPassword, requestId);
 
         if (!result.success) {
             logWithTime(`❌ Reset Password Service failed for User ${user.userId} from device ${device.deviceUUID}`);

@@ -1,17 +1,15 @@
 const { logWithTime } = require("@utils/time-stamps.util");
-const { throwInternalServerError, throwConflictError, throwSpecificInternalServerError } = require("@/utils/error-handler.util");
+const { throwInternalServerError, throwConflictError, throwSpecificInternalServerError, getLogIdentifiers } = require("@/utils/error-handler.util");
 const { OK } = require("@/configs/http-status.config");
-const { logAuthEvent } = require("@/services/audit/auth-audit.service");
-const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { forgotPasswordService } = require("@services/password-management/forgot-password.service");
-const { AuthErrorTypes } = require("@configs/enums.config");
 
 const forgotPassword = async (req, res) => {
     try {
         const user = req.foundUser;
         const device = req.device;
+        const requestId = req.requestId;
 
-        const result = await forgotPasswordService(user, device);
+        const result = await forgotPasswordService(user, device, requestId);
 
         if (!result.success) {
 
@@ -21,14 +19,6 @@ const forgotPassword = async (req, res) => {
 
             return throwSpecificInternalServerError(res, result.message);
         }
-
-        logAuthEvent(
-            user,
-            device,
-            AUTH_LOG_EVENTS.FORGOT_PASSWORD,
-            `Forgot password requested via ${result.contactMode}`,
-            null
-        );
 
         const responses = [];
         if (result.email) responses.push("Email sent");
@@ -42,6 +32,8 @@ const forgotPassword = async (req, res) => {
         });
 
     } catch (err) {
+        const identifiers = getLogIdentifiers(req);
+        logWithTime(`❌ Internal Error during forgot password for User ${identifiers}`);
         return throwInternalServerError(res, err);
     }
 };

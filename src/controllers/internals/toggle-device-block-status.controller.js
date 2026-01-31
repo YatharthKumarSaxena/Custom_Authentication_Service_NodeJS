@@ -43,9 +43,8 @@ const blockDevice = async (req, res) => {
         });
 
     } catch (err) {
-        // ---------------------------------------------------------
-        // ERROR HANDLING
-        // ---------------------------------------------------------
+        
+        // ERROR HANDLING 
 
         // A. Device Not Found (404)
         if (err.type === AuthErrorTypes.RESOURCE_NOT_FOUND) {
@@ -78,10 +77,9 @@ const unblockDevice = async (req, res) => {
 
         // 2. Service Call
         const result = await unblockDeviceService(deviceUUID, admin.adminId);
-
-        // ---------------------------------------------------------
-        // 3. HANDLE CONFLICT (Already Unblocked) 🔥
-        // ---------------------------------------------------------
+      
+        // 3. HANDLE CONFLICT (Already Unblocked) 
+        
         // Agar service ne { success: false } diya matlab device already unblocked tha
         if (result.success === false) {
             logWithTime(`⚠️ Unblock Action Skipped: Device ${deviceUUID} is already unblocked.`);
@@ -97,9 +95,8 @@ const unblockDevice = async (req, res) => {
         });
 
     } catch (err) {
-        // ---------------------------------------------------------
-        // ERROR HANDLING
-        // ---------------------------------------------------------
+        
+        // ERROR HANDLING   
 
         // A. Device Not Found (404)
         if (err.type === AuthErrorTypes.RESOURCE_NOT_FOUND) {

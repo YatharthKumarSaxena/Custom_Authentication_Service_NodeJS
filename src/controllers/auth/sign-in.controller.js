@@ -22,12 +22,12 @@ const signIn = async (req, res) => {
         const user = req.foundUser;
         const device = req.device;
         const plainPassword = req.body.password;
+        const requestId = req.requestId;
 
-        const result = await performSignIn(user, device, plainPassword);
-
-        // --------------------------------------------------
-        // 🔐 RATE LIMIT (2FA resend / password)
-        // --------------------------------------------------
+        const result = await performSignIn(user, device, plainPassword, requestId);
+        
+        // RATE LIMIT (2FA resend / password)
+        
         if (result.rateLimited) {
             return throwTooManyRequestsError(
                 res,
@@ -38,9 +38,8 @@ const signIn = async (req, res) => {
             );
         }
 
-        // --------------------------------------------------
-        // ❌ BUSINESS FAILURES
-        // --------------------------------------------------
+        // BUSINESS FAILURES
+        
         if (!result.success) {
 
             if (result.type === AuthErrorTypes.LOCKED) {
@@ -67,10 +66,9 @@ const signIn = async (req, res) => {
 
             return throwBadRequestError(res, result.message);
         }
-
-        // --------------------------------------------------
-        // 🔐 2FA REQUIRED
-        // --------------------------------------------------
+        
+        // 2FA REQUIRED
+        
         if (result.requires2FA) {
             return res.status(OK).json({
                 success: true,
@@ -78,10 +76,9 @@ const signIn = async (req, res) => {
                 message: result.message
             });
         }
-
-        // --------------------------------------------------
-        // ✅ ACCESS TOKEN
-        // --------------------------------------------------
+        
+        // ACCESS TOKEN
+        
         const accessToken = createToken(
             user.userId,
             expiryTimeOfAccessToken,
