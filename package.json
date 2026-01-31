@@ -4,6 +4,7 @@
   "description": "This is My First Backend Project using Mongo DB, Node.js, Express.js, JavaScript, Mongoose etc.",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Yatharth Kumar Saxena",
