@@ -15,7 +15,6 @@ const {
 } = require("@configs/enums.config");
 
 const {
-    verificationSecurity,
     AUTO_EMAIL_VERIFICATION,
     AUTO_PHONE_VERIFICATION,
     authMode
@@ -26,13 +25,11 @@ const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { hashPassword } = require("@/utils/auth.util");
 
-const signUpService = async (deviceInput, userPayload) => {
+const signUpService = async (deviceInput, userPayload, requestId) => {
 
     const { email, countryCode, localNumber, phone, firstName, password } = userPayload;
 
-    // ---------------------------------------------------------
     // 1. HASH PASSWORD
-    // ---------------------------------------------------------
     const hashedPassword = await hashPassword(password);
 
     if (!hashedPassword) {
@@ -43,9 +40,7 @@ const signUpService = async (deviceInput, userPayload) => {
         };
     }
 
-    // ---------------------------------------------------------
     // 2. GENERATE USER ID
-    // ---------------------------------------------------------
     const generatedUserID = await makeUserId();
 
     if (generatedUserID === "0") {
@@ -64,9 +59,7 @@ const signUpService = async (deviceInput, userPayload) => {
         };
     }
 
-    // ---------------------------------------------------------
     // 3. PREPARE USER DATA
-    // ---------------------------------------------------------
     const userData = {
         userId: generatedUserID,
         firstName,
@@ -84,16 +77,12 @@ const signUpService = async (deviceInput, userPayload) => {
         userData.phone = phone.trim();
     }
 
-    // ---------------------------------------------------------
     // 4. CREATE USER
-    // ---------------------------------------------------------
     const newUser = await UserModel.create(userData);
 
     logWithTime(`🟢 User Created: ${newUser.userId}`);
 
-    // ---------------------------------------------------------
     // 5. ENSURE DEVICE
-    // ---------------------------------------------------------
     const deviceDoc = await DeviceModel.findOneAndUpdate(
         { deviceUUID: deviceInput.deviceUUID },
         {
@@ -103,16 +92,12 @@ const signUpService = async (deviceInput, userPayload) => {
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // ---------------------------------------------------------
     // 6. CONTACT INFO
-    // ---------------------------------------------------------
     const contactInfo = getUserContacts(newUser);
 
     let verificationSent = true;
 
-    // ---------------------------------------------------------
     // 7. EMAIL VERIFICATION
-    // ---------------------------------------------------------
     if (
         email &&
         AUTO_EMAIL_VERIFICATION &&
@@ -145,9 +130,7 @@ const signUpService = async (deviceInput, userPayload) => {
         }
     }
 
-    // ---------------------------------------------------------
     // 8. PHONE VERIFICATION
-    // ---------------------------------------------------------
     if (
         phone &&
         AUTO_PHONE_VERIFICATION &&
@@ -180,20 +163,17 @@ const signUpService = async (deviceInput, userPayload) => {
         }
     }
 
-    // ---------------------------------------------------------
     // 9. AUTH LOG
-    // ---------------------------------------------------------
     logAuthEvent(
         newUser,
         deviceInput,
+        requestId,
         AUTH_LOG_EVENTS.REGISTER,
         "User registered successfully",
         null
     );
 
-    // ---------------------------------------------------------
     // 10. FINAL RESPONSE
-    // ---------------------------------------------------------
     return {
         success: true,
         userId: newUser.userId,

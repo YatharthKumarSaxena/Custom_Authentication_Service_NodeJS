@@ -16,16 +16,15 @@ const {
     resetDeviceAttempts
 } = require("@/services/account-verification/device-verification-security.service");
 
-const verifyDeviceService = async (user, device, code, contactMode) => {
+const verifyDeviceService = async (user, device, requestId, code, contactMode) => {
 
-    // 🔐 Guard
+    // Guard
     if (!user.twoFactorEnabled) {
         return {
             success: false,
             message: "Two-factor authentication is not enabled for this account."
         };
     }
-
 
     const isOtpFlow =
         verificationMode === VerifyMode.OTP ||
@@ -34,9 +33,8 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
     let deviceDoc = null;
     let userDeviceMapping = null;
 
-    // --------------------------------------------------
     // OTP FLOW → device binding + lock + attempts
-    // --------------------------------------------------
+    
     if (isOtpFlow) {
 
         deviceDoc = await DeviceModel.findOne({
@@ -73,7 +71,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
             };
         }
 
-        // 🔒 device lock
+        // device lock
         const lockStatus = checkIsDeviceLocked(userDeviceMapping);
         if (lockStatus.isLocked) {
             return {
@@ -82,10 +80,9 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
             };
         }
     }
-
-    // --------------------------------------------------
+    
     // VERIFY OTP / LINK
-    // --------------------------------------------------
+    
     const validation = await verifyVerification(
         user._id,
         isOtpFlow ? deviceDoc._id : null,
@@ -109,10 +106,9 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
             message: validation.message
         };
     }
-
-    // --------------------------------------------------
+  
     // SUCCESS POST-VERIFY
-    // --------------------------------------------------
+    
     if (isOtpFlow) {
         await resetDeviceAttempts(userDeviceMapping);
         await UserDeviceModel.updateOne(
@@ -124,6 +120,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
     logAuthEvent(
         user,
         device,
+        requestId,
         AUTH_LOG_EVENTS.VERIFY_DEVICE,
         "Device verified via 2FA",
         null
@@ -133,9 +130,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
         `✅ Device (${device.deviceUUID}) verified for User (${user.userId})`
     );
 
-    // --------------------------------------------------
     // LOGIN SESSION
-    // --------------------------------------------------
     
     // Ensure device doc exists for policy check
     if (!deviceDoc) {
@@ -144,7 +139,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
         }).lean();
     }
 
-    // 🛡️ Login Policy Check
+    // Login Policy Check
     const policyCheck = await loginPolicyChecker({
         user,
         deviceId: deviceDoc._id
@@ -174,6 +169,7 @@ const verifyDeviceService = async (user, device, code, contactMode) => {
     const loginSuccess = await loginUserOnDevice(
         user,
         device,
+        requestId,
         refreshToken,
         "Device Verification Completed (2FA)"
     );

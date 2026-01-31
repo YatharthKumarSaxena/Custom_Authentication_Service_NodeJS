@@ -29,7 +29,7 @@ const findActiveLink = async ({ userId, deviceId, purpose }) => {
 };
 
 /**
- * 🔒 INTERNAL: only creates and stores verification link
+ * INTERNAL: only creates and stores verification link
  */
 const generateUserLink = async ({ user, deviceId, purpose, contactMode, expiresAt }) => {
 
@@ -60,7 +60,7 @@ const generateUserLink = async ({ user, deviceId, purpose, contactMode, expiresA
 };
 
 /**
- * 🔒 INTERNAL: only creates and stores OTP
+ * INTERNAL: only creates and stores OTP
  */
 const generateUserOTP = async ({ user, deviceId, purpose, contactMode, maxAttempts, expiresAt }) => {
 
@@ -93,7 +93,7 @@ const generateUserOTP = async ({ user, deviceId, purpose, contactMode, maxAttemp
 };
 
 /**
- * 🚀 MASTER DECISION ENGINE
+ * MASTER DECISION ENGINE
  */
 const generateVerificationForUser = async (
     user,
@@ -178,7 +178,7 @@ const generateVerificationForUser = async (
             return null;
         }
 
-        // ✅ CONSISTENT FINAL RESPONSE
+        // CONSISTENT FINAL RESPONSE
         return {
             ...verificationResult,
             reused: false,

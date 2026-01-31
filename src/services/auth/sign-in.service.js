@@ -15,13 +15,12 @@ const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { logWithTime } = require("@utils/time-stamps.util");
 
-const performSignIn = async (user, deviceInput, plainPassword) => {
+const performSignIn = async (user, deviceInput, plainPassword, requestId) => {
 
     // Check User sessions per device and devices per user
-
-    // ---------------------------------------------------------
+    
     // STEP 1: Password verification
-    // ---------------------------------------------------------
+    
     const passwordCheck = await verifyPasswordWithRateLimit(
         user,
         plainPassword,
@@ -63,9 +62,9 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
 
         targetDeviceId = deviceDoc._id;
     }
-    // ---------------------------------------------------------
+    
     // STEP 2: 2FA FLOW
-    // ---------------------------------------------------------
+    
     if (enable2FA) {
 
         const { contactMode } = getUserContacts(user);
@@ -78,7 +77,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
                 contactMode
             );
 
-        // ❌ system failure
+        // system failure
         if (!verificationResult) {
             return {
                 success: false,
@@ -87,7 +86,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
             };
         }
 
-        // ⏳ already sent
+        // already sent
         if (verificationResult.reused) {
             return {
                 success: true,
@@ -140,9 +139,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
         };
     }
 
-    // ---------------------------------------------------------
     // STEP 3: Normal Login
-    // ---------------------------------------------------------
 
     // Get or create device for policy check
     const deviceDoc = await DeviceModel.findOneAndUpdate(
@@ -154,7 +151,7 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // 🛡️ Login Policy Check
+    // Login Policy Check
     const policyCheck = await loginPolicyChecker({
         user,
         deviceId: deviceDoc._id
@@ -186,7 +183,9 @@ const performSignIn = async (user, deviceInput, plainPassword) => {
         user,
         deviceInput,
         refreshToken,
+        requestId,
         "Standard Sign-In"
+
     );
 
     if (!loginSuccess) {

@@ -5,17 +5,16 @@ const { expiryTimeOfRefreshToken } = require("@configs/token.config");
 const { UserDeviceModel } = require("@models/user-device.model");
 const { deleteAuthSession } = require("@services/integration/session-integration.helper");
 
-const signOutService = async (user, device, userDevice) => {
+const signOutService = async (user, device, userDevice, requestId) => {
 
     const now = new Date();
 
     const jwtIssuedAt = userDevice.jwtTokenIssuedAt
         ? new Date(userDevice.jwtTokenIssuedAt).getTime()
         : null;
-
-    // --------------------------------------------------
-    // 1️⃣ Already logged out
-    // --------------------------------------------------
+    
+    // Already logged out
+    
     if (!userDevice.refreshToken) {
         return {
             success: true,
@@ -24,9 +23,7 @@ const signOutService = async (user, device, userDevice) => {
         };
     }
 
-    // --------------------------------------------------
-    // 2️⃣ Invalidate session (CRITICAL)
-    // --------------------------------------------------
+    // Invalidate session (CRITICAL)
     
     await UserDeviceModel.updateOne(
         { _id: userDevice._id },
@@ -38,23 +35,22 @@ const signOutService = async (user, device, userDevice) => {
         }
     );
 
-    // 2.5 💾 DELETE REDIS SESSION (MICROSERVICE MODE)
+    // DELETE REDIS SESSION (MICROSERVICE MODE)
     await deleteAuthSession(user.userId, device.deviceUUID);
-
-    // --------------------------------------------------
-    // 3️⃣ Audit log (always)
-    // --------------------------------------------------
+    
+    // Audit log (always)
+    
     logAuthEvent(
         user,
         device,
+        requestId,
         AUTH_LOG_EVENTS.LOGOUT_SPECIFIC_DEVICE,
         "User signed out manually.",
         null
     );
-
-    // --------------------------------------------------
-    // 4️⃣ Expiry info (optional)
-    // --------------------------------------------------
+    
+    // Expiry info (optional)
+    
     let sessionExpired = false;
 
     if (jwtIssuedAt) {

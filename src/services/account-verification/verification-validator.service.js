@@ -26,7 +26,7 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
         return { success: false, message: "No valid OTP found. Please request a new one." };
     }
 
-    // 3. 🔥 Check Max Attempts (The Retry Logic)
+    // 3. Check Max Attempts (The Retry Logic)
     if (otpRecord.attemptCount >= otpRecord.maxAttempts) {
         return { success: false, message: "Max verification attempts reached. This OTP is now invalid." };
     }
@@ -35,7 +35,7 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
     const isValid = verifyOTP(inputOtp, otpRecord.otpHash, otpRecord.salt);
 
     if (!isValid) {
-        // ❌ INCORRECT OTP SCENARIO
+        // INCORRECT OTP SCENARIO
 
         await OTPModel.updateOne(
             { _id: otpRecord._id },
@@ -51,7 +51,7 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
         return { success: false, message: `Invalid OTP. You have ${remaining} attempts remaining.` };
     }
 
-    // ✅ SUCCESS SCENARIO
+    // SUCCESS SCENARIO
 
     await OTPModel.updateOne(
         { _id: otpRecord._id, isUsed: false },
@@ -62,14 +62,14 @@ const verifyUserOTP = async ({ userId, deviceId, purpose, inputOtp }) => {
 };
 
 /**
- * 🔐 Service to verify verification link (industry standard)
+ * Service to verify verification link (industry standard)
  */
 const verifyUserLink = async ({ inputToken, purpose }) => {
 
-    // 1️⃣ Hash incoming token using same secret
+    // Hash incoming token using same secret
     const tokenHash = hashLinkToken(inputToken);
 
-    // 2️⃣ Atomically find & mark link as used
+    // Atomically find & mark link as used
     const linkRecord = await VerificationLinkModel.findOneAndUpdate(
         {
             tokenHash,
@@ -85,7 +85,7 @@ const verifyUserLink = async ({ inputToken, purpose }) => {
         }
     );
 
-    // 3️⃣ If no record found → invalid / expired / already used
+    // If no record found → invalid / expired / already used
     if (!linkRecord) {
         return {
             success: false,
@@ -93,7 +93,7 @@ const verifyUserLink = async ({ inputToken, purpose }) => {
         };
     }
 
-    // 4️⃣ Fetch user from verified link
+    // Fetch user from verified link
     const user = await UserModel.findById(linkRecord.userId);
 
     if (!user) {
@@ -103,7 +103,7 @@ const verifyUserLink = async ({ inputToken, purpose }) => {
         };
     }
 
-    // 5️⃣ Account status checks
+    // Account status checks
     if (!user.isActive) {
         return {
             success: false,
@@ -118,7 +118,7 @@ const verifyUserLink = async ({ inputToken, purpose }) => {
         };
     }
 
-    // ✅ Verified successfully
+    // Verified successfully
     return {
         success: true,
         user,
@@ -131,7 +131,7 @@ const verifyVerification = async (userId, deviceId, purpose, code, contactMode) 
 
     const checkVerifyType = (
         verificationMode === VerifyMode.LINK &&
-        contactMode === ContactModes.EMAIL // 👈 Important Check: Phone nahi hona chahiye
+        contactMode === ContactModes.EMAIL // Important Check: Phone nahi hona chahiye
     );
 
     if (checkVerifyType) {

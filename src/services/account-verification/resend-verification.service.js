@@ -7,7 +7,7 @@ const { DeviceModel } = require("@models/device.model");
 const { AuthErrorTypes, VerificationPurpose } = require("@configs/enums.config");
 const { VerificationTemplateMapping } = require("@configs/verification-mapping.config");
 
-const resendVerificationService = async (user, device, purpose) => {
+const resendVerificationService = async (user, device, requestId, purpose) => {
 
     const { contactMode } = getUserContacts(user);
 
@@ -48,10 +48,10 @@ const resendVerificationService = async (user, device, purpose) => {
         { new: true, upsert: true }
     );
 
-    // 🔑 SINGLE SOURCE OF TRUTH
+    // SINGLE SOURCE OF TRUTH
     const verificationResult = await generateVerificationForUser(
         user,
-        deviceDoc._id,   // ✅ correct ObjectId
+        deviceDoc._id,   // correct ObjectId
         purpose,
         contactMode
     );
@@ -64,7 +64,7 @@ const resendVerificationService = async (user, device, purpose) => {
         };
     }
 
-    // ⛔ ACTIVE OTP / LINK EXISTS
+    // ACTIVE OTP / LINK EXISTS
     if (verificationResult.reused === true) {
         return {
             success: false,
@@ -73,7 +73,7 @@ const resendVerificationService = async (user, device, purpose) => {
         };
     }
 
-    // 📩 SEND NOTIFICATION
+    // SEND NOTIFICATION
     const isSent = await SendNotificationFactory(
         user,
         contactMode,
@@ -95,6 +95,7 @@ const resendVerificationService = async (user, device, purpose) => {
     logAuthEvent(
         user,
         device,
+        requestId,
         `SEND_${purpose}`,
         `Resent ${verificationResult.type} for ${purpose} via ${contactMode}.`,
         null

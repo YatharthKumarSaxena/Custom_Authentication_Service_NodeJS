@@ -7,7 +7,7 @@ const { verifyToken } = require("@utils/verify-token.util");
 const { Token } = require("@configs/enums.config");
 
 /**
- * 🟢 Validates User & Device, handles Device Info Updates
+ * Validates User & Device, handles Device Info Updates
  */
 const validateSessionAndSyncDevice = async (userId, device) => {
 

@@ -22,7 +22,7 @@ const syncDeviceData = async ( device, { session }) => {
 
             let shouldUpdate = false;
 
-            // ✅ CORRECTION: Input vs DB comparison
+            // CORRECTION: Input vs DB comparison
             if (deviceName && deviceDoc.deviceName !== deviceName) {
                 deviceDoc.deviceName = deviceName;
                 shouldUpdate = true;

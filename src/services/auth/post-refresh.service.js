@@ -1,19 +1,16 @@
 /**
- * 🔄 Post-Refresh Service
+ * Post-Refresh Service
  * * Business logic for distributed token refresh using Atomic Transactions.
- * Follows the architecture of auth-session.service.
- * * @author Custom Auth Service Team
- * @date 2026-01-29
+ * Follows the architecture of auth-session.service
  */
 
 const mongoose = require("mongoose");
 const { verifyToken } = require("@utils/verify-token.util");
 const { Token, AuthErrorTypes } = require("@configs/enums.config");
-const { UserDeviceModel } = require("@models/index"); // or @models/user-device.model
+const { UserDeviceModel } = require("@models/index"); 
 const { logWithTime } = require("@utils/time-stamps.util");
 
 // Audit & Logging
-const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { SYSTEM_LOG_EVENTS, STATUS_TYPES } = require("@configs/system-log-events.config");
 
 // Integration Helpers (Redis/Microservice)
@@ -39,9 +36,9 @@ const performPostRefresh = async (refreshToken, device) => {
     let session = null;
 
     try {
-        // ---------------------------------------------------------
+        
         // 1. VERIFY REFRESH TOKEN (Stateless Check)
-        // ---------------------------------------------------------
+        
         let decoded;
         try {
             decoded = verifyToken(refreshToken, Token.REFRESH);
@@ -87,16 +84,14 @@ const performPostRefresh = async (refreshToken, device) => {
                 message: "Invalid token payload or device mismatch."
             };
         }
-
-        // ---------------------------------------------------------
+        
         // 2. START TRANSACTION
-        // ---------------------------------------------------------
+        
         session = await mongoose.startSession();
         session.startTransaction();
-
-        // ---------------------------------------------------------
+        
         // 3. VERIFY & RETRIEVE SESSION (With Lock)
-        // ---------------------------------------------------------
+        
         const userDevice = await UserDeviceModel.findOne({
             userId,
             deviceUUID: device.deviceUUID
@@ -147,10 +142,9 @@ const performPostRefresh = async (refreshToken, device) => {
                 message: "Refresh token mismatch (Security Alert)."
             };
         }
-
-        // ---------------------------------------------------------
+        
         // 4. GENERATE NEW TOKENS
-        // ---------------------------------------------------------
+        
         const newRefreshToken = createToken(userId, expiryTimeOfRefreshToken, device.deviceUUID);
 
         if (!refreshToken) {
@@ -161,10 +155,9 @@ const performPostRefresh = async (refreshToken, device) => {
                 message: "Token generation failed."
             };
         }
-
-        // ---------------------------------------------------------
+        
         // 5. UPDATE DATABASE
-        // ---------------------------------------------------------
+        
         userDevice.refreshToken = newRefreshToken;
         userDevice.lastRefreshedAt = new Date();
         
@@ -181,17 +174,14 @@ const performPostRefresh = async (refreshToken, device) => {
             expiryTimeOfAccessToken,
             device.deviceUUID
         );
-
-        // ---------------------------------------------------------
+        
         // 6. COMMIT TRANSACTION
-        // ---------------------------------------------------------
+        
         await session.commitTransaction();
         session.endSession(); // End session immediately after commit
-
-        // ---------------------------------------------------------
-        // 7. EXTERNAL SYSTEMS (Redis & Audit) - Post Commit
-        // ---------------------------------------------------------
         
+        // 7. EXTERNAL SYSTEMS (Redis & Audit) - Post Commit
+             
         // A. Rotate Session in Redis (Microservice Mode)
         // We use the helper similar to 'storeAuthSession'
         try {
@@ -219,10 +209,9 @@ const performPostRefresh = async (refreshToken, device) => {
         });
 
         logWithTime(`✅ Tokens refreshed for User (${userId}) on Device (${device.deviceUUID})`);
-
-        // ---------------------------------------------------------
+ 
         // 8. RETURN SUCCESS
-        // ---------------------------------------------------------
+        
         return {
             success: true,
             userId: userId,

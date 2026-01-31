@@ -1,6 +1,6 @@
 const { rotateRefreshToken } = require("./session-token.service");
 const { verifyToken } = require("@utils/verify-token.util");
-const { Token } = require("@configs/enums.config");
+const { Token, AuthErrorTypes } = require("@configs/enums.config");
 
 const performRefreshToken = async (refreshToken, device) => {
 
@@ -8,7 +8,7 @@ const performRefreshToken = async (refreshToken, device) => {
 
     try {
         decoded = verifyToken(refreshToken, Token.REFRESH);
-    } catch {
+    } catch (err) {
         return {
             success: false,
             type: AuthErrorTypes.INVALID_TOKEN,

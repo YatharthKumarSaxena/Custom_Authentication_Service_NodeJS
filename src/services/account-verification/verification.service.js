@@ -16,9 +16,9 @@ const { DeviceModel } = require("@models/device.model");
 const { UserModel } = require("@models/user.model");
 
 /**
- * 🔒 PRIVATE CORE
+ * PRIVATE CORE
  */
-const performVerificationCore = async (user, device, code, contactMode, config) => {
+const performVerificationCore = async (user, device, requestId, code, contactMode, config) => {
     const {
         purpose,
         updateField,
@@ -36,7 +36,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         };
     }
 
-    // 1️⃣ Ensure device
+    // Ensure device
     const deviceDoc = await DeviceModel.findOneAndUpdate(
         { deviceUUID: device.deviceUUID },
         {
@@ -46,7 +46,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // 2️⃣ Verify OTP / LINK
+    // Verify OTP / LINK
     const validation = await verifyVerification(
         user._id,
         deviceDoc._id,
@@ -59,10 +59,10 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         return { success: false, message: validation.message };
     }
 
-    // 🔥 LINK verification may return fresh user
+    // LINK verification may return fresh user
     const verifiedUser = validation.user || user;
 
-    // 3️⃣ ✅ ATOMIC VERIFICATION UPDATE
+    // ATOMIC VERIFICATION UPDATE
     const updateResult = await UserModel.updateOne(
         { _id: verifiedUser._id, [updateField]: false },
         { $set: { [updateField]: true } }
@@ -77,16 +77,17 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
 
     verifiedUser[updateField] = true;
 
-    // 4️⃣ Logs
+    // Logs
     logAuthEvent(
         verifiedUser,
         device,
+        requestId,
         logEvent,
         `User ${verifiedUser.userId} verified ${type}`,
         null
     );
 
-    // 5️⃣ Check full verification
+    // Check full verification
     let fullyVerified = false;
 
     if (authMode === AuthModes.BOTH) {
@@ -99,7 +100,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         fullyVerified = verifiedUser.isEmailVerified || verifiedUser.isPhoneVerified;
     }
 
-    // 6️⃣ Welcome notification
+    // Welcome notification
     if (fullyVerified) {
         const contactInfo = getUserContacts(verifiedUser);
 
@@ -111,7 +112,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         });
     }
 
-    // 7️⃣ Auto login
+    // Auto login
     let autoLoggedIn = false;
 
     if (AUTO_LOGIN_AFTER_VERIFICATION) {
@@ -123,7 +124,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
         if (canLogin) {
             logWithTime(`🔄 Auto-login after ${type} verification for ${verifiedUser.userId}`);
 
-            // 🛡️ Login Policy Check
+            // Login Policy Check
             const policyCheck = await loginPolicyChecker({
                 user: verifiedUser,
                 deviceId: deviceDoc._id
@@ -150,6 +151,7 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
             const loginSuccess = await loginUserOnDevice(
                 verifiedUser,
                 device,
+                requestId,
                 refreshToken,
                 `Auto-Login (${type} Verified)`
             );
@@ -161,12 +163,10 @@ const performVerificationCore = async (user, device, code, contactMode, config) 
     return { success: true, autoLoggedIn };
 };
 
-// ============================
 // PUBLIC SERVICES
-// ============================
 
-const verifyEmailService = (user, device, code, contactMode) =>
-    performVerificationCore(user, device, code, contactMode, {
+const verifyEmailService = (user, device, requestId, code, contactMode) =>
+    performVerificationCore(user, device, requestId, code, contactMode, {
         purpose: VerificationPurpose.EMAIL_VERIFICATION,
         updateField: "isEmailVerified",
         logEvent: AUTH_LOG_EVENTS.VERIFY_EMAIL,
@@ -175,8 +175,8 @@ const verifyEmailService = (user, device, code, contactMode) =>
         type: "Email"
     });
 
-const verifyPhoneService = (user, device, code, contactMode) =>
-    performVerificationCore(user, device, code, contactMode, {
+const verifyPhoneService = (user, device, requestId, code, contactMode) =>
+    performVerificationCore(user, device, requestId, code, contactMode, {
         purpose: VerificationPurpose.PHONE_VERIFICATION,
         updateField: "isPhoneVerified",
         logEvent: AUTH_LOG_EVENTS.VERIFY_PHONE,

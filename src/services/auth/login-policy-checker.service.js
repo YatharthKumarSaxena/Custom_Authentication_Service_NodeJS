@@ -12,9 +12,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
 
     const validSessionSince = new Date(Date.now() - expiryTimeOfRefreshToken*1000);
 
-    // =================================================
-    // 1️⃣ USERS PER DEVICE LIMIT (DEVICE → USER)
-    // =================================================
+    // USERS PER DEVICE LIMIT (DEVICE → USER)
 
     const uniqueUsersOnDevice = await UserDeviceModel.distinct("userId", {
         deviceId,
@@ -31,7 +29,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
         // New user on same device
         if (!alreadyExists) {
 
-            // ❌ STRICT MODE
+            // STRICT MODE
             if (!ENABLE_DEVICE_SOFT_REPLACE) {
                 return {
                     allowed: false,
@@ -40,7 +38,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
                 };
             }
 
-            // 🔁 SOFT REPLACE MODE (atomic & safe)
+            // SOFT REPLACE MODE (atomic & safe)
             const replacedSession = await UserDeviceModel.findOneAndUpdate(
                 {
                     deviceId,
@@ -68,9 +66,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
         }
     }
 
-    // =================================================
-    // 2️⃣ DEVICE THRESHOLD PER USER (USER → DEVICE)
-    // =================================================
+    // DEVICE THRESHOLD PER USER (USER → DEVICE)
 
     const allowedLimit =
         user.userType === UserTypes.ADMIN
@@ -86,7 +82,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
 
     if (activeDevices.length + 1 > allowedLimit) {
 
-        // ❌ STRICT MODE
+        // STRICT MODE
         if (!ENABLE_DEVICE_SOFT_REPLACE) {
             return {
                 allowed: false,
@@ -95,7 +91,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
             };
         }
 
-        // 🔁 SOFT REPLACE MODE
+        // SOFT REPLACE MODE
         const oldestSession = activeDevices[0];
 
         await UserDeviceModel.updateOne(
@@ -114,9 +110,7 @@ const loginPolicyChecker = async ({ user, deviceId }) => {
         );
     }
 
-    // =================================================
-    // ✅ PASSED
-    // =================================================
+    // PASSED ALL CHECKS
 
     logWithTime(`✅ Login policy check passed for user ${user.userId}.`);
 
