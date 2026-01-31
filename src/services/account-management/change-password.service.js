@@ -1,4 +1,4 @@
-// src/services/password-management/password-update.service.js
+// src/services/account-management/change-password.service.js
 
 const { UserModel } = require("@models/user.model");
 const { hashPassword } = require("@/utils/auth.util");
@@ -7,13 +7,29 @@ const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
+const { logAuthEvent } = require("@/services/audit/auth-audit.service");
+const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 
 /**
- * 🔐 Atomic password update service
+ * Atomic password update service
+ * @param {Object} user - User object
+ * @param {String} newPassword - New password
+ * @param {Object} device - Device object
+ * @param {String} requestId - Request ID
+ * @param {String} context - Context description (e.g., "Change Password", "Reset Password")
+ * @param {String} eventType - Auth log event type (default: CHANGE_PASSWORD)
  */
-const updatePassword = async (user, newPassword) => {
 
-    // 1️⃣ Hash new password
+const updatePassword = async (
+    user, 
+    newPassword, 
+    device, 
+    requestId, 
+    context = "Change Password",
+    eventType = AUTH_LOG_EVENTS.CHANGE_PASSWORD
+) => {
+
+    // Hash new password
     const hashedPassword = await hashPassword(newPassword);
 
     if (!hashedPassword) {
@@ -21,7 +37,7 @@ const updatePassword = async (user, newPassword) => {
         return false;
     }
 
-    // 2️⃣ Atomic DB update
+    // Atomic DB update
     const updatedUser = await UserModel.findOneAndUpdate(
         { _id: user._id },
         {
@@ -39,7 +55,17 @@ const updatePassword = async (user, newPassword) => {
         return false;
     }
 
-    // 3️⃣ Notification AFTER successful DB write
+    // Auth Log Event
+    logAuthEvent(
+        updatedUser,
+        device,
+        requestId,
+        eventType,
+        `Password changed via ${context}`,
+        null
+    );
+
+    // Notification AFTER successful DB write
     const contactInfo = getUserContacts(updatedUser);
 
     sendNotification({

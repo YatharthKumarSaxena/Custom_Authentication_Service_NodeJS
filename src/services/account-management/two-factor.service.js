@@ -11,14 +11,13 @@ const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
 /**
- * 🔐 Service to Toggle Two-Factor Authentication (2FA)
+ * Service to Toggle Two-Factor Authentication (2FA)
  * Atomic • Race-safe • Industry standard
  */
-const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
+const toggleTwoFactorService = async (user, device, password, requestId, shouldEnable) => {
 
-    // --------------------------------------------------
-    // 0️⃣ Feature flag safety
-    // --------------------------------------------------
+    // Feature flag safety
+    
     if (shouldEnable && !IS_TWO_FA_FEATURE_ENABLED) {
         return {
             success: false,
@@ -26,10 +25,9 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
             message: "Two-factor authentication feature is currently disabled by system administrator."
         };
     }
-
-    // --------------------------------------------------
-    // 1️⃣ Password verification (rate-limited)
-    // --------------------------------------------------
+  
+    // Password verification (rate-limited)
+    
     const passwordVerification =
         await verifyPasswordWithRateLimit(
             user,
@@ -40,10 +38,9 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
     if (passwordVerification.success === false) {
         return passwordVerification;
     }
-
-    // --------------------------------------------------
-    // 2️⃣ 🔥 Atomic toggle update
-    // --------------------------------------------------
+    
+    // Atomic toggle update
+    
     const updatedUser = await UserModel.findOneAndUpdate(
         {
             _id: user._id,
@@ -74,9 +71,9 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
         };
     }
 
-    // --------------------------------------------------
-    // 3️⃣ Audit logs
-    // --------------------------------------------------
+    
+    // Audit logs
+    
     const action = shouldEnable ? "ENABLED" : "DISABLED";
 
     logWithTime(
@@ -86,6 +83,7 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
     logAuthEvent(
         updatedUser,
         device,
+        requestId,
         shouldEnable
             ? AUTH_LOG_EVENTS.ENABLE_2FA
             : AUTH_LOG_EVENTS.DISABLE_2FA,
@@ -93,9 +91,8 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
         null
     );
 
-    // --------------------------------------------------
-    // 4️⃣ Notifications
-    // --------------------------------------------------
+    // Notifications
+    
     const contactInfo = getUserContacts(updatedUser);
 
     sendNotification({
@@ -109,9 +106,8 @@ const toggleTwoFactorService = async (user, device, password, shouldEnable) => {
         data: { name: updatedUser.firstName || "User" }
     });
 
-    // --------------------------------------------------
-    // 5️⃣ Final response
-    // --------------------------------------------------
+    // Final response
+    
     return {
         success: true,
         message: `Two-factor authentication has been successfully ${shouldEnable ? "enabled" : "disabled"}.`

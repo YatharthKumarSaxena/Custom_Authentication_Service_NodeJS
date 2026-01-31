@@ -10,9 +10,9 @@ const { SecurityContext } = require("@configs/security.config");
 const { UserModel } = require("@models/user.model");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
-const deactivateAccountService = async (user, device, plainPassword) => {
+const deactivateAccountService = async (user, device, plainPassword, requestId) => {
 
-    // 0️⃣ Fast-fail
+    // Fast-fail
     if (user.isActive === false) {
         return {
             success: false,
@@ -21,7 +21,7 @@ const deactivateAccountService = async (user, device, plainPassword) => {
         };
     }
 
-    // 1️⃣ Password verification (rate-limited)
+    // Password verification (rate-limited)
     const passwordVerification =
         await verifyPasswordWithRateLimit(
             user,
@@ -33,7 +33,7 @@ const deactivateAccountService = async (user, device, plainPassword) => {
         return passwordVerification;
     }
 
-    // 2️⃣ 🔥 Atomic DB update
+    // Atomic DB update
     const updatedUser = await UserModel.findOneAndUpdate(
         {
             _id: user._id,
@@ -56,7 +56,7 @@ const deactivateAccountService = async (user, device, plainPassword) => {
         };
     }
 
-    // 3️⃣ Logs
+    // Logs
     logWithTime(
         `🚫 Account deactivated for UserID: ${updatedUser.userId} from device: ${device.deviceUUID}`
     );
@@ -64,12 +64,13 @@ const deactivateAccountService = async (user, device, plainPassword) => {
     logAuthEvent(
         updatedUser,
         device,
+        requestId,
         AUTH_LOG_EVENTS.DEACTIVATE,
         `User account with userId: ${updatedUser.userId} deactivated manually from device ${device.deviceUUID}.`,
         null
     );
 
-    // 4️⃣ Notification
+    // Notification
     const contactInfo = getUserContacts(updatedUser);
 
     sendNotification({

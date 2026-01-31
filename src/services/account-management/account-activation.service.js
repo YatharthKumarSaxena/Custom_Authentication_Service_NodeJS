@@ -10,9 +10,9 @@ const { SecurityContext } = require("@configs/security.config");
 const { verifyPasswordWithRateLimit } = require("../password-management/password-verification.service");
 const { AuthErrorTypes } = require("@/configs/enums.config");
 
-const activateAccountService = async (user, device, plainPassword) => {
+const activateAccountService = async (user, device, plainPassword, requestId) => {
 
-    // 1️⃣ Already active check
+    // Already active check
     if (user.isActive === true) {
         return {
             success: false,
@@ -21,7 +21,7 @@ const activateAccountService = async (user, device, plainPassword) => {
         };
     }
 
-    // 2️⃣ Verify password (rate-limited)
+    // Verify password (rate-limited)
     const verification = await verifyPasswordWithRateLimit(
         user,
         plainPassword,
@@ -32,7 +32,7 @@ const activateAccountService = async (user, device, plainPassword) => {
         return verification;
     }
 
-    // 3️⃣ Atomic activation
+    // Atomic activation
     const updatedUser = await UserModel.findOneAndUpdate(
         { _id: user._id, isActive: false },
         {
@@ -52,18 +52,19 @@ const activateAccountService = async (user, device, plainPassword) => {
         };
     }
 
-    // 4️⃣ Logs
+    // Logs
     logWithTime(`✅ Account activated for User ${updatedUser.userId}`);
 
     logAuthEvent(
         updatedUser,
         device,
+        requestId,
         AUTH_LOG_EVENTS.ACTIVATE,
         "User account activated manually.",
         null
     );
 
-    // 5️⃣ Notification
+    // Notification
     const contactInfo = getUserContacts(updatedUser);
 
     sendNotification({

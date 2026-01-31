@@ -1,4 +1,4 @@
-const { SendNotificationFactory } = require("@services/factories/notification.factory"); 
+const { SendNotificationFactory } = require("@services/factories/notification.factory");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { DeviceModel } = require("@models/device.model");
@@ -6,11 +6,17 @@ const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { FRONTEND_ROUTES } = require("@configs/frontend-routes.config");
 const { VerificationPurpose, AuthErrorTypes } = require("@configs/enums.config");
+const { logAuthEvent } = require("@services/audit/auth-audit.service");
+const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 
-const forgotPasswordService = async (user, device) => {
+/**
+ * Service to initiate forgot password process
+ */
+
+const forgotPasswordService = async (user, device, requestId) => {
 
     const { email, phone, contactMode } = getUserContacts(user);
-    
+
     const { deviceUUID, deviceName, deviceType } = device;
     const deviceDoc = await DeviceModel.findOneAndUpdate({
         deviceUUID: deviceUUID
@@ -24,7 +30,7 @@ const forgotPasswordService = async (user, device) => {
         upsert: true
     });
 
-    // 2️⃣ Generate token
+    // Generate token
     const verificationResult = await generateVerificationForUser(
         user,
         deviceDoc._id,
@@ -42,7 +48,7 @@ const forgotPasswordService = async (user, device) => {
 
     const { type, token } = verificationResult;
 
-    // 3️⃣ Send notification
+    // Send notification
     const isSent = await SendNotificationFactory(
         user,
         contactMode,
@@ -60,6 +66,15 @@ const forgotPasswordService = async (user, device) => {
             message: "Failed to send reset instructions. Please try again."
         };
     }
+
+    logAuthEvent(
+        user,
+        deviceDoc,
+        requestId,
+        AUTH_LOG_EVENTS.FORGOT_PASSWORD,
+        `Forgot password initiated via ${type}`,
+        null
+    );
 
     return {
         success: true,

@@ -26,7 +26,7 @@ const {
     firstNameLength
 } = require("@configs/fields-length.config");
 
-const updateAccountService = async (user, device, updatePayload) => {
+const updateAccountService = async (user, device, requestId, updatePayload) => {
 
     const { firstName, email, countryCode, localNumber } = updatePayload;
 
@@ -88,7 +88,7 @@ const updateAccountService = async (user, device, updatePayload) => {
         updateSet.isEmailVerified = false;
         updatedFields.push("Email");
 
-        // 📧 Send notification to OLD email about the change
+        // Send notification to OLD email about the change
         const oldEmailContact = {
             email: user.email,
             phone: user.countryCode && user.localNumber ? user.countryCode + user.localNumber : null,
@@ -162,7 +162,7 @@ const updateAccountService = async (user, device, updatePayload) => {
 
         updatedFields.push("Phone Number");
 
-        // 📱 Send notification to OLD phone number about the change
+        // Send notification to OLD phone number about the change
         const oldPhoneContact = {
             email: user.email,
             phone: user.countryCode && user.localNumber ? user.countryCode + user.localNumber : null,
@@ -191,7 +191,7 @@ const updateAccountService = async (user, device, updatePayload) => {
         };
     }
 
-    /* ---------------- 🔥 Atomic DB Update ---------------- */
+    /* ---------------- Atomic DB Update ---------------- */
     const updatedUser = await UserModel.findOneAndUpdate(
         { _id: user._id },
         { $set: updateSet },
@@ -213,6 +213,7 @@ const updateAccountService = async (user, device, updatePayload) => {
     logAuthEvent(
         updatedUser,
         device,
+        requestId,
         AUTH_LOG_EVENTS.UPDATE_ACCOUNT_DETAILS,
         `User updated profile fields: ${updatedFields.join(", ")}`,
         null
@@ -234,7 +235,7 @@ const updateAccountService = async (user, device, updatePayload) => {
         { new: true, upsert: true }
     );
 
-    // 📧 Send verification to NEW email
+    // Send verification to NEW email
     if (updatedFields.includes("Email")) {
         const newContactInfo = getUserContacts(updatedUser);
         
@@ -264,7 +265,7 @@ const updateAccountService = async (user, device, updatePayload) => {
         }
     }
 
-    // 📱 Send verification to NEW phone
+    // Send verification to NEW phone
     if (updatedFields.includes("Phone Number")) {
         const newContactInfo = getUserContacts(updatedUser);
         

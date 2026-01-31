@@ -1,77 +1,41 @@
-const { hashPassword } = require("@/utils/auth.util");
-const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
-const { sendNotification } = require("@utils/notification-dispatcher.util");
-const { getUserContacts } = require("@utils/contact-selector.util");
-const { userTemplate } = require("@services/templates/emailTemplate");
-const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { logoutUserCompletely } = require("../auth/auth-session.service");
-const { UserModel } = require("@models/user.model");
+const { updatePassword } = require("@services/account-management/change-password.service");
 
 /**
  * Service to reset password after OTP verification
  */
 
-const resetPasswordService = async (user, device, newPassword) => {
+const resetPasswordService = async (user, device, newPassword, requestId) => {
 
-    // 1️⃣ Hash password
-    const hashedPassword = await hashPassword(newPassword);
-
-    if (!hashedPassword) {
-        return {
-            success: false,
-            message: "Password encryption failed."
-        };
-    }
-
-    const updatedUser = await UserModel.findOneAndUpdate(
-        { _id: user._id },
-        {
-            $set: {
-                password: hashedPassword,
-                passwordChangedAt: new Date(),
-                "security.changePassword.failedAttempts": 0,
-                "security.changePassword.lockoutUntil": null
-            }
-        },
-        { new: true }
+    // Update password using shared service (includes hashing, DB update, auth log, notification)
+    const isUpdated = await updatePassword(
+        user,
+        newPassword,
+        device,
+        requestId,
+        "Reset Password",
+        AUTH_LOG_EVENTS.RESET_PASSWORD
     );
 
-    if (!updatedUser) {
+    if (!isUpdated) {
         return {
             success: false,
             message: "Unable to reset password. Please try again."
         };
-    }    
+    }
 
-    // 3️⃣ 🔐 FORCE LOGOUT ALL DEVICES (CRITICAL)
+    // FORCE LOGOUT ALL DEVICES (CRITICAL)
     const isLoggedOut = await logoutUserCompletely(
         user,
         device,
+        requestId,
         "Password Reset"
     );
 
-    // 4️⃣ Logs
+    // Logs
     logWithTime(`🔐 Password reset for UserID: ${user.userId}`);
-
-    logAuthEvent(
-        user,
-        device,
-        AUTH_LOG_EVENTS.RESET_PASSWORD,
-        "Password reset via forgot password flow.",
-        null
-    );
-
-    // 5️⃣ Notification
-    const contactInfo = getUserContacts(user);
-
-    sendNotification({
-        contactInfo,
-        emailTemplate: userTemplate.passwordChanged,
-        smsTemplate: userSmsTemplate.passwordChanged,
-        data: { name: user.firstName || "User" }
-    });
 
     if (!isLoggedOut) {
         logWithTime(`⚠️ Warning: Password reset but global logout failed for User ${user.userId}`);

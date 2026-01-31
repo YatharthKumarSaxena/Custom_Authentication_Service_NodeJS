@@ -9,12 +9,12 @@ const { UserModel } = require("@models/user.model");
 
 const verifyPasswordWithRateLimit = async (user, plainPassword, context) => {
 
-    // 1️⃣ Fetch fresh security + password
+    // Fetch fresh security + password
     const userForAuth = await UserModel
         .findById(user._id)
         .select("+password +security");
 
-    // 2️⃣ Check lock status
+    // Check lock status
     const lockStatus = checkIsUserLocked(userForAuth, context);
 
     if (lockStatus.isLocked) {
@@ -25,7 +25,7 @@ const verifyPasswordWithRateLimit = async (user, plainPassword, context) => {
         };
     }
 
-    // 3️⃣ Verify password
+    // Verify password
     const isPasswordValid = await checkPasswordIsValid(
         user.userId,
         plainPassword
@@ -47,7 +47,7 @@ const verifyPasswordWithRateLimit = async (user, plainPassword, context) => {
         };
     }
 
-    // 4️⃣ Success → reset counters
+    // Success → reset counters
     await resetPasswordAttempts(userForAuth);
 
     return {
