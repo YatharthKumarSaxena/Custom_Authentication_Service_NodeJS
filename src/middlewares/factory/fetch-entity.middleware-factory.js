@@ -7,7 +7,7 @@ const {
 } = require("@utils/error-handler.util");
 
 /**
- * 🏭 Factory middleware to fetch any entity
+ * Factory middleware to fetch any entity
  * @param {Function} fetchFunction - (email, phone, userId) => Promise<Entity>
  * @param {string} entityName - e.g., "User"
  * @param {boolean} expectExists - TRUE (Login: User milna chahiye), FALSE (Register: User nahi milna chahiye)
@@ -41,9 +41,7 @@ const fetchEntityFactory = (fetchFunction, entityName, expectExists = true) => {
       // 🔍 Fetch entity
       const foundEntity = await fetchFunction(finalEmail, finalPhone, finalUserId);
       
-      // ============================================================
-      // 🚦 Handling: Login vs Registration Logic
-      // ============================================================
+      // Handling: Login vs Registration Logic
       
       // CASE 1: Login Flow (expectExists = true)
       // User milna chahiye, agar nahi mila to Error 404
@@ -59,7 +57,7 @@ const fetchEntityFactory = (fetchFunction, entityName, expectExists = true) => {
         return throwConflictError(res, `${entityName} already exists with provided credentials`);
       }
 
-      // 📎 Attach to request
+      // Attach to request
       req[`found${entityName}`] = foundEntity;
 
       return next();

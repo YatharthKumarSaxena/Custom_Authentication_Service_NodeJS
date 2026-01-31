@@ -4,6 +4,7 @@ const { isUserAccountBlocked } = require("./is-user-blocked.middleware");
 const { verifyDeviceField } = require("./verify-device-field.middleware");
 const { verifyTokenMiddleware } = require("./verify-token.middleware");
 const { checkUserIsVerified } = require("./check-user-is-verified.middleware");
+const { requestIdMiddleware } = require('./check-request-id.middleware');
 
 const commonMiddlewares = {
     isDeviceBlocked,
@@ -11,7 +12,8 @@ const commonMiddlewares = {
     isUserAccountBlocked,
     verifyDeviceField,
     verifyTokenMiddleware,
-    checkUserIsVerified
+    checkUserIsVerified,
+    requestIdMiddleware
 }
 
 module.exports = {

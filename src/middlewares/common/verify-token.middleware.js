@@ -32,10 +32,10 @@ const verifyTokenMiddleware = async (req, res, next) => {
         let accessDecodeSuccess = false;
 
         try {
-            // ✅ Happy Path: Verify ACCESS token
+            // Happy Path: Verify ACCESS token
             accessDecoded = verifyToken(accessToken, Token.ACCESS);
 
-            // ✅ Logic 1: Stale-token detection (Replay Protection)
+            // Logic 1: Stale-token detection (Replay Protection)
             const tokenAge = Date.now() - (accessDecoded.iat * 1000);
 
             if (tokenAge > expiryTimeOfAccessToken * 1000) {
@@ -57,7 +57,7 @@ const verifyTokenMiddleware = async (req, res, next) => {
             // Check Stale Access Token 
 
         } catch (err) {
-            // 🛑 Catch Block: Access Token Invalid/Expired
+            // Catch Block: Access Token Invalid/Expired
 
             // 1. Unsafe Decode to get UID for session check
             accessDecoded = decodeTokenUnsafe(accessToken);
@@ -86,7 +86,7 @@ const verifyTokenMiddleware = async (req, res, next) => {
             // Buffer to handle JWT second-flooring (JWT iat loses milliseconds)
             const PRECISION_BUFFER = 2 * 1000; // 2 seconds
 
-            // ❌ Case 1: Access token issued BEFORE refresh token (with precision buffer)
+            // Case 1: Access token issued BEFORE refresh token (with precision buffer)
             // If access token is older than refresh token by more than 2 seconds, it's truly stale
             if (accessTokenIssuedAt < (refreshIssuedAt - PRECISION_BUFFER)) {
                 logMiddlewareError(
@@ -97,7 +97,7 @@ const verifyTokenMiddleware = async (req, res, next) => {
                 return throwAccessDeniedError(res, "Stale access token");
             }
 
-            // ❌ Case 2: Access token issued TOO LATE after refresh token
+            // Case 2: Access token issued TOO LATE after refresh token
             if (accessTokenIssuedAt - refreshIssuedAt > MAX_ALLOWED_DELAY) {
                 logMiddlewareError(
                     "verifyToken",
@@ -130,7 +130,7 @@ const verifyTokenMiddleware = async (req, res, next) => {
             return next();
         }
 
-        // ✅ Final Logic: If Access Token was valid (Not rotated)
+        // Final Logic: If Access Token was valid (Not rotated)
         if (accessDecodeSuccess === true) {
             const sessionResult = await validateSessionAndSyncDevice(accessDecoded.uid, device);
             if (!sessionResult.success) {

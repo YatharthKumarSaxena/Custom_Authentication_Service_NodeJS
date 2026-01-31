@@ -17,10 +17,9 @@ const validateVerificationInput = (req, res, next) => {
         const mustOTP =
             verificationMode === VerifyMode.OTP ||
             authMode !== AuthModes.EMAIL;
-
-        // -----------------------------------
-        // 1️⃣ Missing Code
-        // -----------------------------------
+    
+        // Missing Code
+        
         if (!code) {
             const msg = mustOTP
                 ? "OTP code is required."
@@ -29,10 +28,9 @@ const validateVerificationInput = (req, res, next) => {
             logMiddlewareError("validateVerificationInput", msg, req);
             return throwMissingFieldsError(res, "code");
         }
-
-        // -----------------------------------
-        // 2️⃣ OTP validation
-        // -----------------------------------
+   
+        // OTP validation
+        
         if (mustOTP) {
             const otpRegex = new RegExp(`^[0-9]{${otp.length}}$`);
 
@@ -48,10 +46,9 @@ const validateVerificationInput = (req, res, next) => {
                 );
             }
         }
-
-        // -----------------------------------
-        // 3️⃣ LINK validation
-        // -----------------------------------
+        
+        // LINK validation
+        
         else {
             const tokenRegex = /^[0-9a-fA-F]{64}$/;
 

@@ -3,7 +3,7 @@ const { isValidUUID, isValidDeviceNameLength } = require("@utils/id-validators.u
 const { DeviceTypeHelper } = require("@utils/enum-validators.util");
 const { deviceNameLength } = require("@configs/fields-length.config");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { DEVICE_HEADERS } = require("@configs/device-headers.config");
+const { DEVICE_HEADERS } = require("@/configs/headers.config");
 
 const verifyDeviceField = async (req, res, next) => {
     try {

@@ -3,7 +3,7 @@ const { isValidRegex, validateLength } = require("@utils/validators-factory.util
 const { AuthModes, RequestLocation } = require("@configs/enums.config");
 const { authMode } = require("@configs/security.config");
 
-// ✅ Correct Imports
+// Correct Imports
 const { emailRegex, countryCodeRegex, localNumberRegex } = require("@configs/regex.config");
 const { emailLength, countryCodeLength, localNumberLength } = require("@configs/fields-length.config");
 

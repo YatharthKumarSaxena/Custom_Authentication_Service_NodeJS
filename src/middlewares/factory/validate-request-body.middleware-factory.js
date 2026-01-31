@@ -29,7 +29,7 @@ const _genericPresenceCheck = (middlewareName, requiredFields, requestLocation) 
             req[requestLocation] = result.cleanedData;
             
             // Success Log (Optional)
-            // logWithTime(`✅ [${middlewareName}] ${requestLocation} fields present.`);
+            // logWithTime(`[${middlewareName}] ${requestLocation} fields present.`);
             
             return next();
 
@@ -41,21 +41,21 @@ const _genericPresenceCheck = (middlewareName, requiredFields, requestLocation) 
 };
 
 /**
- * ✅ 1. Check Body Fields Wrapper
+ * 1. Check Body Fields Wrapper
  */
 const checkBodyPresence = (middlewareName, requiredFields) => {
     return _genericPresenceCheck(middlewareName, requiredFields, RequestLocation.BODY);
 };
 
 /**
- * ✅ 2. Check Query Params Wrapper (?page=1&limit=10)
+ * 2. Check Query Params Wrapper (?page=1&limit=10)
  */
 const checkQueryPresence = (middlewareName, requiredFields) => {
     return _genericPresenceCheck(middlewareName, requiredFields, RequestLocation.QUERY);
 };
 
 /**
- * ✅ 3. Check URL Params Wrapper (/users/:userId)
+ * 3. Check URL Params Wrapper (/users/:userId)
  */
 const checkParamsPresence = (middlewareName, requiredFields) => {
     return _genericPresenceCheck(middlewareName, requiredFields, RequestLocation.PARAMS);

@@ -91,21 +91,21 @@ const _genericValidation = (controllerName, validationSet, requestLocation) => {
 };
 
 /**
- * ✅ 1. Validate Body Wrapper
+ * 1. Validate Body Wrapper
  */
 const validateBody = (controllerName, validationSet) => {
     return _genericValidation(controllerName, validationSet, RequestLocation.BODY);
 };
 
 /**
- * ✅ 2. Validate Query Wrapper (URL Params like ?page=1&limit=10)
+ * 2. Validate Query Wrapper (URL Params like ?page=1&limit=10)
  */
 const validateQuery = (controllerName, validationSet) => {
     return _genericValidation(controllerName, validationSet, RequestLocation.QUERY);
 };
 
 /**
- * ✅ 3. Validate Route Params Wrapper (URL Path like /users/:userId)
+ * 3. Validate Route Params Wrapper (URL Path like /users/:userId)
  */
 const validateParams = (controllerName, validationSet) => {
     return _genericValidation(controllerName, validationSet, RequestLocation.PARAMS);
