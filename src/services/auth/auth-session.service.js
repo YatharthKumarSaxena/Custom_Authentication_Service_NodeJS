@@ -209,7 +209,6 @@ const loginUserOnDevice = async (user, device, requestId, refreshToken, context 
         // A. Pending Audit Logs (Device/Mapping changes)
         for (const log of logsToFire) {
             // Await lagana hai lagao, nahi to background me chhod do (User requirement ke hisab se)
-            // Main recommend karunga 'await' taaki sequence maintain rahe
             logAuthEvent(log.user, log.device, requestId, log.event, log.message, log.metadata);
         }
 
