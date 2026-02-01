@@ -10,6 +10,22 @@ const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { authMode, FIRST_NAME_SETTING, ADMIN, IS_TWO_FA_FEATURE_ENABLED } = require("@configs/security.config");
 const { sendNotification } = require("@/utils/notification-dispatcher.util");
+const { 
+  emailLength, 
+  passwordLength, 
+  countryCodeLength, 
+  localNumberLength,
+  firstNameLength 
+} = require("@configs/fields-length.config");
+
+const { 
+  emailRegex, 
+  localNumberRegex, 
+  countryCodeRegex,
+  firstNameRegex,
+  strongPasswordRegex 
+} = require("@configs/regex.config");
+const { validateLength, isValidRegex } = require("@/utils/validators-factory.util");
 
 async function bootstrapSuperAdmin() {
   try {
@@ -18,23 +34,25 @@ async function bootstrapSuperAdmin() {
     const existingAdmin = await UserModel.findOne({ userType: UserTypes.ADMIN }).lean();
     if (existingAdmin) {
       logWithTime("ℹ️  Admin Bootstrap Skipped: Super Admin User already exists in the system.");
-      return null;
+      return true; // Already exists = success
     }
 
     let missingCreds = false;
     let passwordHash = null;
 
-    // 2. DYNAMIC VALIDATION: Check .env based on Configs
+    // 2. PASSWORD VALIDATION & HASHING
     if (!ADMIN.PASSWORD) {
-      logWithTime("⚠️ Super Admin Password is not set in Security Configs. Skipping Super Admin Creation.");
+      logWithTime("⚠️ Super Admin Password is not set in Security Configs.");
       missingCreds = true;
     } else {
+      if (!isValidRegex(ADMIN.PASSWORD, strongPasswordRegex) || !validateLength(ADMIN.PASSWORD, passwordLength.min, passwordLength.max)) {
+          logWithTime("❌ Super Admin Password does not meet strength or length requirements in Security Configs.");
+          return false;
+      }
       passwordHash = await hashPassword(ADMIN.PASSWORD);
     }
 
     // 3. PREPARE PAYLOAD
-
-
     const newAdminPayload = {
       userId: adminID,
       password: passwordHash,
@@ -42,119 +60,159 @@ async function bootstrapSuperAdmin() {
       isActive: true
     };
 
-    // 4. AUTH MODE STRICT ENFORCEMENT
+    // 4. AUTH MODE STRICT ENFORCEMENT & VALIDATION
 
+    // --- EMAIL MODE ---
     if (authMode === AuthModes.EMAIL) {
 
       if (!ADMIN.EMAIL) {
-        logWithTime(
-          "❌ AuthMode EMAIL requires ADMIN.EMAIL but it is missing in .env"
-        );
+        logWithTime("❌ AuthMode EMAIL requires ADMIN.EMAIL but it is missing in .env");
         missingCreds = true;
+      } else {
+        // VALIDATION: Email Regex & Length
+        if (!isValidRegex(ADMIN.EMAIL, emailRegex) || !validateLength(ADMIN.EMAIL, emailLength.min, emailLength.max)) {
+            logWithTime(`❌ Invalid Email Format/Length in .env: ${ADMIN.EMAIL}`);
+            return false;
+        }
       }
 
-      if (ADMIN.PHONE_NUMBER || ADMIN.COUNTRY_CODE) {
-        logWithTime(
-          "⚠️ AuthMode EMAIL detected — Phone credentials provided in .env will be ignored"
-        );
+      if (ADMIN.LOCAL_NUMBER || ADMIN.COUNTRY_CODE) {
+        logWithTime("⚠️ AuthMode EMAIL detected — Phone credentials provided in .env will be ignored");
       }
 
       newAdminPayload.email = ADMIN.EMAIL;
       newAdminPayload.isEmailVerified = true;
     }
 
+    // --- PHONE MODE ---
     else if (authMode === AuthModes.PHONE) {
 
-      if (!ADMIN.PHONE_NUMBER || !ADMIN.COUNTRY_CODE) {
-        logWithTime(
-          "❌ AuthMode PHONE requires ADMIN.PHONE_NUMBER and ADMIN.COUNTRY_CODE but one or both are missing in .env"
-        );
+      if (!ADMIN.LOCAL_NUMBER || !ADMIN.COUNTRY_CODE) {
+        logWithTime("❌ AuthMode PHONE requires ADMIN.LOCAL_NUMBER and ADMIN.COUNTRY_CODE");
         missingCreds = true;
+      } else {
+        // VALIDATION: Country Code
+        if (!isValidRegex(ADMIN.COUNTRY_CODE, countryCodeRegex) || !validateLength(ADMIN.COUNTRY_CODE, countryCodeLength.min, countryCodeLength.max)) {
+            logWithTime(`❌ Invalid Country Code format or length in .env (e.g. 91, 1).`);
+            return false;
+        }
+        // VALIDATION: Local Number (Regex + Length)
+        if (!isValidRegex(ADMIN.LOCAL_NUMBER, localNumberRegex) || !validateLength(ADMIN.LOCAL_NUMBER, localNumberLength.min, localNumberLength.max)) {
+             logWithTime(`❌ Invalid Phone Number format. Must be numeric and ${localNumberLength.min}-${localNumberLength.max} digits.`);
+             return false;
+        }
       }
 
       if (ADMIN.EMAIL) {
-        logWithTime(
-          "⚠️ AuthMode PHONE detected — Email credential provided in .env will be ignored"
-        );
+        logWithTime("⚠️ AuthMode PHONE detected — Email credential provided in .env will be ignored");
       }
 
       newAdminPayload.countryCode = ADMIN.COUNTRY_CODE;
-      newAdminPayload.localNumber = ADMIN.PHONE_NUMBER;
-      newAdminPayload.phone = createPhoneNumber(
-        ADMIN.COUNTRY_CODE,
-        ADMIN.PHONE_NUMBER
-      );
+      newAdminPayload.localNumber = ADMIN.LOCAL_NUMBER;
+      newAdminPayload.phone = createPhoneNumber(ADMIN.COUNTRY_CODE, ADMIN.LOCAL_NUMBER);
       newAdminPayload.isPhoneVerified = true;
     }
 
+    // --- BOTH MODE ---
     else if (authMode === AuthModes.BOTH) {
-      if (!ADMIN.EMAIL || !ADMIN.PHONE_NUMBER || !ADMIN.COUNTRY_CODE) {
-        logWithTime(
-          "❌ AuthMode BOTH requires ADMIN.EMAIL, ADMIN.PHONE_NUMBER and ADMIN.COUNTRY_CODE but one or more are missing in .env"
-        );
+      if (!ADMIN.EMAIL || !ADMIN.LOCAL_NUMBER || !ADMIN.COUNTRY_CODE) {
+        logWithTime("❌ AuthMode BOTH requires ADMIN.EMAIL, PHONE and COUNTRY_CODE");
         missingCreds = true;
+      } else {
+         // VALIDATE ALL
+         if (!isValidRegex(ADMIN.EMAIL, emailRegex) || !validateLength(ADMIN.EMAIL, emailLength.min, emailLength.max)) {
+            logWithTime(`❌ Invalid Email Format/Length in .env`);
+            return false;
+         }
+         if (!isValidRegex(ADMIN.COUNTRY_CODE, countryCodeRegex) || !validateLength(ADMIN.COUNTRY_CODE, countryCodeLength.min, countryCodeLength.max)) {
+            logWithTime(`❌ Invalid Country Code format/length in .env.`);
+            return false;
+         }
+         if (!isValidRegex(ADMIN.LOCAL_NUMBER, localNumberRegex) || !validateLength(ADMIN.LOCAL_NUMBER, localNumberLength.min, localNumberLength.max)) {
+            logWithTime(`❌ Invalid Phone Number format/length in .env.`);
+            return false;
+         }
       }
 
       newAdminPayload.email = ADMIN.EMAIL;
       newAdminPayload.isEmailVerified = true;
 
       newAdminPayload.countryCode = ADMIN.COUNTRY_CODE;
-      newAdminPayload.localNumber = ADMIN.PHONE_NUMBER;
-      newAdminPayload.phone = createPhoneNumber(
-        ADMIN.COUNTRY_CODE,
-        ADMIN.PHONE_NUMBER
-      );
+      newAdminPayload.localNumber = ADMIN.LOCAL_NUMBER;
+      newAdminPayload.phone = createPhoneNumber(ADMIN.COUNTRY_CODE, ADMIN.LOCAL_NUMBER);
       newAdminPayload.isPhoneVerified = true;
-    } else {
-      // EITHER MODE
-      if (!ADMIN.EMAIL && !(ADMIN.PHONE_NUMBER && ADMIN.COUNTRY_CODE)) {
+    } 
+    
+    // --- EITHER MODE ---
+    else {
+      if (!ADMIN.EMAIL && !(ADMIN.LOCAL_NUMBER && ADMIN.COUNTRY_CODE)) {
+        logWithTime("❌ AuthMode EITHER requires at least EMAIL or PHONE credentials in .env");
         missingCreds = true;
       }
-      if (ADMIN.EMAIL && (ADMIN.PHONE_NUMBER || ADMIN.COUNTRY_CODE)) {
-        logWithTime(
-          "⚠️ AuthMode EITHER detected — Both Email and Phone credentials provided in .env. Please provide only one."
-        );
-        missingCreds = true;
+      if (ADMIN.EMAIL && (ADMIN.LOCAL_NUMBER || ADMIN.COUNTRY_CODE)) {
+        logWithTime("⚠️ AuthMode EITHER detected — Both Email and Phone provided. Please provide only one.");
+        return false;
       }
+
+      // Case A: Email Provided
       if (ADMIN.EMAIL) {
+        // Validate Email
+        if (!isValidRegex(ADMIN.EMAIL, emailRegex) || !validateLength(ADMIN.EMAIL, emailLength.min, emailLength.max)) {
+            logWithTime(`❌ Invalid Email Format/Length in .env`);
+            return false;
+        }
         newAdminPayload.email = ADMIN.EMAIL;
         newAdminPayload.isEmailVerified = true;
       }
-      if (ADMIN.PHONE_NUMBER && ADMIN.COUNTRY_CODE) {
+      
+      // Case B: Phone Provided
+      if (ADMIN.LOCAL_NUMBER && ADMIN.COUNTRY_CODE) {
+        // Validate Phone
+        if (!isValidRegex(ADMIN.COUNTRY_CODE, countryCodeRegex) || !validateLength(ADMIN.COUNTRY_CODE, countryCodeLength.min, countryCodeLength.max)) {
+            logWithTime(`❌ Invalid Country Code format/length in .env.`);
+            return false;
+        }
+        if (!isValidRegex(ADMIN.LOCAL_NUMBER, localNumberRegex) || !validateLength(ADMIN.LOCAL_NUMBER, localNumberLength.min, localNumberLength.max)) {
+            logWithTime(`❌ Invalid Local Number format/length in .env`);
+            return false;
+        }
         newAdminPayload.countryCode = ADMIN.COUNTRY_CODE;
-        newAdminPayload.localNumber = ADMIN.PHONE_NUMBER;
-        newAdminPayload.phone = createPhoneNumber(
-          ADMIN.COUNTRY_CODE,
-          ADMIN.PHONE_NUMBER
-        );
+        newAdminPayload.localNumber = ADMIN.LOCAL_NUMBER;
+        newAdminPayload.phone = createPhoneNumber(ADMIN.COUNTRY_CODE, ADMIN.LOCAL_NUMBER);
         newAdminPayload.isPhoneVerified = true;
       }
     }
 
-
     if (missingCreds) {
       logWithTime(`⚠️ Admin Bootstrap Skipped: Missing Credentials for Auth Mode [${authMode}]`);
-      return null;
+      return false;
     }
 
-    // ✅ FIX: Use 'FIRST_NAME_SETTING' directly
+    // 5. NAME VALIDATION
+    // Check if Name is Mandatory
     if (FIRST_NAME_SETTING === FirstNameFieldSetting.MANDATORY && !ADMIN.NAME) {
       logWithTime("⚠️ Admin Bootstrap Skipped: First Name is Mandatory but missing in .env");
-      return null;
+      return false;
     }
 
+    // Check if Name is Disabled but provided
     if (FIRST_NAME_SETTING === FirstNameFieldSetting.DISABLED && ADMIN.NAME) {
       logWithTime("⚠️ Admin Bootstrap Skipped: First Name field is Disabled but a name is provided in .env");
-      return null;
+      return false;
+    }
+
+    // VALIDATION: If Name exists (Mandatory or Optional), Validate it
+    if (FIRST_NAME_SETTING !== FirstNameFieldSetting.DISABLED && ADMIN.NAME) {
+        if (!isValidRegex(ADMIN.NAME, firstNameRegex) || !validateLength(ADMIN.NAME, firstNameLength.min, firstNameLength.max)) {
+            logWithTime(`❌ Invalid First Name format/length in .env. Must be alphabetic.`);
+            return false;
+        }
+        newAdminPayload.firstName = ADMIN.NAME;
     }
 
     logWithTime(`⚙️ Bootstrapping Super Admin... [Mode: ${authMode}]`);
 
-    // 👉 Handle First Name
-    if (FIRST_NAME_SETTING !== FirstNameFieldSetting.DISABLED && ADMIN.NAME) {
-      newAdminPayload.firstName = ADMIN.NAME;
-    }
-
+    // 6. TWO FACTOR & CREATE
     if (IS_TWO_FA_FEATURE_ENABLED) {
       newAdminPayload.twoFactorEnabled = true;
       newAdminPayload.twoFactorEnabledAt = new Date();
@@ -164,20 +222,17 @@ async function bootstrapSuperAdmin() {
       `🔐 Super Admin Security Policy → 2FA: ${IS_TWO_FA_FEATURE_ENABLED ? "ENABLED" : "DISABLED"}`
     );
     
-    // 5. CREATE ADMIN
-
     const createdAdmin = await UserModel.create(newAdminPayload);
 
     logWithTime("👑 Super Admin User Created Successfully");
 
-    // 6. System Log (fire-and-forget)
+    // 7. System Log & Notification
     logBootstrapEvent(
       "ADMIN_CREATED",
       `Super Admin created successfully via bootstrap (Auth Mode: ${authMode})`,
       createdAdmin.userId
     );
 
-    // 7. Send Notification
     const contactInfo = getUserContacts(createdAdmin);
     sendNotification({
       contactInfo,
@@ -186,14 +241,13 @@ async function bootstrapSuperAdmin() {
       data: { name: createdAdmin.firstName || "Super Admin" }
     });
 
-    return createdAdmin;
+    return true; // Admin created successfully
 
   } catch (err) {
     logWithTime("⚠️ Error Occurred while Bootstrapping Admin User");
     errorMessage(err);
-    return null;
+    return false; // Error occurred
   }
 }
 
 module.exports = { bootstrapSuperAdmin };
-
