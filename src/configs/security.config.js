@@ -73,7 +73,7 @@ module.exports = {
     EMAIL: process.env.ADMIN_EMAIL_ID || null,
     PASSWORD: process.env.ADMIN_PASSWORD,
     COUNTRY_CODE: process.env.ADMIN_COUNTRY_CODE || null,
-    PHONE_NUMBER: process.env.ADMIN_NUMBER || null
+    LOCAL_NUMBER: process.env.ADMIN_LOCAL_NUMBER || null
   },
   DEVICE: {
     DEVICE_NAME: process.env.DEVICE_NAME || "System Device",
