@@ -6,7 +6,11 @@ const {
   UserTypes,
   AuthModes,
   DeviceTypes,
-  VerificationPurpose
+  VerificationPurpose,
+  VerifyMode,
+  AuditMode,
+  FirstNameFieldSetting,
+  ContactModes
 } = require("@configs/enums.config");
 
 /**
@@ -40,10 +44,18 @@ const DeviceTypeHelper = createEnumHelper(DeviceTypes, "DeviceType");
 const UserTypeHelper = createEnumHelper(UserTypes, "UserType");
 const AuthModesHelper = createEnumHelper(AuthModes, "AuthModes");
 const VerificationPurposeHelper = createEnumHelper(VerificationPurpose, "VerificationPurpose");
+const VerifyModeHelper = createEnumHelper(VerifyMode, "VerifyMode");
+const AuditModeHelper = createEnumHelper(AuditMode, "AuditMode");
+const FirstNameFieldSettingHelper = createEnumHelper(FirstNameFieldSetting, "FirstNameFieldSetting");
+const ContactModesHelper = createEnumHelper(ContactModes, "ContactModes");
 
 module.exports = {
     DeviceTypeHelper,
     UserTypeHelper,
     AuthModesHelper,
-    VerificationPurposeHelper
+    VerificationPurposeHelper,
+    VerifyModeHelper,
+    AuditModeHelper,
+    FirstNameFieldSettingHelper,
+    ContactModesHelper
 };
