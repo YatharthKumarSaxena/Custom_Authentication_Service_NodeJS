@@ -1,11 +1,11 @@
-const { OK } = require("@configs/http-status.config");
 const { getUserFullDetailsService } = require("@services/internals/get-user-details.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 const { 
     throwInternalServerError, 
     throwDBResourceNotFoundError, 
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { getUserDetailsAdminSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 /**
@@ -22,13 +22,7 @@ const getUserDetailsAdmin = async (req, res) => {
         const data = await getUserFullDetailsService(targetUserId);
 
         // 2. Log Action
-        logWithTime(`🔍 Admin (${admin.adminId}) viewed profile of User (${targetUserId})`);
-
-        return res.status(OK).json({
-            success: true,
-            message: "User details fetched successfully.",
-            data: data
-        });
+        return getUserDetailsAdminSuccessResponse(res, admin, targetUserId, data);
 
     } catch (err) {
         if (err.type === AuthErrorTypes.RESOURCE_NOT_FOUND) {

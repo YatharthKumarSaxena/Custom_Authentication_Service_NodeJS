@@ -1,5 +1,3 @@
-// Modules & Configs
-const { OK } = require("@configs/http-status.config");
 const { blockDeviceService, unblockDeviceService } = require("@services/internals/toggle-device-block-status.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
@@ -10,7 +8,8 @@ const {
     throwAccessDeniedError,
     throwConflictError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { toggleDeviceBlockSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 /**
@@ -30,17 +29,13 @@ const blockDevice = async (req, res) => {
         // 3. Success Response
         // Note: Service ke andar already deep logging ho rahi hai, 
         // par controller level par bhi ek confirmation log achha rehta hai.
-        logWithTime(`✅ Admin (${admin.adminId}) successfully blocked device: ${deviceUUID}`);
 
         if (result.success === false) {
             logWithTime(`⚠️ Block Action Skipped: Device ${deviceUUID} is already blocked.`);
             return throwConflictError(res, result.message);
         }
 
-        return res.status(OK).json({
-            success: true,
-            message: result.message
-        });
+        return toggleDeviceBlockSuccessResponse(res, admin, deviceUUID, result.message);
 
     } catch (err) {
         
@@ -87,12 +82,8 @@ const unblockDevice = async (req, res) => {
         }
 
         // 4. Success Response
-        logWithTime(`✅ Admin (${admin.adminId}) successfully unblocked device: ${deviceUUID}`);
 
-        return res.status(OK).json({
-            success: true,
-            message: result.message
-        });
+        return toggleDeviceBlockSuccessResponse(res, admin, deviceUUID, result.message);
 
     } catch (err) {
         

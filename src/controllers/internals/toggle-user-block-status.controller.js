@@ -1,11 +1,11 @@
-const { OK } = require("@configs/http-status.config");
 const { updateUserBlockStatusService } = require("@services/internals/toggle-user-block-status.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 const {
     throwInternalServerError,
     throwDBResourceNotFoundError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { toggleUserBlockSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 /**
@@ -30,10 +30,7 @@ const handleBlockToggle = async (req, res, shouldBlock) => {
             return throwConflictError(res, result.message);
         }
 
-        return res.status(OK).json({
-            success: true,
-            message: result.message
-        });
+        return toggleUserBlockSuccessResponse(res, admin, userId, result.message);
 
     } catch (err) {
         if (err.type === AuthErrorTypes.RESOURCE_NOT_FOUND) {

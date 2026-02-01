@@ -1,8 +1,8 @@
 const { getActiveSessionsService } = require("@services/internals/get-user-device.service");
 const { UserModel } = require("@models/user.model");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { OK } = require("@configs/http-status.config");
-const { throwDBResourceNotFoundError, throwInternalServerError } = require("@utils/error-handler.util");
+const { throwDBResourceNotFoundError, throwInternalServerError } = require("@/responses/common/error-handler.response");
+const { getUserSessionsForAdminSuccessResponse, getUserSessionsForAdminNoSessionsResponse } = require("@/responses/success/index");
 
 /**
  * Controller: Get Session Details for a specific User (Admin View)
@@ -31,19 +31,7 @@ const getUserSessionsForAdmin = async (req, res) => {
         // Handle Empty Sessions (User has never logged in or cleared sessions)
         if (sessions.length === 0) {
             logWithTime(`⚠️ No sessions found for User (${userId}) by Admin.`);
-            return res.status(OK).json({
-                success: true,
-                message: "No sessions found for the user.",
-                data: {
-                    userId: targetUser._id,
-                    summary: {
-                        total: 0,
-                        active: 0,
-                        expired: 0
-                    },
-                    sessions: []
-                }
-            });
+            return getUserSessionsForAdminNoSessionsResponse(res, targetUser);
         }
 
         // 3. FIX: Stats Calculation (Kyunki ab mixed sessions aa rahe hain)
@@ -53,23 +41,7 @@ const getUserSessionsForAdmin = async (req, res) => {
         logWithTime(`🔍 Admin (${req.admin.adminId}) fetched sessions for User (${userId}).`);
 
         // 4. Response
-        return res.status(OK).json({
-            success: true,
-            message: "User sessions fetched successfully",
-            data: {        // Optional Chaining lagayi h adminId pe, taaki agar middleware fail ho to crash na kare
-                userId: targetUser._id,
-                email: targetUser.email, // Email bhi bhej do, admin ko confirm rahega
-                
-                // Summary Object (Frontend pe Badge dikhane ke kaam aayega)
-                summary: {
-                    total: sessions.length,
-                    active: activeCount,
-                    expired: expiredCount
-                },
-                
-                sessions: sessions
-            }
-        });
+        return getUserSessionsForAdminSuccessResponse(res, req.admin, targetUser, sessions);
 
     } catch (error) {
         const userId = req.params.userId;
