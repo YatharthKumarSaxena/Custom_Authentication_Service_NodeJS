@@ -50,7 +50,6 @@ const sendNotification = async ({
                 try {
                     await sendEmail(email, emailContent.subject, emailContent.html);
                     emailSent = true;
-                    logWithTime("INFO", `📧 Email sent to ${email}`);
                 } catch (error) {
                     logWithTime("ERROR", `❌ Email Error: ${error.message}`);
                 }
@@ -64,7 +63,6 @@ const sendNotification = async ({
                 try {
                     await sendSMS(phone, smsMessage);
                     smsSent = true;
-                    logWithTime("INFO", `📱 SMS sent to ${phone}`);
                 } catch (error) {
                     logWithTime("ERROR", `❌ SMS Error: ${error.message}`);
                 }
