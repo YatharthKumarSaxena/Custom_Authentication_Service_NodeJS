@@ -1,4 +1,10 @@
+require("dotenv").config();
 require("module-alias/register");
+
+// BOOT VALIDATION - Must run BEFORE anything else
+require("@bootstrap/env.defaults").applyEnvDefaults();
+require("@bootstrap/env.validator").validateEnvironment();
+
 const mongoose = require("mongoose");
 const db = mongoose.connection;
 
@@ -20,13 +26,21 @@ db.on("error", (err) => {
 db.once("open", async () => {
     logWithTime("✅ Connection established with MongoDB Successfully");
 
-    // Bootstrap Super Admin
+    // Bootstrap Super Admin - CRITICAL STEP
     try {
-        await bootstrapSuperAdmin();
+        const bootstrapSuccess = await bootstrapSuperAdmin();
+        
+        if (!bootstrapSuccess) {
+            logWithTime("❌ Super Admin Bootstrap Failed - System cannot continue");
+            logWithTime("⛔ Please check .env configuration and try again");
+            process.exit(1); // ⛔ HARD STOP - Admin bootstrap is critical
+        }
+        
         logWithTime("✅ Super Admin Bootstrap Completed");
     } catch (err) {
-        logWithTime("⚠️ Error during Super Admin Bootstrap");
+        logWithTime("❌ Critical Error during Super Admin Bootstrap");
         errorMessage(err);
+        process.exit(1); // HARD STOP on exception
     }
 
     // Initialize Microservice Components (if enabled)
