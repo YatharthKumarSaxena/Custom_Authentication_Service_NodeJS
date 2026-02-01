@@ -182,10 +182,9 @@ const performSignIn = async (user, deviceInput, plainPassword, requestId) => {
     const loginSuccess = await loginUserOnDevice(
         user,
         deviceInput,
-        refreshToken,
         requestId,
+        refreshToken,
         "Standard Sign-In"
-
     );
 
     if (!loginSuccess) {
