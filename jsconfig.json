@@ -5,6 +5,7 @@
       "@/*": ["src/*"],
       "@testing/*": ["src/testing/*"],
       "@app": ["src/app.js"],
+      "@bootstrap/*": ["src/bootstrap/*"],
       "@configs/*": ["src/configs/*"],
       "@utils/*": ["src/utils/*"],
       "@middlewares/*": ["src/middlewares/*"],
