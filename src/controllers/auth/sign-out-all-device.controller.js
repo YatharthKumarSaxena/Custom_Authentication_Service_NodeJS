@@ -1,7 +1,7 @@
 // Extracting the required modules
-const { throwSpecificInternalServerError, throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
+const { throwSpecificInternalServerError, throwInternalServerError, getLogIdentifiers } = require("@/responses/common/error-handler.response");
+const { signOutAllDevicesSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { OK } = require("@configs/http-status.config");
 const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 
 const signOutAllDevices = async (req, res) => {
@@ -20,17 +20,8 @@ const signOutAllDevices = async (req, res) => {
 
         // 3. Extract correct identifiers 
         res.set('x-access-token', '');
-        const deviceUUID = device.deviceUUID;
-        const userId = user.userId; 
-
-        logWithTime(`🔓 User (${userId}) successfully logged out from all devices via request from (${deviceUUID})`);
         
-        const praiseBy = user.firstName || "User";
-        
-        return res.status(OK).json({
-            success: true,
-            message: `${praiseBy}, you are successfully logged out from all devices.`
-        });
+        return signOutAllDevicesSuccessResponse(res, user, device);
 
     } catch (err) {
         const getIdentifiers = getLogIdentifiers(req);

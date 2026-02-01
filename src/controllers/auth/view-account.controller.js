@@ -1,10 +1,10 @@
-const { OK } = require("@configs/http-status.config");
 const { getAccountDetailsService } = require("@services/auth/account-details.service");
 const {
     throwInternalServerError,
     throwSpecificInternalServerError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { getMyAccountSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 const getMyAccount = async (req, res) => {
@@ -20,11 +20,7 @@ const getMyAccount = async (req, res) => {
         }
 
         // 2. Response
-        return res.status(OK).json({
-            success: true,
-            message: "Account details fetched successfully.",
-            data: userAccountDetails
-        });
+        return getMyAccountSuccessResponse(res, userAccountDetails);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

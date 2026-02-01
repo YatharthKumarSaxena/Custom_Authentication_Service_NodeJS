@@ -1,7 +1,6 @@
 // Modules & Configs
 const { performRefreshToken } = require("@services/auth/refresh-token.service");
 const { buildAccessTokenHeaders } = require("@utils/token-headers.util");
-const { OK } = require("@configs/http-status.config");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 // Error Handlers
@@ -10,7 +9,9 @@ const {
     throwInvalidResourceError,
     throwBadRequestError, 
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { refreshTokenSuccessResponse } = require("@/responses/success/index");
 
 /**
  * Refresh Token Controller
@@ -47,12 +48,7 @@ const refreshToken = async (req, res) => {
         
         // 4. SUCCESS RESPONSE
         
-        logWithTime(`✅ Token refreshed successfully for user (${result.userId}) on device (${device.deviceUUID}).`);
-
-        return res.status(OK).json({
-            success: true,
-            message: "Token refreshed successfully."
-        });
+        return refreshTokenSuccessResponse(res, result.userId, device.deviceUUID);
 
     } catch (err) {
         

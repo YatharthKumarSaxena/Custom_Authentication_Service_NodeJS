@@ -1,6 +1,6 @@
-const { OK } = require("@configs/http-status.config");
 const { getAuthLogService } = require("@services/auth/auth-log.service");
-const { throwInternalServerError, getLogIdentifiers } = require("@utils/error-handler.util");
+const { throwInternalServerError, getLogIdentifiers } = require("@/responses/common/error-handler.response");
+const { getMyAuthLogsSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 const getMyAuthLogs = async (req, res) => {
@@ -15,19 +15,7 @@ const getMyAuthLogs = async (req, res) => {
         const result = await getAuthLogService(user, page, limit);
 
         // 3. Response with Meta-Data
-        logWithTime(`✅ Auth logs fetched for user ${user.userId} (Page: ${page})`);
-
-        return res.status(OK).json({
-            success: true,
-            message: "Activity logs retrieved successfully.",
-            meta: {
-                totalLogs: result.totalCount,
-                currentPage: page,
-                totalPages: result.totalPages,
-                limit
-            },
-            logs: result.logs
-        });
+        return getMyAuthLogsSuccessResponse(res, user, page, result, limit);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

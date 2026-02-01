@@ -1,5 +1,3 @@
-// Modules & Configs
-const { OK } = require("@configs/http-status.config");
 const { signOutService } = require("@services/auth/sign-out.service");
 
 // Error Handlers
@@ -7,7 +5,9 @@ const {
     throwInternalServerError,
     throwSpecificInternalServerError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { signOutSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
 
@@ -28,15 +28,7 @@ const signOut = async (req, res) => {
         // Clear access token header always
         res.set("x-access-token", "");
 
-        logWithTime(
-            `👋 Sign-out processed for User (${user.userId}) on device (${device.deviceUUID})`
-        );
-
-        return res.status(OK).json({
-            success: true,
-            message: result.message,
-            sessionExpired: result.sessionExpired || false
-        });
+        return signOutSuccessResponse(res, user, device, result);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

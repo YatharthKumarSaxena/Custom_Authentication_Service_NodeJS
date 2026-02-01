@@ -3,7 +3,6 @@ const { performSignIn } = require("@services/auth/sign-in.service");
 const { buildAccessTokenHeaders } = require("@utils/token-headers.util");
 const { expiryTimeOfAccessToken } = require("@configs/token.config");
 const { AuthErrorTypes } = require("@configs/enums.config");
-const { OK } = require("@configs/http-status.config");
 const { createToken } = require("@utils/issue-token.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 
@@ -15,7 +14,13 @@ const {
     getLogIdentifiers,
     throwTooManyRequestsError,
     throwSpecificInternalServerError
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+// Success Handlers
+const {
+    signInTwoFactorRequiredResponse,
+    signInSuccessResponse
+} = require("@/responses/success/index");
 
 const signIn = async (req, res) => {
     try {
@@ -70,11 +75,7 @@ const signIn = async (req, res) => {
         // 2FA REQUIRED
         
         if (result.requires2FA) {
-            return res.status(OK).json({
-                success: true,
-                requires2FA: true,
-                message: result.message
-            });
+            return signInTwoFactorRequiredResponse(res, result.message);
         }
         
         // ACCESS TOKEN
@@ -93,14 +94,7 @@ const signIn = async (req, res) => {
 
         res.set(headers);
 
-        logWithTime(
-            `✅ User (${user.userId}) logged in from device (${device.deviceUUID})`
-        );
-
-        return res.status(OK).json({
-            success: true,
-            message: `Welcome ${user.firstName || "User"}, you are logged in successfully.`
-        });
+        return signInSuccessResponse(res, user, device);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

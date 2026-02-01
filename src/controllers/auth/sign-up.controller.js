@@ -1,4 +1,3 @@
-const { CREATED } = require("@configs/http-status.config");
 const { signUpService } = require("@services/auth/sign-up.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
@@ -7,7 +6,9 @@ const {
     throwConflictError,
     throwSpecificInternalServerError,
     throwBadRequestError
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { signUpSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
 
@@ -39,19 +40,7 @@ const signUp = async (req, res) => {
         }
 
         // Success
-        logWithTime(
-            `✅ SignUp Initialized: User (${result.userId}) on device (${deviceInput.deviceUUID})`
-        );
-
-        return res.status(CREATED).json({
-            success: true,
-            message: result.message,
-            data: {
-                userId: result.userId,
-                contactMode: result.contactMode,
-                nextStep: "VERIFICATION_REQUIRED"
-            }
-        });
+        return signUpSuccessResponse(res, result, deviceInput);
 
     } catch (err) {
         // Only unexpected crashes

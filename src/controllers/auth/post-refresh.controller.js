@@ -1,12 +1,6 @@
-/**
- * 🔄 Post-Refresh Token Controller
- */
-
 const { performPostRefresh } = require("@services/auth/post-refresh.service");
-const { OK } = require("@configs/http-status.config");
 const { AuthErrorTypes } = require("@configs/enums.config");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { microserviceConfig } = require("@configs/microservice.config");
 
 // Error Handlers
 const { 
@@ -15,7 +9,8 @@ const {
     throwInvalidResourceError,
     throwBadRequestError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { postRefreshSuccessResponse } = require("@/responses/success/index");
 const { DeviceModel } = require("@models/index");
 
 const postRefresh = async (req, res) => {
@@ -69,18 +64,8 @@ const postRefresh = async (req, res) => {
 
         // 4. SUCCESS RESPONSE
         
-        const mode = microserviceConfig.enabled ? 'microservice' : 'monolithic';
-        
-        logWithTime(
-            `✅ [${mode.toUpperCase()}] Post-refresh completed for user (${result.userId.substring(0, 8)}...) on device (${device.deviceUUID.substring(0, 8)}...)`
-        );
-
         // No need to set Access Token in Headers as this is an Internal API Call by Other Services
-        return res.status(OK).json({
-            success: true,
-            message: "Tokens refreshed successfully",
-            accessToken: result.accessToken
-        });
+        return postRefreshSuccessResponse(res, result, device);
 
     } catch (err) {
         // Only catch totally unexpected runtime errors here
