@@ -4,7 +4,7 @@ const {
   throwInternalServerError, 
   logMiddlewareError,
   throwConflictError // User already exists ke liye
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
 
 /**
  * Factory middleware to fetch any entity

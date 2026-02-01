@@ -1,4 +1,4 @@
-const { throwInternalServerError, logMiddlewareError, throwMissingFieldsError, throwBadRequestError, throwValidationError } = require("@utils/error-handler.util");
+const { throwInternalServerError, logMiddlewareError, throwMissingFieldsError, throwBadRequestError, throwValidationError } = require("@/responses/common/error-handler.response");
 const { isValidRegex, validateLength } = require("@utils/validators-factory.util");
 const { AuthModes, RequestLocation } = require("@configs/enums.config");
 const { authMode } = require("@configs/security.config");

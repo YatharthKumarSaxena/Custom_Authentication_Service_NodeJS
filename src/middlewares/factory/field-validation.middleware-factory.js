@@ -1,5 +1,5 @@
 const { isValidRegex, validateLength } = require("@utils/validators-factory.util");
-const { throwInternalServerError, logMiddlewareError, throwValidationError } = require("@utils/error-handler.util");
+const { throwInternalServerError, logMiddlewareError, throwValidationError } = require("@/responses/common/error-handler.response");
 const { RequestLocation } = require("@configs/enums.config"); // Ensure Enums have 'body', 'query', 'params' values
 
 /**

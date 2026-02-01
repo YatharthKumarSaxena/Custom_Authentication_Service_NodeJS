@@ -1,5 +1,5 @@
 const { UserTypes } = require("@/configs/enums.config");
-const { throwInternalServerError, logMiddlewareError, throwAccessDeniedError } = require("@utils/error-handler.util");
+const { throwInternalServerError, logMiddlewareError, throwAccessDeniedError } = require("@/responses/common/error-handler.response");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 // Checking if user Account is Blocked

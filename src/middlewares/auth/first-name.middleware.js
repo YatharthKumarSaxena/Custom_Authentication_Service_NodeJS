@@ -1,7 +1,7 @@
 const { logWithTime } = require("@/utils/time-stamps.util");
 const { FirstNameFieldSetting } = require("@configs/enums.config");
 const { FIRST_NAME_SETTING } = require("@configs/security.config");
-const { logMiddlewareError, throwInternalServerError, throwAccessDeniedError, throwMissingFieldsError, throwInvalidResourceError } = require("@utils/error-handler.util");
+const { logMiddlewareError, throwInternalServerError, throwAccessDeniedError, throwMissingFieldsError, throwInvalidResourceError } = require("@/responses/common/error-handler.response");
 const { firstNameRegex } = require("@configs/regex.config");
 const { firstNameLength } = require("@configs/fields-length.config");
 const { isValidRegex, validateLength } = require("@utils/validators-factory.util");

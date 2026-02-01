@@ -1,5 +1,5 @@
 const { validateMissingFields } = require("@utils/validate-fields.util"); // Generalized util
-const { throwInternalServerError, logMiddlewareError, throwMissingFieldsError } = require("@utils/error-handler.util");
+const { throwInternalServerError, logMiddlewareError, throwMissingFieldsError } = require("@/responses/common/error-handler.response");
 const { RequestLocation } = require("@configs/enums.config");
 
 /**

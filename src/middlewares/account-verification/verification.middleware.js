@@ -5,7 +5,7 @@ const {
     throwMissingFieldsError,
     logMiddlewareError,
     throwInternalServerError
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
 
 const { isValidRegex } = require("@utils/validators-factory.util");
 const { logWithTime } = require("@utils/time-stamps.util");

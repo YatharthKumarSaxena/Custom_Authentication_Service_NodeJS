@@ -5,7 +5,7 @@ const {
     throwDBResourceNotFoundError,
     throwSessionExpiredError,
     throwInternalServerError
-} = require("@/utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
 const { extractAccessToken } = require("@/utils/extract-token.util");
 const { validateSessionAndSyncDevice, rotateRefreshToken } = require("@/services/auth/session-token.service");
 const { verifyToken, decodeTokenUnsafe } = require("@utils/verify-token.util");

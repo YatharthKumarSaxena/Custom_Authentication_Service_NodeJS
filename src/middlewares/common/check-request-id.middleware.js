@@ -1,6 +1,6 @@
 const {  v4: uuidv4 } = require('uuid');
 const { REQUEST_HEADERS } = require('@configs/headers.config');
-const { throwInvalidResourceError, logMiddlewareError } = require('@/utils/error-handler.util');
+const { throwInvalidResourceError, logMiddlewareError } = require('@/responses/common/error-handler.response');
 const { logWithTime } = require('@/utils/time-stamps.util');
 const { isValidUUID } = require('@/utils/id-validators.util');
 
