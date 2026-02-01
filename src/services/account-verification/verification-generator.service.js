@@ -5,7 +5,7 @@ const { generateOTP, hashOTP } = require("../../utils/otp.util");
 const { logWithTime } = require("../../utils/time-stamps.util");
 const { VerificationLinkModel } = require("@models/link.model");
 const { OTPModel } = require("@models/otp.model");
-const { errorMessage } = require("../../utils/error-handler.util");
+const { errorMessage } = require("../../responses/common/error-handler.response");
 
 const findActiveOTP = async ({ userId, deviceId, purpose }) => {
     return OTPModel.findOne({

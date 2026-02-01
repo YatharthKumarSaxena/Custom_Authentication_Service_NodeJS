@@ -1,6 +1,6 @@
 const { AuthLogModel } = require("@models/auth-logs.model");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 
 /**
  * Logs an authentication event (fire-and-forget)

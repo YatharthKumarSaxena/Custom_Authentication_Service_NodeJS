@@ -1,7 +1,7 @@
 const { UserDeviceModel } = require("@models/user-device.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { expiryTimeOfRefreshToken } = require("@configs/token.config");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 /**
  * Service to fetch VALID active sessions
  */

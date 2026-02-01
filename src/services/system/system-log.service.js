@@ -8,7 +8,7 @@
 const { SystemLogModel } = require("@models/system-log.model");
 const { SYSTEM_LOG_EVENTS, STATUS_TYPES, SERVICE_NAMES } = require("@configs/system-log-events.config");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 const { getServerInstanceId, extractRequestMetadata } = require("@utils/server-instance.util");
 
 /**

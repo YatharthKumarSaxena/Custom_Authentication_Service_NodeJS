@@ -1,7 +1,7 @@
 const { expiryTimeOfRefreshToken } = require("@configs/token.config"); 
 const { logWithTime } = require("@utils/time-stamps.util");
 const { httpOnly, sameSite, secure } = require("@configs/cookies.config");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 
 const setRefreshTokenCookie = (res, token) => {
     try{

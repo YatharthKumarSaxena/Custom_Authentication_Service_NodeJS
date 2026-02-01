@@ -1,6 +1,6 @@
 const { CounterModel } = require("@models/counter.model");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 const { userIDPrefix } = require("@configs/system.config");
 
 /**

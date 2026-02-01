@@ -1,6 +1,6 @@
 // utils/redis-client.util.js
 const Redis = require("ioredis");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { redis } = require("@configs/redis.config");
 

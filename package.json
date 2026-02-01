@@ -41,6 +41,7 @@
     "@routes": "src/routers",
     "@models": "src/models",
     "@cron-jobs": "src/cron-jobs",
-    "@internals": "src/internals"
+    "@internals": "src/internals",
+    "@responses": "src/responses"
   }
 }

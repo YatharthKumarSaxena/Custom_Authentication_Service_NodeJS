@@ -2,7 +2,7 @@ const { CounterModel } = require("@models/id-generator.model");
 const { userRegistrationCapacity } = require("@configs/app-limits.config");
 const { IP_Address_Code } = require("@configs/ip-address.config");
 const { customerIdPrefix } = require("@configs/id-prefixes.config");
-const { errorMessage } = require("@utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 const makeUserId = async () => {

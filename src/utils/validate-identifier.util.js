@@ -1,7 +1,7 @@
 // utils/existence-factory.util.js
 const { logWithTime } = require("@utils/time-stamps.util");
 const { BAD_REQUEST } = require("@configs/http-status.config");
-const { errorMessage, throwInternalServerError } = require("@utils/error-handler.util");
+const { errorMessage, throwInternalServerError } = require("@/responses/common/error-handler.response");
 
 /**
  * Generic existence checker factory

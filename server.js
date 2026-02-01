@@ -12,7 +12,7 @@ const { app } = require("@app"); // import pure Express app
 const { DB_URL } = require("@configs/db.config");
 const { PORT_NUMBER } = require("@configs/server.config");
 const { logWithTime } = require("@utils/time-stamps.util");
-const { errorMessage } = require("@/utils/error-handler.util");
+const { errorMessage } = require("@/responses/common/error-handler.response");
 const { bootstrapSuperAdmin } = require("@services/bootstrap/super-admin-bootstrap.service");
 
 // Connect to MongoDB

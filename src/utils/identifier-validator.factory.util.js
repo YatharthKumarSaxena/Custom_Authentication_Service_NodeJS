@@ -1,7 +1,7 @@
 // utils/identifier-validator.factory.js
 const { logWithTime } = require("./time-stamps.util");
 const { IdentifierKeys } = require("@configs/enums.config");
-const { throwBadRequestError } = require("./error-handler.util");
+const { throwBadRequestError } = require("../responses/common/error-handler.response");
 
 /**
  * Factory to generate a validator for a single identifier for User/Admin

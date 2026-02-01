@@ -4,7 +4,7 @@ const { getFrontendUrl } = require("@utils/url.util");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { VerifyMode } = require("@configs/enums.config");
-const { errorMessage } = require("@utils/error-handler.util"); // Path fix kar lena
+const { errorMessage } = require("@/responses/common/error-handler.response"); // Path fix kar lena
 
 const SendNotificationFactory = async(user, contactMode, token, type, emailTemplate, smsTemplate, middleUri) => {
     try {
