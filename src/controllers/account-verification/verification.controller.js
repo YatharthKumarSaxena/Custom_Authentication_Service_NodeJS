@@ -1,5 +1,3 @@
-// Modules & Configs
-const { OK } = require("@configs/http-status.config");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { createToken } = require("@utils/issue-token.util");
 const { expiryTimeOfAccessToken } = require("@configs/token.config");
@@ -9,7 +7,13 @@ const {
     throwInternalServerError,
     throwBadRequestError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const {
+    verificationAlreadyVerifiedResponse,
+    verificationSuccessWithAutoLoginResponse,
+    verificationSuccessWithLimitReachedResponse
+} = require("@/responses/success/index");
 
 // Services Import
 const { verifyEmailService, verifyPhoneService } = require("@services/account-verification/verification.service");
@@ -40,14 +44,9 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
         if (success) {
             // Handle specific error types
             if (result.type === AuthErrorTypes.ALREADY_VERIFIED) {
-                return res.status(OK).json({
-                    success: true,
-                    message: `${result.message}`
-                });
+                return verificationAlreadyVerifiedResponse(res, result.message);
             }
             const { autoLoggedIn } = result;
-
-            let additionalMessage = "";
 
             // 2. Handle Auto Login (Common Logic)
             if (autoLoggedIn) {
@@ -60,7 +59,6 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
                 if (accessToken && headers) {
                     // C. Set Headers
                     res.set(headers);
-                    additionalMessage = " You have been automatically logged in.";
                     logWithTime(`🔄 Auto-login headers set for User ID: ${user.userId}`);
                 } else {
                     logWithTime(`⚠️ Auto-login active but failed to set headers for User ID: ${user.userId}`);
@@ -69,11 +67,7 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
 
             logWithTime(`✅ ${successMessageBase} for User ID: ${user.userId}`);
 
-            return res.status(OK).json({
-                success: true,
-                message: `${successMessageBase} successfully. Your account is now active.` + additionalMessage,
-                isAutoLoggedIn: autoLoggedIn
-            });
+            return verificationSuccessWithAutoLoginResponse(res, successMessageBase, autoLoggedIn);
         }
 
         if (!success) {
@@ -81,24 +75,12 @@ const handleContactVerification = async (req, res, serviceFunction, successMessa
             // Handle device/session limit errors (when auto-login fails due to policy)
             if (result.type === AuthErrorTypes.DEVICE_USER_LIMIT_REACHED) {
                 logWithTime(`⚠️ ${successMessageBase} completed but auto-login blocked: Device user limit reached for User ID: ${user.userId}`);
-                return res.status(OK).json({
-                    success: true,
-                    message: `${successMessageBase} successfully but login was not possible. ${result.message}`,
-                    isAutoLoggedIn: false,
-                    limitReached: true,
-                    limitType: "DEVICE_USER_LIMIT"
-                });
+                return verificationSuccessWithLimitReachedResponse(res, successMessageBase, result);
             }
             
             if (result.type === AuthErrorTypes.SESSION_LIMIT_REACHED) {
                 logWithTime(`⚠️ ${successMessageBase} completed but auto-login blocked: Session limit reached for User ID: ${user.userId}`);
-                return res.status(OK).json({
-                    success: true,
-                    message: `${successMessageBase} successfully but login was not possible. ${result.message}`,
-                    isAutoLoggedIn: false,
-                    limitReached: true,
-                    limitType: "SESSION_LIMIT"
-                });
+                return verificationSuccessWithLimitReachedResponse(res, successMessageBase, result);
             }
         }
 

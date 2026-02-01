@@ -1,4 +1,3 @@
-const { OK } = require("@configs/http-status.config");
 const { resendVerificationService } = require("@services/account-verification/resend-verification.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
@@ -8,9 +7,8 @@ const {
     throwBadRequestError,
     throwSpecificInternalServerError,
     throwConflictError
-} = require("@utils/error-handler.util");
-
-const { logWithTime } = require("@utils/time-stamps.util");
+} = require("@/responses/common/error-handler.response");
+const { resendVerificationSuccessReponse } = require("@/responses/success/index");
 
 const resendVerification = async (req, res) => {
     try {
@@ -43,14 +41,7 @@ const resendVerification = async (req, res) => {
             return throwSpecificInternalServerError(res, result.message);
         }
 
-        logWithTime(
-            `✅ Verification resent for User ${user.userId} via ${result.contactMode}`
-        );
-
-        return res.status(OK).json({
-            success: true,
-            message: `Verification ${result.type === "OTP" ? "code" : "link"} has been resent successfully.`
-        });
+        return resendVerificationSuccessReponse(res,user,result);
 
     } catch (err) {
         return throwInternalServerError(res, err);
