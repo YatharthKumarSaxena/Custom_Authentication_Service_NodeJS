@@ -1,4 +1,3 @@
-const { OK } = require("@configs/http-status.config");
 const { toggleTwoFactorService } = require("@services/account-management/two-factor.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
@@ -9,7 +8,9 @@ const {
     throwBadRequestError,
     throwAccessDeniedError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { twoFactorToggleSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
 const { isAdminId } = require("@/utils/auth.util");
@@ -57,10 +58,7 @@ const handleTwoFactorToggle = async (req, res, shouldEnable) => {
         }
 
         // Success
-        return res.status(OK).json({
-            success: true,
-            message: result.message
-        });
+        return twoFactorToggleSuccessResponse(res, result.message);
 
     } catch (err) {
         // Only unexpected errors

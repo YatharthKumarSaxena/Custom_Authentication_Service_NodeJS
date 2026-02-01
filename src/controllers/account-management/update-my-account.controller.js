@@ -1,4 +1,3 @@
-const { OK } = require("@configs/http-status.config");
 const { updateAccountService } = require("@services/account-management/update-account.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
@@ -6,7 +5,9 @@ const {
     throwInternalServerError,
     throwInvalidResourceError,
     throwConflictError
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { updateAccountNoChangeResponse, updateAccountSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
 const { logoutUserCompletely } = require("@/services/auth/auth-session.service");
@@ -50,10 +51,7 @@ const updateMyAccount = async (req, res) => {
             }
 
             // No change is NOT an error
-            return res.status(OK).json({
-                success: true,
-                message: result.message
-            });
+            return updateAccountNoChangeResponse(res, result.message);
         }
 
         // Logout if sensitive info changed
@@ -83,30 +81,7 @@ const updateMyAccount = async (req, res) => {
         }
 
         // Success response with verification status
-        let message = result.message;
-        
-        // Build dynamic message based on what was updated
-        if (result.emailVerificationSent || result.phoneVerificationSent) {
-            const verificationMessages = [];
-            
-            if (result.emailVerificationSent) {
-                verificationMessages.push("Verification email sent to your new email address");
-            }
-            
-            if (result.phoneVerificationSent) {
-                verificationMessages.push("Verification code sent to your new phone number");
-            }
-            
-            message = `Profile updated successfully. ${verificationMessages.join(". ")}.`;
-        }
-        
-        return res.status(OK).json({
-            success: true,
-            message,
-            updatedFields: result.updatedFields,
-            emailVerificationSent: result.emailVerificationSent || false,
-            phoneVerificationSent: result.phoneVerificationSent || false
-        });
+        return updateAccountSuccessResponse(res, result);
 
     } catch (err) {
         logWithTime(`❌ Fatal update account error: ${err.message}`);

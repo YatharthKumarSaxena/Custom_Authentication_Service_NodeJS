@@ -5,10 +5,11 @@ const {
     getLogIdentifiers, 
     throwTooManyRequestsError,
     throwAccessDeniedError, 
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { deactivateAccountSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
-const { OK } = require("@configs/http-status.config");
 const { deactivateAccountService } = require("@services/account-management/account-deactivation.service");
 const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 const { AuthErrorTypes } = require("@configs/enums.config"); 
@@ -65,11 +66,7 @@ const deactivateMyAccount = async (req, res) => {
         }
 
         // Response
-        return res.status(OK).json({
-            success: true,
-            message: result.message,
-            notice: "You have been logged out."
-        });
+        return deactivateAccountSuccessResponse(res, result.message);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

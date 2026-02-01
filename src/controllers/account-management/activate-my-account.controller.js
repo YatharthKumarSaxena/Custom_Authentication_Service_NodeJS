@@ -1,4 +1,3 @@
-const { OK } = require("@configs/http-status.config");
 const { activateAccountService } = require("@services/account-management/account-activation.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 const { isAdminId } = require("@/utils/auth.util");
@@ -10,7 +9,9 @@ const {
     throwConflictError,
     throwAccessDeniedError,
     getLogIdentifiers
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+
+const { activateAccountSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
 
@@ -49,11 +50,7 @@ const activateMyAccount = async (req, res) => {
             return throwConflictError(res, result.message);
         }
 
-        return res.status(OK).json({
-            success: true,
-            message: result.message,
-            suggestion: "Please login to continue."
-        });
+        return activateAccountSuccessResponse(res, result.message);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

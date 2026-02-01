@@ -1,6 +1,5 @@
 const { verifyPasswordWithRateLimit } = require("@services/password-management/password-verification.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
-const { OK } = require("@configs/http-status.config");
 const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 const {
     throwBadRequestError,
@@ -9,7 +8,8 @@ const {
     getLogIdentifiers,
     throwSpecificInternalServerError,
     throwTooManyRequestsError
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { changePasswordSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { updatePassword } = require("@/services/account-management/change-password.service");
 const { SecurityContext } = require("@/configs/security.config");
@@ -77,13 +77,7 @@ const changePassword = async (req, res) => {
         
         // 5. Response & Logs
         
-        logWithTime(`✅ Password changed for User (${user.userId}) from device (${device.deviceUUID})`);
-
-        return res.status(OK).json({
-            success: true,
-            message: "Password changed successfully.",
-            notice: logoutStatusMsg
-        });
+        return changePasswordSuccessResponse(res, user, device, logoutStatusMsg);
 
     } catch (err) {
         const getIdentifiers = getLogIdentifiers(req);
