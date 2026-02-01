@@ -1,6 +1,6 @@
 const { logWithTime } = require("@utils/time-stamps.util");
-const { throwInternalServerError, throwConflictError, throwSpecificInternalServerError, getLogIdentifiers } = require("@/utils/error-handler.util");
-const { OK } = require("@/configs/http-status.config");
+const { throwInternalServerError, throwConflictError, throwSpecificInternalServerError, getLogIdentifiers } = require("@/responses/common/error-handler.response");
+const { forgotPasswordSuccessResponse } = require("@/responses/success/index");
 const { forgotPasswordService } = require("@services/password-management/forgot-password.service");
 
 const forgotPassword = async (req, res) => {
@@ -20,16 +20,7 @@ const forgotPassword = async (req, res) => {
             return throwSpecificInternalServerError(res, result.message);
         }
 
-        const responses = [];
-        if (result.email) responses.push("Email sent");
-        if (result.phone) responses.push("SMS sent");
-
-        logWithTime(`✅ Forgot password process initiated for User ${user.userId} via ${responses.join(" & ")}`);
-
-        return res.status(OK).json({
-            success: true,
-            message: `Password reset initiated. ${responses.join(" & ")}.`
-        });
+        return forgotPasswordSuccessResponse(res, user, result);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);

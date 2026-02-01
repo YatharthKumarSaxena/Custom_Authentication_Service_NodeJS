@@ -1,10 +1,10 @@
-const { OK } = require("@configs/http-status.config");
 const { resetPasswordService } = require("@services/password-management/reset-password.service");
 const { 
     throwInternalServerError, 
     throwBadRequestError, 
     getLogIdentifiers 
-} = require("@utils/error-handler.util");
+} = require("@/responses/common/error-handler.response");
+const { resetPasswordSuccessResponse } = require("@/responses/success/index");
 const { logWithTime } = require("@utils/time-stamps.util");
 
 const resetPassword = async (req, res) => {
@@ -32,22 +32,7 @@ const resetPassword = async (req, res) => {
             return throwBadRequestError(res, result.message);
         }
 
-        logWithTime(`✅ Password reset successful for User ${user.userId} from device ${device.deviceUUID}`);
-        
-        if (!result.isLoggedOut) {
-            return res.status(OK).json({
-                success: true,
-                message: result.message,
-                notice: "Warning: Unable to log out all active sessions. Please verify your account security."
-            });
-        }
-        
-        // 4. Response
-        return res.status(OK).json({
-            success: true,
-            message: result.message,
-            notice: "All active sessions have been terminated. Please login with your new password."
-        });
+        return resetPasswordSuccessResponse(res, user, device, result.isLoggedOut);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);
