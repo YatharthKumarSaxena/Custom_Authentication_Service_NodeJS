@@ -1,4 +1,4 @@
-// utils/url.helper.js
+// utils/url.util.js
 
 const getFrontendUrl = (routePath, queryParams = {}) => {
     // 1. Base URL uthao

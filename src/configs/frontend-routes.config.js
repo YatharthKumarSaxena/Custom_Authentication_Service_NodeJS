@@ -8,7 +8,7 @@ const FRONTEND_ROUTES = {
     VERIFY_DEVICE: "/verify-device",
     // Other Routes
     DASHBOARD: "/dashboard",
-    PROFILE: "/user/profile"
+    ACCOUNT_DETAILS: "/profile"
 };
 
 module.exports = { FRONTEND_ROUTES };

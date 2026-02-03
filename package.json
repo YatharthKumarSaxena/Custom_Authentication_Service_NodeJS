@@ -20,6 +20,7 @@
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
+    "mongodb": "^7.0.0",
     "mongoose": "^8.15.1",
     "node-cron": "^4.1.0",
     "nodemailer": "^7.0.12",
