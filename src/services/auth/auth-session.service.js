@@ -4,7 +4,6 @@ const { AUTH_LOG_EVENTS } = require("@/configs/auth-log-events.config");
 const { syncDeviceData, syncUserDeviceMapping } = require("./device.service");
 const { errorMessage } = require("@/responses/common/error-handler.response");
 const { UserDeviceModel } = require("@models/user-device.model");
-const mongoose = require("mongoose");
 const { UserModel } = require("@models/user.model");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
 const { getUserContacts } = require("@utils/contact-selector.util");
@@ -18,9 +17,8 @@ const { storeAuthSession, deleteAllAuthSessions } = require("@services/integrati
  * NOTE: Caller MUST pass deviceObjectId (MongoDB _id), NOT deviceUUID.
  */
 
-const loginTheUserCore = async (user, deviceObjectId, refreshToken, options = {}) => {
+const loginTheUserCore = async (user, deviceObjectId, refreshToken) => {
     try {
-        const { session } = options;
 
         // Using 'upsert' here ensures record exists with Token.
         // We use deviceObjectId (Mongo ID) because Schema links to Device Collection.
@@ -36,7 +34,7 @@ const loginTheUserCore = async (user, deviceObjectId, refreshToken, options = {}
                 $inc: { loginCount: 1 },
                 $setOnInsert: { firstSeenAt: new Date() }
             },
-            { upsert: true, new: true, session: session } // Session Passed
+            { upsert: true, new: true }
         );
 
         // SAFE LOGIC: Use loginCount to detect first-time login
@@ -60,9 +58,8 @@ const loginTheUserCore = async (user, deviceObjectId, refreshToken, options = {}
  * Logs out user from ALL devices and clears User flags.
  * Atomic Transaction Safe.
  */
-const logoutUserCompletelyCore = async (user, options = {}) => {
+const logoutUserCompletelyCore = async (user) => {
     try {
-        const { session } = options;
 
         // Step 1: Bulk Update (Much faster & safer than for-loop)
         // Sare devices jahan token null nahi hai, unhe null kar do
@@ -74,8 +71,7 @@ const logoutUserCompletelyCore = async (user, options = {}) => {
                     jwtTokenIssuedAt: null,
                     lastLogoutAt: new Date()
                 }
-            },
-            { session: session } // Session Passed
+            }
         );
 
         logWithTime(`ℹ️  Cleared tokens for ${updateResult.modifiedCount} devices.`);
@@ -91,8 +87,7 @@ const logoutUserCompletelyCore = async (user, options = {}) => {
                     isVerified: false,
                     'devices.info': []
                 }
-            },
-            { session: session }
+            }
         );
 
         logWithTime(`✅ User (${user.userId}) core flags reset successfully.`);
@@ -113,28 +108,20 @@ const logoutUserCompletely = async (user, device, requestId, context = "general 
     // Safety: Device exist karta hai ya nahi check kar lo
     const deviceUUID = device.deviceUUID;
 
-    // 1. Start Session
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
-        // 2. Core Logout Logic (Database Operations)
-        const coreLoggedOut = await logoutUserCompletelyCore(user, { session });
+        // Core Logout Logic (Database Operations)
+        const coreLoggedOut = await logoutUserCompletelyCore(user);
 
         if (!coreLoggedOut) {
             throw new Error("Core logout operation failed");
         }
-
-        // 4. COMMIT TRANSACTION
-        await session.commitTransaction();
-        session.endSession();
 
         logWithTime(`👋 User (${user.userId}) fully logged out from ALL devices via ${deviceUUID}.`);
 
         // DELETE ALL REDIS SESSIONS (MICROSERVICE MODE)
         await deleteAllAuthSessions(user.userId);
 
-        // 5. FIRE LOGS (After Commit)
+        // FIRE LOGS
         // "Logout All" ek bada event hai, isliye await karna safe hai
         logAuthEvent(
             user,
@@ -145,7 +132,7 @@ const logoutUserCompletely = async (user, device, requestId, context = "general 
             null
         );
 
-        // 6. Send Notification
+        // Send Notification
         const contactInfo = getUserContacts(user);
         sendNotification({
             contactInfo,
@@ -157,10 +144,6 @@ const logoutUserCompletely = async (user, device, requestId, context = "general 
         return true;
 
     } catch (error) {
-        // Rollback
-        await session.abortTransaction();
-        session.endSession();
-
         logWithTime(`❌ Error in logoutUserCompletely for user (${user.userId})`);
         errorMessage(error);
         return false;
@@ -168,31 +151,21 @@ const logoutUserCompletely = async (user, device, requestId, context = "general 
 };
 
 const loginUserOnDevice = async (user, device, requestId, refreshToken, context = "standard login") => {
-    // 1. Start Session
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     // Logs collect karne ke liye array
     const logsToFire = [];
 
     try {
-        // 2. Device Sync (Get Data + Audit Payload)
-        const { deviceDoc, auditLogPayload: deviceLog } = await syncDeviceData(device, { session });
+        // Device Sync (Get Data + Audit Payload)
+        const { deviceDoc, auditLogPayload: deviceLog } = await syncDeviceData(device);
         if (deviceLog) logsToFire.push({ user, device: deviceDoc, ...deviceLog });
 
-        // 3. Core Login
-        const coreLoggedIn = await loginTheUserCore(user, deviceDoc._id, refreshToken, { session });
+        // Core Login
+        const coreLoggedIn = await loginTheUserCore(user, deviceDoc._id, refreshToken);
         if (!coreLoggedIn) throw new Error("Core login failed");
 
-        // 4. Mapping Sync (Get Data + Audit Payload)
-        const { mappingDoc, auditLogPayload: mappingLog } = await syncUserDeviceMapping(user, deviceDoc, { session });
+        // Mapping Sync (Get Data + Audit Payload)
+        const { mappingDoc, auditLogPayload: mappingLog } = await syncUserDeviceMapping(user, deviceDoc);
         if (mappingLog) logsToFire.push({ user, device: deviceDoc, ...mappingLog });
-
-        // STORE SESSION IN REDIS (MICROSERVICE MODE)
-
-        // 5. COMMIT TRANSACTION (Data Safe Now)
-        await session.commitTransaction();
-        session.endSession(); // Close session immediately
 
         // Store session in Redis (only in microservice mode)
         await storeAuthSession(
@@ -201,14 +174,11 @@ const loginUserOnDevice = async (user, device, requestId, refreshToken, context 
             refreshToken
         );
         
-        logWithTime(`✅ Transaction committed successfully for user ${user.userId}`);
+        logWithTime(`✅ Login successful for user ${user.userId}`);
 
-        // 6. 🚀 FIRE LOGS (After Commit - Safe Zone)
-        // Ab DB rollback ka dar nahi, aur logs async chalenge
-
+        // 🚀 FIRE LOGS
         // A. Pending Audit Logs (Device/Mapping changes)
         for (const log of logsToFire) {
-            // Await lagana hai lagao, nahi to background me chhod do (User requirement ke hisab se)
             logAuthEvent(log.user, log.device, requestId, log.event, log.message, log.metadata);
         }
 
@@ -218,14 +188,8 @@ const loginUserOnDevice = async (user, device, requestId, refreshToken, context 
         return true;
 
     } catch (error) {
-        // Rollback
-        await session.abortTransaction();
-        session.endSession();
-
-        logWithTime(`❌ Transaction aborted: ${error.message}`);
+        logWithTime(`❌ Login failed: ${error.message}`);
         errorMessage(error);
-
-        // Optional: Fail hone ka log alag se record kar sakte ho (without transaction)
         return false;
     }
 };
