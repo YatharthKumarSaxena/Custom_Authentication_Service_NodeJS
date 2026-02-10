@@ -86,5 +86,6 @@ module.exports = {
     encoding: "hex",
     secret: process.env.VERIFICATION_LINK_SECRET
   },
-  ENABLE_DEVICE_SOFT_REPLACE: process.env.ENABLE_DEVICE_SOFT_REPLACE === 'true'
+  ENABLE_DEVICE_SOFT_REPLACE: process.env.ENABLE_DEVICE_SOFT_REPLACE === 'true',
+  ENABLE_AUTH_SESSION_LOGGING: process.env.ENABLE_AUTH_SESSION_LOGGING === 'true'
 };

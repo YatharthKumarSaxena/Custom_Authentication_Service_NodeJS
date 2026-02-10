@@ -1,6 +1,7 @@
 const { AuthLogModel } = require("@models/auth-logs.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage } = require("@/responses/common/error-handler.response");
+const { ENABLE_AUTH_SESSION_LOGGING } = require("@/configs/security.config");
 
 /**
  * Logs an authentication event (fire-and-forget)
@@ -8,6 +9,8 @@ const { errorMessage } = require("@/responses/common/error-handler.response");
 const logAuthEvent = (user, device, requestId, eventType, description, logOptions = {}) => {
     (async () => {
         try {
+
+            if (!ENABLE_AUTH_SESSION_LOGGING)return;
             const userId = user.userId;
             
             const baseLog = {
