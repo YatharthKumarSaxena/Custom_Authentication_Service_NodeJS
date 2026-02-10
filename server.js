@@ -13,9 +13,13 @@ const { PORT_NUMBER } = require("@configs/server.config");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage } = require("@/responses/common/error-handler.response");
 const { bootstrapSuperAdmin } = require("@services/bootstrap/super-admin-bootstrap.service");
+const { logSystemConfiguration } = require("@services/bootstrap/system-info.service");
 
 (async () => {
     try {
+        // 📋 LOG SYSTEM CONFIGURATION
+        await logSystemConfiguration();
+
         // 🔑 DATABASE CONNECTION (CORRECT WAY)
         await mongoose.connect(DB_URL);
         logWithTime("✅ Connection established with MongoDB Successfully");
