@@ -1,7 +1,8 @@
 const { VerificationPurpose } = require("./enums.config");
+const { getMyEnv, getMyEnvAsNumber, getMyEnvAsBool, getMyEnvAsArray } = require("../utils/env.util");
 
 module.exports = {
-  SALT: Number(process.env.SALT),
+  SALT: getMyEnvAsNumber('SALT', 10),
   usersPerDevice: 1,
   deviceThreshold: {
     ADMIN: 1,
@@ -14,9 +15,9 @@ module.exports = {
     DEACTIVATE_ACCOUNT: "deactivateAccount",
     TOGGLE_2FA: "toggle2FA"
   },
-  authMode: process.env.AUTH_MODE,
-  auditMode: process.env.AUDIT_MODE,
-  verificationMode: process.env.VERIFICATION_MODE,
+  authMode: getMyEnv('AUTH_MODE'),
+  auditMode: getMyEnv('AUDIT_MODE'),
+  verificationMode: getMyEnv('VERIFICATION_MODE'),
   otp: {
     length: 6,                // digits in OTP
     maxAttempts: 5,
@@ -62,30 +63,30 @@ module.exports = {
       LINK_EXPIRY_MINUTES: 30
     }
   },
-  AUTO_LOGIN_AFTER_VERIFICATION: process.env.AUTO_LOGIN_AFTER_VERIFICATION === 'true',
-  AUTO_EMAIL_VERIFICATION: process.env.AUTO_EMAIL_VERIFICATION === 'true',
-  AUTO_PHONE_VERIFICATION: process.env.AUTO_PHONE_VERIFICATION === 'true',
-  IS_TWO_FA_FEATURE_ENABLED: process.env.IS_2FA_FEATURE_ENABLED === 'true',
-  WHITELISTED_DEVICE_UUIDS: process.env.WHITELISTED_DEVICE_UUIDS ? process.env.WHITELISTED_DEVICE_UUIDS.split(',') : [],
-  FIRST_NAME_SETTING: process.env.FIRST_NAME_SETTING,
-  ENABLE_AUTH_SESSION_LOGGING: process.env.ENABLE_AUTH_SESSION_LOGGING === 'true',
+  AUTO_LOGIN_AFTER_VERIFICATION: getMyEnvAsBool('AUTO_LOGIN_AFTER_VERIFICATION'),
+  AUTO_EMAIL_VERIFICATION: getMyEnvAsBool('AUTO_EMAIL_VERIFICATION'),
+  AUTO_PHONE_VERIFICATION: getMyEnvAsBool('AUTO_PHONE_VERIFICATION'),
+  IS_TWO_FA_FEATURE_ENABLED: getMyEnvAsBool('IS_2FA_FEATURE_ENABLED'),
+  WHITELISTED_DEVICE_UUIDS: getMyEnvAsArray('WHITELISTED_DEVICE_UUIDS'),
+  FIRST_NAME_SETTING: getMyEnv('FIRST_NAME_SETTING'),
+  ENABLE_AUTH_SESSION_LOGGING: getMyEnvAsBool('ENABLE_AUTH_SESSION_LOGGING'),
   ADMIN: {
-    NAME: process.env.ADMIN_NAME || null,
-    EMAIL: process.env.ADMIN_EMAIL_ID || null,
-    PASSWORD: process.env.ADMIN_PASSWORD,
-    COUNTRY_CODE: process.env.ADMIN_COUNTRY_CODE || null,
-    LOCAL_NUMBER: process.env.ADMIN_LOCAL_NUMBER || null
+    NAME: getMyEnv('ADMIN_NAME', null),
+    EMAIL: getMyEnv('ADMIN_EMAIL_ID', null),
+    PASSWORD: getMyEnv('ADMIN_PASSWORD'),
+    COUNTRY_CODE: getMyEnv('ADMIN_COUNTRY_CODE', null),
+    LOCAL_NUMBER: getMyEnv('ADMIN_LOCAL_NUMBER', null)
   },
   DEVICE: {
-    DEVICE_NAME: process.env.DEVICE_NAME || "System Device",
-    DEVICE_TYPE: process.env.DEVICE_TYPE || "LAPTOP",
-    DEVICE_UUID: process.env.DEVICE_UUID || "00000000-0000-4000-8000-000000000000"
+    DEVICE_NAME: getMyEnv('DEVICE_NAME', "System Device"),
+    DEVICE_TYPE: getMyEnv('DEVICE_TYPE', "LAPTOP"),
+    DEVICE_UUID: getMyEnv('DEVICE_UUID', "00000000-0000-4000-8000-000000000000")
   },
   link: {
     length: 32,
     algorithm: "sha256",
     encoding: "hex",
-    secret: process.env.VERIFICATION_LINK_SECRET
+    secret: getMyEnv('VERIFICATION_LINK_SECRET')
   },
-  ENABLE_DEVICE_SOFT_REPLACE: process.env.ENABLE_DEVICE_SOFT_REPLACE === 'true'
+  ENABLE_DEVICE_SOFT_REPLACE: getMyEnvAsBool('ENABLE_DEVICE_SOFT_REPLACE')
 };
