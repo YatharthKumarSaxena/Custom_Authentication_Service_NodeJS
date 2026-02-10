@@ -68,6 +68,7 @@ module.exports = {
   IS_TWO_FA_FEATURE_ENABLED: process.env.IS_2FA_FEATURE_ENABLED === 'true',
   WHITELISTED_DEVICE_UUIDS: process.env.WHITELISTED_DEVICE_UUIDS ? process.env.WHITELISTED_DEVICE_UUIDS.split(',') : [],
   FIRST_NAME_SETTING: process.env.FIRST_NAME_SETTING,
+  ENABLE_AUTH_SESSION_LOGGING: process.env.ENABLE_AUTH_SESSION_LOGGING === 'true',
   ADMIN: {
     NAME: process.env.ADMIN_NAME || null,
     EMAIL: process.env.ADMIN_EMAIL_ID || null,
