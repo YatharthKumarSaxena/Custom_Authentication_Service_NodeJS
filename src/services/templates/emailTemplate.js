@@ -139,6 +139,34 @@ const userTemplate = {
         details: {} // Deactivated At
     },
 
+    // Account Permanently Deleted (Hard Delete Warning)
+    accountPermanentlyDeleted: {
+        ...defaultConfig,
+        subject: "Account Permanently Deleted - Action Required",
+        event_name: "Account Deletion",
+        action: "Permanently Deleted",
+        status: "Deleted", // 🔴 Red Badge
+        message_intro: "Your account has been permanently deleted as requested.",
+        notes: "All your data including profile information, sessions, and authentication history has been permanently removed from our systems. This action cannot be undone. You will need to create a new account if you wish to use our services again.",
+        details: {} // Deleted At, User ID
+    },
+
+    // Account Soft Deleted with Recovery Option
+    accountSoftDeleted: {
+        ...defaultConfig,
+        subject: "Account Deleted - Recovery Available",
+        event_name: "Account Soft Deletion",
+        action: "Account Deleted",
+        status: "Recoverable", // 🟡 Yellow Badge
+        message_intro: "Your account has been deleted as requested.",
+        actionbutton_text: "Recover Account",
+        actionlink: "<LINK>/activate",
+        fallback_note: "Or copy this link to recover: {{link}}",
+        action_link: "<LINK>/activate",
+        notes: "You can recover your account within {{recoveryDays}} days by logging in. After this period, your account will be permanently deleted and cannot be recovered.",
+        details: {} // Deleted At, Recovery Deadline
+    },
+
     // Account Reactivated (Welcome Back)
     accountReactivated: {
         ...defaultConfig,

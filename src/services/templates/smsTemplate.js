@@ -56,6 +56,18 @@ const userSmsTemplate = {
         dlt_template_id: "1007XXXXXXX"
     },
 
+    // Account Permanently Deleted
+    accountPermanentlyDeleted: {
+        message: "Your [App Name] account has been permanently deleted. All data has been removed. Create a new account anytime to rejoin.",
+        dlt_template_id: "1007XXXXXXX"
+    },
+
+    // Account Soft Deleted with Recovery
+    accountSoftDeleted: {
+        message: "Your [App Name] account has been deleted. You can recover it by logging in within {{recoveryDays}} days. After that, it will be permanently deleted.",
+        dlt_template_id: "1007XXXXXXX"
+    },
+
     // Account Reactivated
     accountReactivated: {
         message: "Welcome back! Your [App Name] account has been reactivated successfully.",
