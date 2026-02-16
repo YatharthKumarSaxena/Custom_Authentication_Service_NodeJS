@@ -1,4 +1,5 @@
-// Extracting the required modules
+// Hard Delete Account Controller
+
 const { 
     throwInvalidResourceError, 
     throwInternalServerError, 
@@ -7,21 +8,23 @@ const {
     throwSpecificInternalServerError
 } = require("@/responses/common/error-handler.response");
 
-const { deactivateAccountSuccessResponse } = require("@/responses/success/index");
+const { hardDeleteAccountSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
-const { deactivateAccountService } = require("@services/account-management/account-deactivation.service");
+const { hardDeleteAccountService } = require("@services/account-management/account-deletion.service");
 const { logoutUserCompletely } = require("@services/auth/auth-session.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
 
-const deactivateMyAccount = async (req, res) => {
+const hardDeleteMyAccount = async (req, res) => {
     try {
         const user = req.user;
         const device = req.device;
         const { password } = req.body;
         const requestId = req.requestId;
 
-        const result = await deactivateAccountService(user, device, password, requestId);
+        // Policy and admin checks are handled by middleware
+        // Call service
+        const result = await hardDeleteAccountService(user, device, password, requestId);
 
         if (!result.success) {
 
@@ -33,10 +36,6 @@ const deactivateMyAccount = async (req, res) => {
                 return throwInvalidResourceError(res, "Password", result.message);
             }
 
-            if (result.type === AuthErrorTypes.ALREADY_DEACTIVATED) {
-                return throwInvalidResourceError(res, "Account", result.message);
-            }
-
             return throwSpecificInternalServerError(res, result.message);
         }
 
@@ -45,25 +44,25 @@ const deactivateMyAccount = async (req, res) => {
             user,
             device,
             requestId,
-            "Account Deactivation"
+            "Account Hard Deletion"
         );
 
         if (isLoggedOut) {
             res.set("x-access-token", "");
         } else {
             logWithTime(
-                `⚠️ Warning: Account deactivated but logout failed for User ${user.userId}`
+                `⚠️ Warning: Account deleted but logout failed for User ${user.userId}`
             );
         }
 
         // Response
-        return deactivateAccountSuccessResponse(res, result.message);
+        return hardDeleteAccountSuccessResponse(res, result.message);
 
     } catch (err) {
         const identifiers = getLogIdentifiers(req);
-        logWithTime(`❌ Deactivate account error for ${identifiers}: ${err.message}`);
+        logWithTime(`❌ Hard delete account error for ${identifiers}: ${err.message}`);
         return throwInternalServerError(res, err);
     }
 };
 
-module.exports = { deactivateMyAccount };
+module.exports = { hardDeleteMyAccount };
