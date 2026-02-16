@@ -10,7 +10,8 @@ const {
   VerifyMode,
   AuditMode,
   FirstNameFieldSetting,
-  ContactModes
+  ContactModes,
+  DeletionPolicy
 } = require("@configs/enums.config");
 
 /**
@@ -48,6 +49,7 @@ const VerifyModeHelper = createEnumHelper(VerifyMode, "VerifyMode");
 const AuditModeHelper = createEnumHelper(AuditMode, "AuditMode");
 const FirstNameFieldSettingHelper = createEnumHelper(FirstNameFieldSetting, "FirstNameFieldSetting");
 const ContactModesHelper = createEnumHelper(ContactModes, "ContactModes");
+const DeletionPolicyHelper = createEnumHelper(DeletionPolicy, "DeletionPolicy");
 
 module.exports = {
     DeviceTypeHelper,
@@ -57,5 +59,6 @@ module.exports = {
     VerifyModeHelper,
     AuditModeHelper,
     FirstNameFieldSettingHelper,
-    ContactModesHelper
+    ContactModesHelper,
+    DeletionPolicyHelper
 };
