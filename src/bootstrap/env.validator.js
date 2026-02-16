@@ -10,7 +10,8 @@ const {
   VerifyModeHelper,
   AuditModeHelper,
   FirstNameFieldSettingHelper,
-  DeviceTypeHelper
+  DeviceTypeHelper,
+  DeletionPolicyHelper
 } = require("@utils/enum-validators.util");
 
 /**
@@ -51,7 +52,8 @@ function validateEnvironment() {
     "VERIFICATION_MODE",
     "AUDIT_MODE",
     "FIRST_NAME_SETTING",
-    "DEVICE_TYPE"
+    "DEVICE_TYPE",
+    "DELETION_POLICY"
   ], "Configuration Enums");
 
   // ===== AUTH MODE VALIDATION =====
@@ -77,6 +79,11 @@ function validateEnvironment() {
 
   // ===== DEVICE TYPE VALIDATION =====
   if (!DeviceTypeHelper.validate(process.env.DEVICE_TYPE)) {
+    process.exit(1);
+  }
+
+  // ===== DELETION POLICY VALIDATION =====
+  if (!DeletionPolicyHelper.validate(process.env.DELETION_POLICY)) {
     process.exit(1);
   }
 
