@@ -57,7 +57,7 @@ const hardDeleteAccountService = async (user, device, plainPassword, requestId) 
             user,
             device,
             requestId,
-            AUTH_LOG_EVENTS.HARD_DELETE,
+            AUTH_LOG_EVENTS.DELETE_ACCOUNT,
             `User account with userId: ${userIdStr} permanently deleted from device ${device.deviceUUID}.`,
             null
         );

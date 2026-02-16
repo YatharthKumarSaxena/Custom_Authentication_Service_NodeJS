@@ -4,6 +4,8 @@
  * NO SECRETS, NO AUTH MODES, NO VERIFICATION MODES
  */
 
+const { DeletionPolicy } = require("@/configs/enums.config");
+
 function applyEnvDefaults() {
 
   // Server Configuration
@@ -27,6 +29,9 @@ function applyEnvDefaults() {
   process.env.AUTO_PHONE_VERIFICATION ||= "false";
   process.env.IS_2FA_FEATURE_ENABLED ||= "false";
   process.env.ENABLE_DEVICE_SOFT_REPLACE ||= "false";
+
+  // Account Deletion Settings
+  process.env.DELETION_POLICY ||= DeletionPolicy.SOFT_DELETE;
 
   // First Name Setting
   process.env.FIRST_NAME_SETTING ||= "Optional";
