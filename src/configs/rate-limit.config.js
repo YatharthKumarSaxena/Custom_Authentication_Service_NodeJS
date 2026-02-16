@@ -111,6 +111,14 @@ module.exports = {
       message: "Too many deactivate account attempts."
     },
 
+    hardDeleteMyAccount: {
+      maxRequests: 10,
+      windowMs: 60 * 60 * 1000,
+      prefix: "hard_delete_my_account",
+      reason: "Account permanent deletion abuse",
+      message: "Too many hard delete account attempts. This action is irreversible."
+    },
+
     changePassword: {
       maxRequests: 20,
       windowMs: 60 * 60 * 1000,

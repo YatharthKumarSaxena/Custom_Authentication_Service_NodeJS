@@ -93,6 +93,12 @@ const Token = Object.freeze({
     REFRESH: "REFRESH"
 });
 
+const DeletionPolicy = Object.freeze({
+    SOFT_DELETE: "SOFT_DELETE",
+    HARD_DELETE: "HARD_DELETE",
+    HYBRID: "HYBRID"
+});
+
 module.exports = {
     AuthModes,
     UserTypes,
@@ -105,5 +111,6 @@ module.exports = {
     RequestLocation,
     FirstNameFieldSetting,
     AuditMode,
-    ServiceNames
+    ServiceNames,
+    DeletionPolicy
 }

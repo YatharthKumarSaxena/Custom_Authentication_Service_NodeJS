@@ -69,6 +69,16 @@ const FieldDefinitions = {
     }
   },
   
+  // Hard Delete Account (Permanent Deletion)
+  HARD_DELETE_ACCOUNT: {
+    PASSWORD: {
+      field: 'password',
+      required: true,
+      validation: validationRules.password,
+      description: 'Password confirmation for permanent account deletion'
+    }
+  },
+  
   // Handle 2FA
   HANDLE_2FA: {
     PASSWORD: {

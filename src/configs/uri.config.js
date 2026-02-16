@@ -43,6 +43,7 @@ module.exports = {
     ACCOUNT_MANAGEMENT_ROUTES: {
         ACTIVATE_ACCOUNT: `/activate`,
         DEACTIVATE_ACCOUNT: `/deactivate`,
+        HARD_DELETE_ACCOUNT: `/hard-delete`,
         ENABLE_2FA: `/enable-2fa`,
         DISABLE_2FA: `/disable-2fa`,
         UPDATE_ACCOUNT_DETAILS: `/update-details`,
