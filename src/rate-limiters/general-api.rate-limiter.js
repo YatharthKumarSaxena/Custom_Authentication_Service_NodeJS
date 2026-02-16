@@ -11,6 +11,9 @@ const signOutDeviceRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.s
 // middlewares/rateLimit_deactivateAccount.js
 const deactivateAccountRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.deactivateMyAccount);
 
+// middlewares/rateLimit_hardDeleteAccount.js
+const hardDeleteAccountRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.hardDeleteMyAccount);
+
 // middlewares/rateLimit_changePassword.js
 const changePasswordRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.changePassword);
 
@@ -33,6 +36,7 @@ const disable2FARateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.disa
 const userAndDeviceBasedRateLimiters = {
     signOutRateLimiter,
     deactivateAccountRateLimiter,
+    hardDeleteAccountRateLimiter,
     changePasswordRateLimiter,
     getMyActiveDevicesRateLimiter,
     getUserAuthLogsRateLimiter,
