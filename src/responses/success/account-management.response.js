@@ -68,13 +68,22 @@ const deactivateAccountSuccessResponse = (res, message) => {
     });
 };
 
+const hardDeleteAccountSuccessResponse = (res, message) => {
+    return res.status(OK).json({
+        success: true,
+        message: message,
+        notice: "Your account and all associated data have been permanently deleted. You have been logged out."
+    });
+};
+
 const accountManagementSuccessResponses = {
     changePasswordSuccessResponse,
     updateAccountNoChangeResponse,
     updateAccountSuccessResponse,
     twoFactorToggleSuccessResponse,
     activateAccountSuccessResponse,
-    deactivateAccountSuccessResponse
+    deactivateAccountSuccessResponse,
+    hardDeleteAccountSuccessResponse
 }
 
 module.exports = {
