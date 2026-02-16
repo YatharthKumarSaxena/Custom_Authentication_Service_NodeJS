@@ -17,6 +17,8 @@ Shared middleware components used across multiple routes. Provide common functio
 | is-user-blocked.middleware.js | Checks if user account is blocked |
 | verify-device-field.middleware.js | Validates device-related fields |
 | verify-token.middleware.js | Validates authentication tokens |
+| check-request-id.middleware.js | Validates request ID |
+| protect-admin.middleware.js | Blocks admin users from specific operations |
 
 ## 🔗 Key Files
 - **global-error-handler.middleware.js**: Centralized error handling for all routes, formats error responses
@@ -26,6 +28,7 @@ Shared middleware components used across multiple routes. Provide common functio
 - **is-device-blocked.middleware.js**: Prevents access from blocked devices
 - **is-user-account-active.middleware.js**: Ensures account is not deactivated
 - **verify-device-field.middleware.js**: Validates device information in requests
+- **protect-admin.middleware.js**: Prevents admin users from operations like account deletion/deactivation
 - **index.js**: Module exports for common middleware
 
 ## 📝 Usage Notes
@@ -35,3 +38,4 @@ Shared middleware components used across multiple routes. Provide common functio
 - Provides consistent security enforcement
 - Global error handler should be last middleware in the chain
 - Critical for application-wide security and error handling
+- **protect-admin** blocks admin users from self-destructive operations (deletion, deactivation)
