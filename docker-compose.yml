@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongo-rs:
     image: mongo:6.0  # MongoDB version 6
@@ -11,3 +9,9 @@ services:
     command: ["--replSet", "rs0", "--bind_ip_all"]
     volumes:
       - ./mongo-data:/data/db # Data yahan save hoga taaki restart par ude nahi
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo-local-rs:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      retries: 10
+      start_period: 10s
