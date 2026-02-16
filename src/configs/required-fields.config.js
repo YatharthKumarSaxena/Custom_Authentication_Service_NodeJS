@@ -20,6 +20,7 @@ const signInField = getRequiredFields(FieldDefinitions.SIGN_IN);
 const activateAccount = getRequiredFields(FieldDefinitions.ACTIVATE_ACCOUNT);
 const deactivateAccount = getRequiredFields(FieldDefinitions.DEACTIVATE_ACCOUNT);
 const handle2FA = getRequiredFields(FieldDefinitions.HANDLE_2FA);
+const hardDeleteAccount = getRequiredFields(FieldDefinitions.HARD_DELETE_ACCOUNT);
 const changePassword = getRequiredFields(FieldDefinitions.CHANGE_PASSWORD);
 const resetPassword = getRequiredFields(FieldDefinitions.RESET_PASSWORD);
 const verifyEmail = getRequiredFields(FieldDefinitions.VERIFY_EMAIL);
@@ -36,5 +37,6 @@ module.exports = {
     resetPassword,
     verifyEmail,
     verifyPhone,
-    resendVerification
+    resendVerification,
+    hardDeleteAccount
 };
