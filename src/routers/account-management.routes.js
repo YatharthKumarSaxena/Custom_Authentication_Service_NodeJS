@@ -13,6 +13,7 @@ const { commonMiddlewares } = require("@middlewares/common/index");
 const {
     ACTIVATE_ACCOUNT,
     DEACTIVATE_ACCOUNT,
+    HARD_DELETE_ACCOUNT,
     ENABLE_2FA,
     DISABLE_2FA,
     UPDATE_ACCOUNT_DETAILS,
@@ -28,17 +29,29 @@ accountManagementRouter.post(ACTIVATE_ACCOUNT, [
     accountManagementMiddlewares.activateAccountFieldPresenceMiddleware
 ], accountManagementControllers.activateMyAccount);
 
-// Deactivate Account
+// Deactivate Account (Soft Delete)
 accountManagementRouter.post(DEACTIVATE_ACCOUNT, [
     rateLimiters.deactivateAccountRateLimiter,
     ...baseAuthMiddlewares,
+    commonMiddlewares.protectAdmin,
+    accountManagementMiddlewares.checkSoftDeleteAllowed,
     accountManagementMiddlewares.deactivateAccountFieldPresenceMiddleware
 ], accountManagementControllers.deactivateMyAccount);
+
+// Hard Delete Account (Permanent Deletion)
+accountManagementRouter.delete(HARD_DELETE_ACCOUNT, [
+    rateLimiters.hardDeleteAccountRateLimiter,
+    ...baseAuthMiddlewares,
+    commonMiddlewares.protectAdmin,
+    accountManagementMiddlewares.checkHardDeleteAllowed,
+    accountManagementMiddlewares.hardDeleteAccountFieldPresenceMiddleware
+], accountManagementControllers.hardDeleteMyAccount);
 
 // Enable 2FA
 accountManagementRouter.post(ENABLE_2FA, [
     rateLimiters.enable2FARateLimiter,
     ...baseAuthMiddlewares,
+    accountManagementMiddlewares.check2FAEnabled,
     accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.enable2FA);
 
@@ -46,6 +59,7 @@ accountManagementRouter.post(ENABLE_2FA, [
 accountManagementRouter.post(DISABLE_2FA, [
     rateLimiters.disable2FARateLimiter,
     ...baseAuthMiddlewares,
+    accountManagementMiddlewares.check2FAEnabled,
     accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.disable2FA);
 
