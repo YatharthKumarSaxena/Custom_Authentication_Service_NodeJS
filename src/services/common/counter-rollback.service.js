@@ -1,7 +1,7 @@
 const { CounterModel } = require("@models/counter.model");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { errorMessage } = require("@/responses/common/error-handler.response");
-const { userIDPrefix } = require("@configs/system.config");
+const { adminIdPrefix } = require("@configs/id-prefixes.config");
 
 /**
  * Rollback admin counter after failed admin creation
@@ -12,7 +12,7 @@ const { userIDPrefix } = require("@configs/system.config");
 const rollbackAdminCounter = async () => {
   try {
     const counter = await CounterModel.findOneAndUpdate(
-      { _id: adminIDPrefix },
+      { _id: adminIdPrefix },
       { $inc: { seq: -1 } },
       { new: true }
     );
@@ -25,7 +25,7 @@ const rollbackAdminCounter = async () => {
     if (counter.seq < 0) {
       // Prevent negative sequence
       await CounterModel.findOneAndUpdate(
-        { _id: adminIDPrefix },
+        { _id: adminIdPrefix },
         { $set: { seq: 0 } }
       );
       logWithTime("⚠️ Counter was negative, reset to 0");
