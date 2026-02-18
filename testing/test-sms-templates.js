@@ -7,7 +7,7 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 require("module-alias/register");
 require("dotenv").config();
-const { sendSMS } = require("@services/sms.service");
+const { sendSMS } = require("@/services/common/sms.service");
 const { generateSmsMessage } = require("@utils/sms-generator.util");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { logWithTime } = require("@utils/time-stamps.util");

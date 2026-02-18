@@ -1,6 +1,6 @@
 const { UserModel } = require("@models/user.model");
 const { DeviceModel } = require("@models/device.model");
-const { makeUserId } = require("@services/userId.service");
+const { makeUserId } = require("@/services/common/userId.service");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { sendNotification } = require("@utils/notification-dispatcher.util");

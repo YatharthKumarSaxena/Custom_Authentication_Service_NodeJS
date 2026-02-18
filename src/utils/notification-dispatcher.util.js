@@ -1,8 +1,8 @@
 // src/utils/notification.util.js
 
 const { ContactModes } = require("../configs/enums.config");
-const { sendEmail } = require("@services/mail.service");
-const { sendSMS } = require("../services/sms.service");
+const { sendEmail } = require("@/services/common/mail.service");
+const { sendSMS } = require("@/services/common/sms.service");
 const { generateEmailHtml } = require("./email-generator.util");
 const { generateSmsMessage } = require("./sms-generator.util");
 const { logWithTime } = require("./time-stamps.util");
