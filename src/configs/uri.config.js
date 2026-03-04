@@ -59,6 +59,10 @@ module.exports = {
         FORGOT_PASSWORD: `/forgot-password`,
         RESET_PASSWORD: `/reset-password`
     },
-    // Admin-specific routes (e.g. category creation, update, delete)
 
+    // Admin-specific routes (e.g. category creation, update, delete)
+    INTERNAL_ROUTES: {
+        PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE: `/admin-panel/health`, // /admin-panel-service/api/v1/internal/auth/health
+        PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE: `/software-management/health` // /software-management-service/api/v1/internal/software/health
+    }
 }

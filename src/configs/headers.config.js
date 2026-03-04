@@ -6,6 +6,10 @@ const DEVICE_HEADERS = {
 
 const REQUEST_HEADERS = {
     REQUEST_ID: "x-request-id"
-}
+};
 
-module.exports = { DEVICE_HEADERS, REQUEST_HEADERS };
+const SERVICE_HEADERS = {
+    SERVICE_TOKEN: "x-service-token"
+};
+
+module.exports = { DEVICE_HEADERS, REQUEST_HEADERS, SERVICE_HEADERS };
