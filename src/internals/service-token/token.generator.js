@@ -38,7 +38,7 @@ const generateServiceInstanceId = () => {
  */
 const generateServiceToken = (serviceName = SERVICE_NAMES.AUTH_SERVICE) => {
     if (!SERVICE_TOKEN.SECRET) {
-        throw new Error('SERVICE_TOKEN_SECRET is not configured');
+        throw new Error('CUSTOM_AUTH_SERVICE_TOKEN_SECRET is not configured');
     }
 
     const serviceInstanceId = generateServiceInstanceId();
@@ -86,7 +86,7 @@ const hashServiceToken = (token) => {
 const verifyServiceToken = (token) => {
     try {
         if (!SERVICE_TOKEN.SECRET) {
-            throw new Error('SERVICE_TOKEN_SECRET is not configured');
+            throw new Error('CUSTOM_AUTH_SERVICE_TOKEN_SECRET is not configured');
         }
 
         const decoded = jwt.verify(token, SERVICE_TOKEN.SECRET, {
