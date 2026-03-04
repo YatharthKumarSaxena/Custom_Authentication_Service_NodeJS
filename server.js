@@ -1,5 +1,12 @@
-require("dotenv").config();
 require("module-alias/register");
+
+
+const dotenv = require("dotenv");
+const dotenvExpand = require("dotenv-expand");
+
+// Load and expand environment variables
+const myEnv = dotenv.config();
+dotenvExpand.expand(myEnv);
 
 // BOOT VALIDATION - Must run BEFORE anything else
 require("@bootstrap/env.defaults").applyEnvDefaults();
@@ -18,7 +25,7 @@ const { logSystemConfiguration } = require("@services/bootstrap/system-info.serv
 (async () => {
     try {
         // 📋 LOG SYSTEM CONFIGURATION
-        await logSystemConfiguration();
+        // await logSystemConfiguration();
 
         // 🔑 DATABASE CONNECTION (CORRECT WAY)
         await mongoose.connect(DB_URL);
