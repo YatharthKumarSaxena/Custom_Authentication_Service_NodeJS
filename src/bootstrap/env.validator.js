@@ -144,10 +144,11 @@ function validateEnvironment() {
   // ===== MICROSERVICE MODE VALIDATION =====
   if (process.env.MAKE_IT_MICROSERVICE === "true") {
     requireEnv([
-      "SERVICE_TOKEN_SECRET",
+      "CUSTOM_AUTH_SERVICE_TOKEN_SECRET",
       "SERVICE_INSTANCE_NAME",
       "REDIS_KEY_SALT",
-      "ADMIN_PANEL_SERVICE_URL"
+      "ADMIN_PANEL_SERVICE_URL",
+      "CUSTOM_AUTH_SERVICE_NAME"
     ], "MAKE_IT_MICROSERVICE=true");
   }
 
