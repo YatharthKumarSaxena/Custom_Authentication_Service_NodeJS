@@ -219,7 +219,7 @@ const healthCheck = async () => {
         
         const response = await retryRequest(async () => {
             const client = await createAuthenticatedClient();
-            return await client.get('/admin-panel-service/api/v1/internals/auth/health');
+            return await client.get('/admin-panel-service/api/v1/internal/auth/health');
         });
 
         const isLive = response.status === 200 && response.data?.success === true;
