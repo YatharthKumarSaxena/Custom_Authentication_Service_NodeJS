@@ -26,7 +26,8 @@ const {
   strongPasswordRegex 
 } = require("@configs/regex.config");
 const { validateLength, isValidRegex } = require("@/utils/validators-factory.util");
-const { isMicroserviceMode } = require("@/internals");
+const internals = require("@/internals");
+const isMicroserviceMode = internals?.isMicroserviceMode?.() || false;
 
 async function bootstrapSuperAdmin() {
   try {
