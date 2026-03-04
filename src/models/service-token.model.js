@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
-const { ServiceNames } = require("@/configs/enums.config");
+const { ServiceNames } = require("@/configs/security.config");
 
 /**
  * Service Token Schema
