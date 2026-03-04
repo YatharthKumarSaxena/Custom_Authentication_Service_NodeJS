@@ -85,6 +85,23 @@ const throwConflictError = (res, message, suggestion) => {
     });
 };
 
+/*
+  SRP + DRY: 
+  Handles all credentials failure responses.
+*/
+
+const throwUnauthorizedError = (res,resource,reason) => {
+    logWithTime("⚠️ Invalid "+resource);
+    logWithTime("❌ Invalid Credentials! Please try again.");
+    return res.status(UNAUTHORIZED).json({
+        success: false,
+        type: "Unauthorized",
+        resource: resource,
+        reason: reason,
+        warning: "Invalid "+ resource + " Entered",
+        message: "Please enter a Valid "+ resource
+    })
+}
 
 
 const throwDBResourceNotFoundError = (res, resource) => {
@@ -189,6 +206,7 @@ module.exports = {
     throwSpecificInternalServerError,
     throwTooManyRequestsError,
     throwFeatureDisabledError,
+    throwUnauthorizedError,
     getLogIdentifiers,
     logMiddlewareError,
     errorMessage
