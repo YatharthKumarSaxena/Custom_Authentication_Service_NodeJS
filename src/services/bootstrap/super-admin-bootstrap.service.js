@@ -26,6 +26,7 @@ const {
   strongPasswordRegex 
 } = require("@configs/regex.config");
 const { validateLength, isValidRegex } = require("@/utils/validators-factory.util");
+const { isMicroserviceMode } = require("@/internals");
 
 async function bootstrapSuperAdmin() {
   try {
@@ -226,7 +227,45 @@ async function bootstrapSuperAdmin() {
 
     logWithTime("👑 Super Admin User Created Successfully");
 
-    // 7. System Log & Notification
+    // 7. Microservice: Create Super Admin in Admin Panel Service
+    try {
+      
+      if (isMicroserviceMode) {
+        logWithTime("🔗 Microservice Mode: Syncing super admin to Admin Panel Service...");
+        
+        const internal = require('@internals');
+        if (internal && internal.clients && internal.clients.adminPanelClient) {
+          const { createSuperAdmin } = internal.clients.adminPanelClient;
+          
+          // Prepare admin data for internal API
+          const adminData = {
+            userId: createdAdmin.userId,
+          };
+          
+          // Add optional fields if they exist
+          if (createdAdmin.email) adminData.email = createdAdmin.email;
+          if (createdAdmin.phone) adminData.phone = createdAdmin.phone;
+          if (createdAdmin.firstName) adminData.firstName = createdAdmin.firstName;
+          
+          const syncResult = await createSuperAdmin(adminData);
+          
+          if (syncResult.success) {
+            logWithTime("✅ Super admin successfully synced to Admin Panel Service");
+          } else {
+            logWithTime("⚠️  Super admin created locally but failed to sync to Admin Panel Service");
+            logWithTime(`   Reason: ${syncResult.error || 'Unknown error'}`);
+            logWithTime("   Note: Local admin is still active, but Admin Panel may need manual sync");
+          }
+        }
+      }
+    } catch (syncError) {
+      // Non-critical error - admin is created locally, sync can be retried later
+      logWithTime("⚠️  Failed to sync super admin to Admin Panel Service");
+      logWithTime(`   Error: ${syncError.message}`);
+      logWithTime("   Note: Super admin is active locally, but Admin Panel Service sync failed");
+    }
+
+    // 8. System Log & Notification
     logBootstrapEvent(
       "ADMIN_CREATED",
       `Super Admin created successfully via bootstrap (Auth Mode: ${authMode})`,

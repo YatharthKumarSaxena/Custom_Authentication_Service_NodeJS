@@ -59,6 +59,20 @@ const initializeMicroservice = async () => {
             logWithTime(`   Error: ${redisError.message}`);
         }
 
+        // Check Admin Panel Service health
+        logWithTime(`📡 Checking connected services...`);
+        try {
+            const { healthCheck } = internal.clients.adminPanelClient;
+            const healthStatus = await healthCheck();
+            
+            if (!healthStatus.success) {
+                logWithTime('⚠️  Admin Panel Service is not reachable - some features may not work');
+            }
+        } catch (healthError) {
+            logWithTime('⚠️  Failed to check Admin Panel Service health');
+            logWithTime(`   Error: ${healthError.message}`);
+        }
+
         // Log internal service URLs
         logWithTime(`📡 Internal Services:`);
         logWithTime(`   - Admin Panel: ${microserviceConfig.services.adminPanel}`);
