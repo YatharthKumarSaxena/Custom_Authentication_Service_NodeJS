@@ -91,5 +91,31 @@ module.exports = {
   },
   ENABLE_DEVICE_SOFT_REPLACE: getMyEnvAsBool('ENABLE_DEVICE_SOFT_REPLACE',true),
   DELETION_POLICY: getMyEnv('DELETION_POLICY', 'SOFT_DELETE'),
-  SOFT_DELETE_RETENTION_DAYS: getMyEnvAsNumber('SOFT_DELETE_RETENTION_DAYS', 30)
+  SOFT_DELETE_RETENTION_DAYS: getMyEnvAsNumber('SOFT_DELETE_RETENTION_DAYS', 30),
+  
+  // Service Token Configuration for Microservices
+  service: {
+    // Service Names
+    Custom_Auth_Service_Name: getMyEnv('CUSTOM_AUTH_SERVICE_NAME', 'Custom_Auth_Service'),
+    Software_Management_Service_Name: getMyEnv('SOFTWARE_MANAGEMENT_SERVICE_NAME', 'Software_Management_Service'),
+    Admin_Panel_Service_Name: getMyEnv('ADMIN_PANEL_SERVICE_NAME', 'Admin_Panel_Service'),
+    
+    // Service Token Secrets
+    CUSTOM_AUTH_SERVICE_TOKEN_SECRET: getMyEnv('CUSTOM_AUTH_SERVICE_TOKEN_SECRET'),
+    SOFTWARE_MANAGEMENT_SERVICE_TOKEN_SECRET: getMyEnv('SOFTWARE_MANAGEMENT_SERVICE_TOKEN_SECRET'),
+    ADMIN_PANEL_SERVICE_TOKEN_SECRET: getMyEnv('ADMIN_PANEL_SERVICE_TOKEN_SECRET'),
+    
+    // Allowed Services
+    ALLOWED_SERVICE_NAMES: getMyEnvAsArray('ALLOWED_SERVICE_NAMES'),
+    
+    // JWT Algorithm
+    algorithms: ['HS256']
+  },
+  
+  // Service Names Enum (for microservice architecture)
+  ServiceNames: Object.freeze({
+    AUTH_SERVICE: getMyEnv('CUSTOM_AUTH_SERVICE_NAME', 'Custom_Auth_Service'),
+    ADMIN_PANEL_SERVICE: getMyEnv('ADMIN_PANEL_SERVICE_NAME', 'Admin_Panel_Service'),
+    SOFTWARE_MANAGEMENT_SERVICE: getMyEnv('SOFTWARE_MANAGEMENT_SERVICE_NAME', 'Software_Management_Service')
+  })
 };

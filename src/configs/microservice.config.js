@@ -10,7 +10,7 @@ const microserviceConfig = {
 
     // Service token settings
     serviceToken: {
-        secret: process.env.SERVICE_TOKEN_SECRET,
+        secret: process.env.CUSTOM_AUTH_SERVICE_TOKEN_SECRET,
         expiry: 15 * 60, // 15 minutes
         rotationThreshold: 10 * 60 // 10 minutes
     },
@@ -49,7 +49,7 @@ const validateMicroserviceConfig = () => {
     const errors = [];
 
     if (!microserviceConfig.serviceToken.secret) {
-        errors.push('SERVICE_TOKEN_SECRET is required when MAKE_IT_MICROSERVICE=true');
+        errors.push('CUSTOM_AUTH_SERVICE_TOKEN_SECRET is required when MAKE_IT_MICROSERVICE=true');
     }
 
     if (!microserviceConfig.redis.keySalt || microserviceConfig.redis.keySalt === 'default-salt-change-in-production') {

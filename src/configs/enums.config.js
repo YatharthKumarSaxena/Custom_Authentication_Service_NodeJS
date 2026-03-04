@@ -56,12 +56,6 @@ const AuthErrorTypes = Object.freeze({
     TOKEN_REFRESH: "AUTH_TOKEN_REFRESH"
 });
 
-const ServiceNames = Object.freeze({
-    AUTH_SERVICE: "auth-service",
-    ADMIN_PANEL_SERVICE: "admin-panel-service",
-    SOFTWARE_MANAGEMENT_SERVICE: "software-management-service"
-});
-
 const AuditMode = Object.freeze({
     FULL: "FULL",
     CHANGED_ONLY: "CHANGED_ONLY"
@@ -111,6 +105,5 @@ module.exports = {
     RequestLocation,
     FirstNameFieldSetting,
     AuditMode,
-    ServiceNames,
     DeletionPolicy
 }
