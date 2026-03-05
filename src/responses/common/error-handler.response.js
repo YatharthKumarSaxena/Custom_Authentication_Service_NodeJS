@@ -176,6 +176,24 @@ const throwFeatureDisabledError = (res, featureName, reason = "This feature is c
     });
 };
 
+/*
+  SRP + DRY: 
+  Handles all credentials failure responses.
+*/
+
+const throwUnauthorizedError = (res,resource,reason) => {
+    logWithTime("⚠️ Invalid "+resource);
+    logWithTime("❌ Invalid Credentials! Please try again.");
+    return res.status(UNAUTHORIZED).json({
+        success: false,
+        type: "Unauthorized",
+        resource: resource,
+        reason: reason,
+        warning: "Invalid "+ resource + " Entered",
+        message: "Please enter a Valid "+ resource
+    })
+}
+
 module.exports = {
     throwMissingFieldsError,
     throwInternalServerError,
@@ -189,6 +207,7 @@ module.exports = {
     throwSpecificInternalServerError,
     throwTooManyRequestsError,
     throwFeatureDisabledError,
+    throwUnauthorizedError,
     getLogIdentifiers,
     logMiddlewareError,
     errorMessage
