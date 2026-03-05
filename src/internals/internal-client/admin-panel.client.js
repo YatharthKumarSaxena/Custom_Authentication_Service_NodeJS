@@ -20,6 +20,10 @@ const { getServiceToken } = require('../service-token');
 const { INTERNAL_API, HEADERS, SERVICE_NAMES } = require('../constants');
 const { logWithTime } = require('@/utils/time-stamps.util');
 
+// Device configuration
+const DEVICE_UUID = process.env.DEVICE_UUID || '00000000-0000-4000-8000-000000000000';
+const DEVICE_TYPE = process.env.DEVICE_TYPE || 'SERVER';
+
 /**
  * Create axios instance with service authentication
  */
@@ -33,6 +37,8 @@ const createAuthenticatedClient = async () => {
             [HEADERS.SERVICE_TOKEN]: serviceToken,
             [HEADERS.SERVICE_NAME]: SERVICE_NAMES.AUTH_SERVICE,
             [HEADERS.REQUEST_ID]: uuidv4(),
+            [HEADERS.DEVICE_UUID]: DEVICE_UUID,
+            [HEADERS.DEVICE_TYPE]: DEVICE_TYPE,
             'Content-Type': 'application/json'
         }
     });
@@ -205,16 +211,90 @@ const rollbackAdminCreation = async (adminId) => {
 /**
  * Health check for Admin Panel Service
  * 
- * @returns {Promise<boolean>} true if service is healthy
+ * @returns {Promise<Object>} Health status response
  */
 const healthCheck = async () => {
     try {
-        const client = await createAuthenticatedClient();
-        const response = await client.get('/internal/health');
-        return response.status === 200;
+        logWithTime('🏥 Checking Admin Panel Service health...');
+        
+        const response = await retryRequest(async () => {
+            const client = await createAuthenticatedClient();
+            return await client.get('/admin-panel-service/api/v1/internal/auth/health');
+        });
+
+        const isLive = response.status === 200 && response.data?.success === true;
+        
+        if (isLive) {
+            logWithTime('✅ Admin Panel is live');
+        } else {
+            logWithTime('⚠️  Admin Panel responded but status is not healthy');
+        }
+        
+        return {
+            success: isLive,
+            data: response.data || null
+        };
     } catch (error) {
-        logWithTime(`❌ Admin Panel Service health check failed: ${error.message}`);
-        return false;
+        logWithTime(`❌ Admin Panel Service is not reachable: ${error.message}`);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
+/**
+ * Create super admin in Admin Panel Service
+ * This is called during bootstrap after the super admin is created in Auth Service
+ * 
+ * @param {Object} adminData - Super admin data
+ * @param {string} adminData.userId - User ID of the super admin
+ * @param {string} [adminData.email] - Email address (if applicable)
+ * @param {string} [adminData.phone] - Phone number (if applicable)
+ * @param {string} [adminData.firstName] - First name (if provided)
+ * @returns {Promise<Object>} Response from Admin Panel Service
+ */
+const createSuperAdmin = async (adminData) => {
+    try {
+        logWithTime(`🚀 Creating super admin in Admin Panel Service: ${adminData.userId.substring(0, 8)}...`);
+
+        const response = await retryRequest(async () => {
+            const client = await createAuthenticatedClient();
+            return await client.post('/admin-panel-service/api/v1/internals/create-super-admin', adminData);
+        });
+
+        const success = response.status === 200 || response.status === 201;
+        
+        if (success && response.data?.success) {
+            logWithTime(`✅ Super admin created successfully in Admin Panel Service`);
+        } else {
+            logWithTime(`⚠️  Unexpected response from Admin Panel Service`);
+        }
+        
+        return {
+            success: success && (response.data?.success === true),
+            data: response.data || null
+        };
+    } catch (error) {
+        logWithTime(`❌ Failed to create super admin in Admin Panel Service: ${error.message}`);
+        
+        if (error.response) {
+            return {
+                success: false,
+                error: `Admin Panel Service error: ${error.response.status}`,
+                details: error.response.data
+            };
+        } else if (error.request) {
+            return {
+                success: false,
+                error: 'Admin Panel Service is not reachable'
+            };
+        } else {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
     }
 };
 
@@ -223,5 +303,6 @@ module.exports = {
     syncIdentityState,
     syncAccountState,
     rollbackAdminCreation,
-    healthCheck
+    healthCheck,
+    createSuperAdmin
 };

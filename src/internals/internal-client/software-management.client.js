@@ -18,6 +18,11 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { getServiceToken } = require('../service-token');
 const { INTERNAL_API, HEADERS, SERVICE_NAMES } = require('../constants');
+const { logWithTime } = require('@utils/time-stamps.util');
+
+// Device configuration
+const DEVICE_UUID = process.env.DEVICE_UUID || '00000000-0000-4000-8000-000000000000';
+const DEVICE_TYPE = process.env.DEVICE_TYPE || 'SERVER';
 
 /**
  * Create axios instance with service authentication
@@ -32,6 +37,8 @@ const createAuthenticatedClient = async () => {
             [HEADERS.SERVICE_TOKEN]: serviceToken,
             [HEADERS.SERVICE_NAME]: SERVICE_NAMES.AUTH_SERVICE,
             [HEADERS.REQUEST_ID]: uuidv4(),
+            [HEADERS.DEVICE_UUID]: DEVICE_UUID,
+            [HEADERS.DEVICE_TYPE]: DEVICE_TYPE,
             'Content-Type': 'application/json'
         }
     });
@@ -128,16 +135,35 @@ const syncUserAccountState = async (userId, isActive) => {
 /**
  * Health check for Software Management Service
  * 
- * @returns {Promise<boolean>} true if service is healthy
+ * @returns {Promise<Object>} Health status response
  */
 const healthCheck = async () => {
     try {
-        const client = await createAuthenticatedClient();
-        const response = await client.get('/internal/health');
-        return response.status === 200;
+        logWithTime('🏥 Checking Software Management Service health...');
+        
+        const response = await retryRequest(async () => {
+            const client = await createAuthenticatedClient();
+            return await client.get('/software-management-service/api/v1/internal/auth/health');
+        });
+
+        const isLive = response.status === 200 && response.data?.success === true;
+        
+        if (isLive) {
+            logWithTime('✅ Software Management Service is live');
+        } else {
+            logWithTime('⚠️  Software Management Service responded but status is not healthy');
+        }
+        
+        return {
+            success: isLive,
+            data: response.data || null
+        };
     } catch (error) {
-        logWithTime(`❌ Software Management Service health check failed: ${error.message}`);
-        return false;
+        logWithTime(`❌ Software Management Service is not reachable: ${error.message}`);
+        return {
+            success: false,
+            error: error.message
+        };
     }
 };
 
