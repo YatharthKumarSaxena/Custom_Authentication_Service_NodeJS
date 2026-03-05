@@ -12,6 +12,13 @@
 const express = require("express");
 const internalRouter = express.Router();
 const { microserviceConfig } = require("@configs/microservice.config");
+const {
+    sendAdminPanelServiceHealthSuccess,
+    sendSoftwareServiceHealthSuccess
+} = require("@/responses/internals/common.response");
+const { INTERNAL_ROUTES } = require("@configs/uri.config");
+const { adminPanelInternalMiddlewares, softwareManagementInternalMiddlewares } = require("./middleware.gateway.routes");
+const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE } = INTERNAL_ROUTES;
 
 // Check if microservice mode is enabled
 if (!microserviceConfig.enabled) {
@@ -20,43 +27,33 @@ if (!microserviceConfig.enabled) {
 } else {
     // Load internal modules only in microservice mode
     const internal = require('../internals');
-    
+
     if (!internal) {
         console.error('❌ Internal module not available');
         module.exports = { internalRouter };
     } else {
-        const { verifyAnyService } = internal.middlewares;
+        // ==================== Health Check Routes (Service-Specific) ====================
 
-        // Health check endpoint
-        internalRouter.get('/health', verifyAnyService, (req, res) => {
-            res.status(200).json({
-                success: true,
-                message: 'Authentication Service is healthy',
-                service: 'auth-service',
-                timestamp: new Date().toISOString()
-            });
+        /**
+         * @route   GET /internal/auth/health
+         * @desc    Health check for auth service
+         * @access  Internal (auth-service ONLY)
+         */
+        internalRouter.get(PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, adminPanelInternalMiddlewares, (req, res) => {
+            return sendAdminPanelServiceHealthSuccess(res, req.serviceAuth);
         });
 
-        // Service token status
-        internalRouter.get('/token-status', verifyAnyService, async (req, res) => {
-            try {
-                const { getTokenStatus } = internal.serviceToken;
-                const status = getTokenStatus();
-
-                res.status(200).json({
-                    success: true,
-                    data: status
-                });
-            } catch (error) {
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to get token status',
-                    error: error.message
-                });
-            }
+        /**
+         * @route   GET /internal/software/health
+         * @desc    Health check for software management service
+         * @access  Internal (software-management-service ONLY)
+         */
+        internalRouter.get(PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE, softwareManagementInternalMiddlewares, (req, res) => {
+            return sendSoftwareServiceHealthSuccess(res, req.serviceAuth);
         });
 
-        console.log('✅ Internal routes enabled (microservice mode)');
-        module.exports = { internalRouter };
+        module.exports = {
+            internalRouter
+        }
     }
 }
