@@ -14,19 +14,21 @@ if (!guard) {
     return;
 }
 
+const { service } = require('@/configs/security.config');
+
 module.exports = {
     // Service Names
     SERVICE_NAMES: {
-        AUTH_SERVICE: 'auth-service',
-        ADMIN_PANEL_SERVICE: 'admin-panel-service',
-        SOFTWARE_MANAGEMENT_SERVICE: 'software-management-service'
+        AUTH_SERVICE: service.Custom_Auth_Service_Name,
+        ADMIN_PANEL_SERVICE: service.Admin_Panel_Service_Name,
+        SOFTWARE_MANAGEMENT_SERVICE: service.Software_Management_Service_Name
     },
 
     // Service Token Configuration
     SERVICE_TOKEN: {
         EXPIRY: 60 * 60, // 60 minutes in seconds
         ROTATION_THRESHOLD: 10 * 60, // 10 minutes in seconds
-        SECRET: process.env.SERVICE_TOKEN_SECRET,
+        SECRET: service.CUSTOM_AUTH_SERVICE_TOKEN_SECRET,
         ALGORITHM: 'HS256'
     },
 
@@ -50,6 +52,8 @@ module.exports = {
     HEADERS: {
         SERVICE_TOKEN: 'x-service-token',
         SERVICE_NAME: 'x-service-name',
-        REQUEST_ID: 'x-request-id'
+        REQUEST_ID: 'x-request-id',
+        DEVICE_UUID: 'x-device-uuid',
+        DEVICE_TYPE: 'x-device-type'
     }
 };
