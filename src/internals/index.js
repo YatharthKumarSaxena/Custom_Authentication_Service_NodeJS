@@ -29,9 +29,6 @@ if (!guard) {
         // Redis session management
         redisSession: require('./redis-session'),
 
-        // Internal middlewares
-        middlewares: require('./middlewares'),
-
         // Internal API clients
         clients: require('./internal-client'),
 
