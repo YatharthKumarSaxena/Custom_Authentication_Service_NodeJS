@@ -116,6 +116,13 @@ serviceTokenSchema.statics.cleanupExpiredTokens = function () {
     });
 };
 
+serviceTokenSchema.statics.findActiveByServiceName = async function(serviceName) {
+  return this.findOne({
+    serviceName: serviceName,
+    isActive: true
+  }).sort({ createdAt: -1 });
+};
+
 const ServiceToken = mongoose.model(
     DB_COLLECTIONS.SERVICE_TOKENS || "ServiceToken",
     serviceTokenSchema

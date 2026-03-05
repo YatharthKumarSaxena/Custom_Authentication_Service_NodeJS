@@ -19,6 +19,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getServiceToken } = require('../service-token');
 const { INTERNAL_API, HEADERS, SERVICE_NAMES } = require('../constants');
 const { logWithTime } = require('@/utils/time-stamps.util');
+const { OK, CREATED } = require('@/configs/http-status.config');
 
 // Device configuration
 const DEVICE_UUID = process.env.DEVICE_UUID || '00000000-0000-4000-8000-000000000000';
@@ -248,22 +249,22 @@ const healthCheck = async () => {
  * This is called during bootstrap after the super admin is created in Auth Service
  * 
  * @param {Object} adminData - Super admin data
- * @param {string} adminData.userId - User ID of the super admin
+ * @param {string} adminData.adminId - Admin ID of the super admin
  * @param {string} [adminData.email] - Email address (if applicable)
  * @param {string} [adminData.phone] - Phone number (if applicable)
  * @param {string} [adminData.firstName] - First name (if provided)
  * @returns {Promise<Object>} Response from Admin Panel Service
  */
-const createSuperAdmin = async (adminData) => {
+const createSuperAdminInAdminPanel = async (adminData) => {
     try {
-        logWithTime(`🚀 Creating super admin in Admin Panel Service: ${adminData.userId.substring(0, 8)}...`);
+        logWithTime(`🚀 Creating super admin in Admin Panel Service: ${adminData.adminId.substring(0, 8)}...`);
 
         const response = await retryRequest(async () => {
             const client = await createAuthenticatedClient();
-            return await client.post('/admin-panel-service/api/v1/internals/create-super-admin', adminData);
+            return await client.post('/admin-panel-service/api/v1/internal/create-super-admin', adminData);
         });
 
-        const success = response.status === 200 || response.status === 201;
+        const success = response.status === OK || response.status === CREATED;
         
         if (success && response.data?.success) {
             logWithTime(`✅ Super admin created successfully in Admin Panel Service`);
@@ -304,5 +305,5 @@ module.exports = {
     syncAccountState,
     rollbackAdminCreation,
     healthCheck,
-    createSuperAdmin
+    createSuperAdminInAdminPanel
 };
