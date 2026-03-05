@@ -34,7 +34,7 @@ Update your `.env` file:
 MAKE_IT_MICROSERVICE=true
 
 # ========== Service Token ==========
-SERVICE_TOKEN_SECRET=change-this-to-a-strong-random-secret-in-production
+CUSTOM_AUTH_SERVICE_TOKEN_SECRET=change-this-to-a-strong-random-secret-in-production
 SERVICE_INSTANCE_NAME=auth-service-01
 
 # ========== Redis Configuration ==========
@@ -288,12 +288,12 @@ redis-cli INFO memory | grep used_memory_human
 
 ## ❌ Troubleshooting
 
-### Problem: "SERVICE_TOKEN_SECRET is not configured"
+### Problem: "CUSTOM_AUTH_SERVICE_TOKEN_SECRET is not configured"
 
 **Solution**:
 ```bash
 # Add to .env
-SERVICE_TOKEN_SECRET=your-secure-random-secret-here
+CUSTOM_AUTH_SERVICE_TOKEN_SECRET=your-secure-random-secret-here
 ```
 
 ### Problem: Redis connection failed
@@ -347,7 +347,7 @@ openssl rand -base64 32
 
 ```bash
 # Never commit secrets to git!
-export SERVICE_TOKEN_SECRET=$(openssl rand -base64 32)
+export CUSTOM_AUTH_SERVICE_TOKEN_SECRET=$(openssl rand -base64 32)
 export REDIS_KEY_SALT=$(openssl rand -base64 32)
 ```
 
@@ -398,7 +398,7 @@ Set up monitoring for:
 | Variable | Required | Default | Purpose |
 |----------|----------|---------|---------|
 | `MAKE_IT_MICROSERVICE` | ✅ | `false` | Enable microservice mode |
-| `SERVICE_TOKEN_SECRET` | ✅* | - | Service token signing secret |
+| `CUSTOM_AUTH_SERVICE_TOKEN_SECRET` | ✅* | - | Service token signing secret |
 | `REDIS_KEY_SALT` | ✅* | - | Salt for Redis key hashing |
 | `SERVICE_INSTANCE_NAME` | ❌ | `auth-service-default` | Service instance identifier |
 | `ADMIN_PANEL_SERVICE_URL` | ❌ | `http://localhost:8081` | Admin Panel base URL |
