@@ -86,7 +86,7 @@ Service tokens are **ONLY** for service-to-service communication. They are **NEV
 
 ### Token Properties
 - **Algorithm**: HS256 (JWT)
-- **Secret**: `SERVICE_TOKEN_SECRET` (env variable)
+- **Secret**: `CUSTOM_AUTH_SERVICE_TOKEN_SECRET` (env variable)
 - **Payload**:
   ```json
   {
@@ -299,7 +299,7 @@ POST /custom-auth-service/api/v1/auth/post-refresh
 MAKE_IT_MICROSERVICE=false
 
 # Service Token
-SERVICE_TOKEN_SECRET=your_secret_here
+CUSTOM_AUTH_SERVICE_TOKEN_SECRET=your_secret_here
 SERVICE_INSTANCE_NAME=auth-service-01
 
 # Redis Session
@@ -344,7 +344,7 @@ setupTokenRotationScheduler();
 ### Enable Microservice Mode
 ```bash
 export MAKE_IT_MICROSERVICE=true
-export SERVICE_TOKEN_SECRET=test-secret
+export CUSTOM_AUTH_SERVICE_TOKEN_SECRET=test-secret
 export REDIS_KEY_SALT=test-salt
 ```
 
@@ -406,7 +406,7 @@ console.log(`Active devices: ${devices.length}`);
 
 ## 🔥 Production Checklist
 
-- [ ] Set `SERVICE_TOKEN_SECRET` to strong random value
+- [ ] Set `CUSTOM_AUTH_SERVICE_TOKEN_SECRET` to strong random value
 - [ ] Set `REDIS_KEY_SALT` to unique value
 - [ ] Configure actual internal service URLs
 - [ ] Enable Redis persistence
