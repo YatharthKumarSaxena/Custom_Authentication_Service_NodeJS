@@ -235,27 +235,35 @@ async function bootstrapSuperAdmin() {
         logWithTime("🔗 Microservice Mode: Syncing super admin to Admin Panel Service...");
         
         const internal = require('@internals');
-        if (internal && internal.clients && internal.clients.adminPanelClient) {
-          const { createSuperAdmin } = internal.clients.adminPanelClient;
+        if (internal && internal.clients && internal.clients.adminPanelClient && internals.clients.softwareManagementClient) {
+          const { createSuperAdminInAdminPanel } = internal.clients.adminPanelClient;
           
           // Prepare admin data for internal API
           const adminData = {
-            userId: createdAdmin.userId,
+            adminId: createdAdmin.userId,
           };
           
-          // Add optional fields if they exist
-          if (createdAdmin.email) adminData.email = createdAdmin.email;
-          if (createdAdmin.phone) adminData.phone = createdAdmin.phone;
           if (createdAdmin.firstName) adminData.firstName = createdAdmin.firstName;
           
-          const syncResult = await createSuperAdmin(adminData);
+          const syncResultInAdminPanel = await createSuperAdminInAdminPanel(adminData);
           
-          if (syncResult.success) {
+          if (syncResultInAdminPanel.success) {
             logWithTime("✅ Super admin successfully synced to Admin Panel Service");
           } else {
             logWithTime("⚠️  Super admin created locally but failed to sync to Admin Panel Service");
-            logWithTime(`   Reason: ${syncResult.error || 'Unknown error'}`);
+            logWithTime(`   Reason: ${syncResultInAdminPanel.error || 'Unknown error'}`);
             logWithTime("   Note: Local admin is still active, but Admin Panel may need manual sync");
+          }
+
+          const { createSuperAdminInSoftwareManagement } = internal.clients.softwareManagementClient;
+          const syncResultInSoftwareManagement = await createSuperAdminInSoftwareManagement(adminData);
+
+          if (syncResultInSoftwareManagement.success) {
+            logWithTime("✅ Super admin successfully synced to Software Management Service");
+          } else {
+            logWithTime("⚠️  Super admin created locally but failed to sync to Software Management Service");
+            logWithTime(`   Reason: ${syncResultInSoftwareManagement.error || 'Unknown error'}`);
+            logWithTime("   Note: Local admin is still active, but Software Management Service may need manual sync");
           }
         }
       }

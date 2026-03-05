@@ -19,6 +19,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getServiceToken } = require('../service-token');
 const { INTERNAL_API, HEADERS, SERVICE_NAMES } = require('../constants');
 const { logWithTime } = require('@utils/time-stamps.util');
+const { OK, CREATED } = require('@/configs/http-status.config');
 
 // Device configuration
 const DEVICE_UUID = process.env.DEVICE_UUID || '00000000-0000-4000-8000-000000000000';
@@ -167,8 +168,64 @@ const healthCheck = async () => {
     }
 };
 
+/**
+ * Create super admin in Software Management Service
+ * This is called during bootstrap after the super admin is created in Auth Service
+ * 
+ * @param {Object} adminData - Super admin data
+ * @param {string} adminData.adminId - Admin ID of the super admin
+ * @param {string} [adminData.email] - Email address (if applicable)
+ * @param {string} [adminData.phone] - Phone number (if applicable)
+ * @param {string} [adminData.firstName] - First name (if provided)
+ * @returns {Promise<Object>} Response from Software Management Service
+ */
+const createSuperAdminInSoftwareManagement = async (adminData) => {
+    try {
+        logWithTime(`🚀 Creating super admin in Software Management Service: ${adminData.adminId.substring(0, 8)}...`);
+
+        const response = await retryRequest(async () => {
+            const client = await createAuthenticatedClient();
+            return await client.post('/software-management-service/api/v1/internal/create-super-admin', adminData);
+        });
+
+        const success = response.status === OK || response.status === CREATED;
+        
+        if (success && response.data?.success) {
+            logWithTime(`✅ Super admin created successfully in Software Management Service`);
+        } else {
+            logWithTime(`⚠️  Unexpected response from Software Management Service`);
+        }
+        
+        return {
+            success: success && (response.data?.success === true),
+            data: response.data || null
+        };
+    } catch (error) {
+        logWithTime(`❌ Failed to create super admin in Software Management Service: ${error.message}`);
+        
+        if (error.response) {
+            return {
+                success: false,
+                error: `Software Management Service error: ${error.response.status}`,
+                details: error.response.data
+            };
+        } else if (error.request) {
+            return {
+                success: false,
+                error: 'Software Management Service is not reachable'
+            };
+        } else {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+};
+
 module.exports = {
     notifyUserCreation,
     syncUserAccountState,
-    healthCheck
+    healthCheck,
+    createSuperAdminInSoftwareManagement
 };
