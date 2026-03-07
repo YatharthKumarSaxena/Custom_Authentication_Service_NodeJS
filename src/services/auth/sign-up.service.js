@@ -1,6 +1,6 @@
 const { UserModel } = require("@models/user.model");
 const { DeviceModel } = require("@models/device.model");
-const { makeUserId } = require("@/services/common/userId.service");
+const { makeUserIdWithPrefix } = require("@/services/common/userId.service");
 const { generateVerificationForUser } = require("@services/account-verification/verification-generator.service");
 const { getUserContacts } = require("@utils/contact-selector.util");
 const { sendNotification } = require("@utils/notification-dispatcher.util");
@@ -24,63 +24,71 @@ const { logAuthEvent } = require("@/services/audit/auth-audit.service");
 const { logWithTime } = require("@utils/time-stamps.util");
 const { AUTH_LOG_EVENTS } = require("@configs/auth-log-events.config");
 const { hashPassword } = require("@/utils/auth.util");
+const { userIdPrefix } = require("@/configs/id-prefixes.config");
 
-const signUpService = async (deviceInput, userPayload, requestId) => {
+/**
+ * Sign Up Service
+ * @param {Object} deviceInput - Device information
+ * @param {Object} userPayload - User data (email, phone, password, etc)
+ * @param {string} requestId - Request ID for logging
+ * @param {string} idPrefix - Custom ID prefix (default: userIdPrefix for regular users)
+ */
+const signUpService = async (deviceInput, userPayload, requestId, idPrefix = userIdPrefix) => {
+    try {
+        const { email, countryCode, localNumber, phone, firstName, password } = userPayload;
 
-    const { email, countryCode, localNumber, phone, firstName, password } = userPayload;
+        // 1. HASH PASSWORD
+        const hashedPassword = await hashPassword(password);
 
-    // 1. HASH PASSWORD
-    const hashedPassword = await hashPassword(password);
+        if (!hashedPassword) {
+            return {
+                success: false,
+                type: AuthErrorTypes.SERVER_ERROR,
+                message: "Password encryption failed."
+            };
+        }
 
-    if (!hashedPassword) {
-        return {
-            success: false,
-            type: AuthErrorTypes.SERVER_ERROR,
-            message: "Password encryption failed."
+        // 2. GENERATE USER ID
+        const generatedUserID = await makeUserIdWithPrefix(idPrefix);
+
+        if (generatedUserID === "0") {
+            return {
+                success: false,
+                type: AuthErrorTypes.SERVER_LIMIT_REACHED,
+                message: "User registration limit reached."
+            };
+        }
+
+        if (!generatedUserID) {
+            return {
+                success: false,
+                type: AuthErrorTypes.SERVER_ERROR,
+                message: "User ID generation failed."
+            };
+        }
+
+        // 3. PREPARE USER DATA
+        const userData = {
+            userId: generatedUserID,
+            firstName,
+            password: hashedPassword,
+            isEmailVerified: false,
+            isPhoneVerified: false,
+            isActive: true
         };
-    }
 
-    // 2. GENERATE USER ID
-    const generatedUserID = await makeUserId();
+        if (email?.trim()) userData.email = email.trim();
 
-    if (generatedUserID === "0") {
-        return {
-            success: false,
-            type: AuthErrorTypes.SERVER_LIMIT_REACHED,
-            message: "User registration limit reached."
-        };
-    }
+        if (countryCode && localNumber && phone) {
+            userData.countryCode = countryCode.trim();
+            userData.localNumber = localNumber.trim();
+            userData.phone = phone.trim();
+        }
 
-    if (!generatedUserID) {
-        return {
-            success: false,
-            type: AuthErrorTypes.SERVER_ERROR,
-            message: "User ID generation failed."
-        };
-    }
+        // 4. CREATE USER
+        const newUser = await UserModel.create(userData);
 
-    // 3. PREPARE USER DATA
-    const userData = {
-        userId: generatedUserID,
-        firstName,
-        password: hashedPassword,
-        isEmailVerified: false,
-        isPhoneVerified: false,
-        isActive: true
-    };
-
-    if (email?.trim()) userData.email = email.trim();
-
-    if (countryCode && localNumber && phone) {
-        userData.countryCode = countryCode.trim();
-        userData.localNumber = localNumber.trim();
-        userData.phone = phone.trim();
-    }
-
-    // 4. CREATE USER
-    const newUser = await UserModel.create(userData);
-
-    logWithTime(`🟢 User Created: ${newUser.userId}`);
+        logWithTime(`🟢 User Created: ${newUser.userId}`);
 
     // 5. ENSURE DEVICE
     const deviceDoc = await DeviceModel.findOneAndUpdate(
@@ -173,16 +181,44 @@ const signUpService = async (deviceInput, userPayload, requestId) => {
         null
     );
 
-    // 10. FINAL RESPONSE
-    return {
-        success: true,
-        userId: newUser.userId,
-        contactMode: contactInfo.contactMode,
-        verificationSent,
-        message: verificationSent
-            ? "Registration successful. Verification sent."
-            : "Registration successful, but verification could not be sent. Please tap resend."
-    };
+        // 10. FINAL RESPONSE
+        return {
+            success: true,
+            userId: newUser.userId,
+            contactMode: contactInfo.contactMode,
+            verificationSent,
+            message: verificationSent
+                ? "Registration successful. Verification sent."
+                : "Registration successful, but verification could not be sent. Please tap resend."
+        };
+
+    } catch (error) {
+        // HANDLE DUPLICATE USER ERROR (MongoDB E11000)
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern || {})[0];
+            const message = field === 'email'
+                ? "Email already registered."
+                : field === 'phone'
+                ? "Phone number already registered."
+                : "User already exists.";
+
+            logWithTime(`⚠️ Duplicate User: ${field} - ${error.keyValue?.[field]}`);
+
+            return {
+                success: false,
+                type: AuthErrorTypes.RESOURCE_EXISTS,
+                message
+            };
+        }
+
+        // HANDLE OTHER ERRORS
+        logWithTime(`❌ SignUp Service Error: ${error.message}`);
+        return {
+            success: false,
+            type: AuthErrorTypes.SERVER_ERROR,
+            message: "User registration failed."
+        };
+    }
 };
 
 module.exports = { signUpService };
