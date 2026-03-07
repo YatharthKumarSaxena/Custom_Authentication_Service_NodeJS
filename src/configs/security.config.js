@@ -112,6 +112,12 @@ module.exports = {
     algorithms: ['HS256']
   },
   
+  device: {
+    DEVICE_UUID: getMyEnv('DEVICE_UUID', "00000000-0000-4000-8000-000000000000"),
+    DEVICE_TYPE: getMyEnv('DEVICE_TYPE', "LAPTOP"),
+    DEVICE_NAME: getMyEnv('DEVICE_NAME', "System Device")
+  },
+
   // Service Names Enum (for microservice architecture)
   ServiceNames: Object.freeze({
     AUTH_SERVICE: getMyEnv('CUSTOM_AUTH_SERVICE_NAME', 'Custom_Auth_Service'),

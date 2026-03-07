@@ -4,5 +4,9 @@ module.exports = {
   secretCodeOfAccessToken: process.env.ACCESS_TOKEN_SECRET_CODE,
   secretCodeOfRefreshToken: process.env.REFRESH_TOKEN_SECRET_CODE,
   expiryTimeOfResetToken: Number(process.env.RESET_TOKEN_EXPIRY),
-  expiryTimeOfVerificationToken: Number(process.env.VERIFICATION_TOKEN_EXPIRY)
+  expiryTimeOfVerificationToken: Number(process.env.VERIFICATION_TOKEN_EXPIRY),
+  
+  // JWT Payload Structure - Required fields for token validation
+  // Supports both old (uid, did) and new (id, adminId, deviceId) naming
+  tokenPayloads: ["uid", "did", "exp", "iat"]
 };

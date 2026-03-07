@@ -63,6 +63,8 @@ module.exports = {
     // Admin-specific routes (e.g. category creation, update, delete)
     INTERNAL_ROUTES: {
         PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE: `/admin-panel/health`, // /admin-panel-service/api/v1/internal/auth/health
-        PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE: `/software-management/health` // /software-management-service/api/v1/internal/software/health
+        PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE: `/software-management/health`, // /software-management-service/api/v1/internal/software/health
+        POST_REFRESH: `/post-refresh`, // POST /custom-auth-service/api/v1/internal/post-refresh
+        CREATE_USER: `/create-user` // POST /custom-auth-service/api/v1/internal/create-user (from Admin Panel)
     }
 }
