@@ -1,17 +1,20 @@
 const { CounterModel } = require("@models/id-generator.model");
 const { userRegistrationCapacity } = require("@configs/app-limits.config");
 const { IP_Address_Code } = require("@configs/ip-address.config");
-const { userIdPrefix } = require("@configs/id-prefixes.config");
+const { customIdPrefix } = require("@configs/id-prefixes.config");
 const { errorMessage } = require("@/responses/common/error-handler.response");
 const { logWithTime } = require("@utils/time-stamps.util");
+const { UserTypes } = require("@/configs/enums.config");
 
 /**
  * Generate user ID with custom prefix
- * @param {string} prefix - "ADM" for admin or "USR" for user
+ * @param {string} userType - Type of user (default: UserTypes.USER)
  * @returns {Promise<string>} Generated user ID or empty string on failure
  */
-const makeUserIdWithPrefix = async (prefix = userIdPrefix) => {
+const makeUserIdWithPrefix = async (userType = UserTypes.USER) => {
     try {
+        const prefix = customIdPrefix;
+
         const counter = await CounterModel.findOneAndUpdate(
             { _id: prefix },
             { $inc: { seq: 1 } },
@@ -38,7 +41,7 @@ const makeUserIdWithPrefix = async (prefix = userIdPrefix) => {
 
         return userId;
     } catch (err) {
-        logWithTime(`🛑 Error in makeUserIdWithPrefix for ${prefix}`);
+        logWithTime(`🛑 Error in makeUserIdWithPrefix for UserType: ${userType}`);
         errorMessage(err);
         return "";
     }
