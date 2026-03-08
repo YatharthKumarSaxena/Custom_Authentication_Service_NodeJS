@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use(malformedJsonHandler);
 
 // 5. Routes
-require("@routes/index")(app);
+require("@/routes/index")(app);
 
 // 6. Unknown route fallback
 app.use(unknownRouteHandler);
