@@ -10,8 +10,7 @@
  */
 
 const { signUpService } = require("@services/auth/sign-up.service");
-const { AuthErrorTypes } = require("@configs/enums.config");
-const { adminIdPrefix, userIdPrefix } = require("@configs/id-prefixes.config");
+const { AuthErrorTypes, UserTypes } = require("@configs/enums.config");
 const { logWithTime } = require("@utils/time-stamps.util");
 const {
     throwInternalServerError,
@@ -47,9 +46,13 @@ const createUser = async (req, res) => {
             return throwBadRequestError(res, `Missing required fields: ${missing.join(", ")}`);
         }
 
-        // 3. DETERMINE PREFIX BASED ON TYPE
-        const userType = type.toLowerCase();
-        const idPrefix = userType === "admin" ? adminIdPrefix : userIdPrefix;
+        // 3. DETERMINE PREFIX BASED ON TYPE 
+        let userType = type.toLowerCase(); 
+        if (userType === "admin") {
+            userType = UserTypes.ADMIN
+        }else {
+            userType = UserTypes.CLIENT
+        }
 
         // 4. PREPARE USER PAYLOAD
         const userPayload = {
@@ -62,7 +65,7 @@ const createUser = async (req, res) => {
         };
 
         // 5. CALL SIGNUP SERVICE WITH CUSTOM PREFIX
-        const result = await signUpService(deviceInput, userPayload, requestId, idPrefix);
+        const result = await signUpService(deviceInput, userPayload, requestId, userType);
 
         // 6. HANDLE SERVICE FAILURES
         if (!result.success) {

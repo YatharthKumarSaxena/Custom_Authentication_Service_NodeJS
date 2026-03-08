@@ -12,8 +12,7 @@ const { deactivateAccountSuccessResponse } = require("@/responses/success/index"
 const { logWithTime } = require("@utils/time-stamps.util");
 const { deactivateAccountService } = require("@services/account-management/account-deactivation.service");
 const { logoutUserCompletely } = require("@services/auth/auth-session.service");
-const { AuthErrorTypes } = require("@configs/enums.config"); 
-const { isAdminId } = require("@/utils/auth.util");
+const { AuthErrorTypes } = require("@configs/enums.config");
 
 const deactivateMyAccount = async (req, res) => {
     try {
@@ -21,13 +20,6 @@ const deactivateMyAccount = async (req, res) => {
         const device = req.device;
         const { password } = req.body;
         const requestId = req.requestId;
-
-        if (isAdminId(user.userId)) {
-            return throwAccessDeniedError(
-                res,
-                "Deactivation of Admin account is not permitted."
-            );
-        }
 
         // Call service
         const result = await deactivateAccountService(user, device, password, requestId);

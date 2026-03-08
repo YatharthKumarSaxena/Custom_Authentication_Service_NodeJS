@@ -4,6 +4,7 @@ const { getUserSessionsForAdmin } = require("./get-user-device.controller");
 const { blockDevice, unblockDevice } = require("./toggle-device-block-status.controller");
 const { blockUser, unblockUser } = require("./toggle-user-block-status.controller");
 const { createUser } = require("./create-user.controller");
+const { convertUserType } = require("./convert-user-type.controller");
 
 
 const internalControllers = {
@@ -14,7 +15,8 @@ const internalControllers = {
     unblockDevice,
     blockUser,
     unblockUser,
-    createUser
+    createUser,
+    convertUserType
 };
 
 module.exports = {
