@@ -1,11 +1,13 @@
+const { getMyEnv } = require("@/utils/env.util");
+
 module.exports = {
   redis: {
-    host: process.env.REDIS_HOST || "127.0.0.1",
-    port: parseInt(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || undefined,
+    host: getMyEnv("REDIS_HOST", "127.0.0.1"),
+    port: parseInt(getMyEnv("REDIS_PORT", 6379)),
+    password: getMyEnv("REDIS_PASSWORD"),
     db: 0,
-    maxRetryAttempts: parseInt(process.env.REDIS_MAX_RETRY_ATTEMPTS) || 10,
-    retryInitialDelayMs: parseInt(process.env.REDIS_RETRY_INITIAL_DELAY) || 100,
-    retryMaxDelayMs: parseInt(process.env.REDIS_RETRY_MAX_DELAY) || 2000
+    maxRetryAttempts: parseInt(getMyEnv("REDIS_MAX_RETRY_ATTEMPTS", 10)),
+    retryInitialDelayMs: parseInt(getMyEnv("REDIS_RETRY_INITIAL_DELAY", 100)),
+    retryMaxDelayMs: parseInt(getMyEnv("REDIS_RETRY_MAX_DELAY", 2000))
   }
 };

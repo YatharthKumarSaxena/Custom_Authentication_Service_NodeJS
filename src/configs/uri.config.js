@@ -65,6 +65,7 @@ module.exports = {
         PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE: `/admin-panel/health`, // /admin-panel-service/api/v1/internal/auth/health
         PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE: `/software-management/health`, // /software-management-service/api/v1/internal/software/health
         POST_REFRESH: `/post-refresh`, // POST /custom-auth-service/api/v1/internal/post-refresh
-        CREATE_USER: `/create-user` // POST /custom-auth-service/api/v1/internal/create-user (from Admin Panel)
+        CREATE_USER: `/create-user`, // POST /custom-auth-service/api/v1/internal/create-user (from Admin Panel)
+        CONVERT_USER_TYPE: `/convert-user-type/:userId` // PATCH /custom-auth-service/api/v1/internal/convert-user-type/:userId
     }
 }

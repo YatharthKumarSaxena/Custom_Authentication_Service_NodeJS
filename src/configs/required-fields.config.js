@@ -11,7 +11,8 @@
  * → Changes will automatically reflect here
  */
 
-const { FieldDefinitions, getRequiredFields } = require("./field-definitions.config");
+const { getRequiredFields } = require("@/utils/field-definition.util");
+const { FieldDefinitions } = require("./field-definitions.config");
 
 // AUTO-GENERATED REQUIRED FIELDS
 

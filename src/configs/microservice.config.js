@@ -4,30 +4,32 @@
  * Central configuration for microservice mode settings.
  */
 
+const { getMyEnvAsBool, getMyEnv } = require("@/utils/env.util");
+
 const microserviceConfig = {
     // Is microservice mode enabled?
-    enabled: process.env.MAKE_IT_MICROSERVICE === 'true',
+    enabled: getMyEnvAsBool("MAKE_IT_MICROSERVICE", false),
 
     // Service token settings
     serviceToken: {
-        secret: process.env.CUSTOM_AUTH_SERVICE_TOKEN_SECRET,
+        secret: getMyEnv("CUSTOM_AUTH_SERVICE_TOKEN_SECRET"),
         expiry: 15 * 60, // 15 minutes
         rotationThreshold: 10 * 60 // 10 minutes
     },
 
     // Service instance name
-    instanceName: process.env.SERVICE_INSTANCE_NAME || 'auth-service-default',
+    instanceName: getMyEnv("SERVICE_INSTANCE_NAME", 'auth-service-default'),
 
     // Redis session settings
     redis: {
-        keySalt: process.env.REDIS_KEY_SALT || 'default-salt-change-in-production',
+        keySalt: getMyEnv("REDIS_KEY_SALT", 'default-salt-change-in-production'),
         sessionTTL: 7 * 24 * 60 * 60 // 7 days
     },
 
     // Internal service URLs
     services: {
-        adminPanel: process.env.ADMIN_PANEL_SERVICE_URL || 'http://localhost:8081',
-        softwareManagement: process.env.SOFTWARE_MANAGEMENT_SERVICE_URL || 'http://localhost:8082'
+        adminPanel: getMyEnv("ADMIN_PANEL_SERVICE_URL", 'http://localhost:8081'),
+        softwareManagement: getMyEnv("SOFTWARE_MANAGEMENT_SERVICE_URL", 'http://localhost:8082')
     },
 
     // Internal API settings
