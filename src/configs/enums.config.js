@@ -6,7 +6,8 @@ const AuthModes = Object.freeze({
 });
 
 const UserTypes = Object.freeze({
-    CUSTOMER: "CUSTOMER",
+    USER: "USER",
+    CLIENT: "CLIENT",
     ADMIN: "ADMIN"
 });
 

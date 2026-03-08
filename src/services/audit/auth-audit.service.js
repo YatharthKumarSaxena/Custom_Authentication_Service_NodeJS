@@ -9,9 +9,8 @@ const { ENABLE_AUTH_SESSION_LOGGING } = require("@/configs/security.config");
 const logAuthEvent = (user, device, requestId, eventType, description, logOptions = {}) => {
     (async () => {
         try {
-            
-            if(!ENABLE_AUTH_SESSION_LOGGING) return;
 
+            if (!ENABLE_AUTH_SESSION_LOGGING)return;
             const userId = user.userId;
             
             const baseLog = {

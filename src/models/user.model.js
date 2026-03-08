@@ -11,7 +11,7 @@ const {
 const {
     emailRegex,
     phoneNumberRegex,
-    userIdRegex,
+    customIdRegex,
     firstNameRegex,
     localNumberRegex,
     countryCodeRegex
@@ -23,10 +23,9 @@ const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 const userSchema = new mongoose.Schema({
     userId: {
         type: String,
-        immutable: true,
         unique: true,
         index: true,
-        match: userIdRegex
+        match: customIdRegex
     },
 
     firstName: {
@@ -83,7 +82,7 @@ const userSchema = new mongoose.Schema({
     userType: {
         type: String,
         enum: Object.values(UserTypes),
-        default: UserTypes.CUSTOMER
+        default: UserTypes.USER
     },
 
     isEmailVerified: {

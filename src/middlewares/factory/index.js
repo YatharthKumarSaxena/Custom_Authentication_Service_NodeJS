@@ -4,6 +4,7 @@ const { checkBodyPresence, checkParamsPresence, checkQueryPresence } = require("
 const { fetchEntityFactory } = require("./fetch-entity.middleware-factory");
 const { sanitizeAuthPayload } = require("./sanitize-auth-payload.middleware.factory");
 const { checkFeatureEnabled, checkBooleanFeature, checkEnumFeature } = require("./feature-enabled.middleware-factory");
+const { authorizeUserTypes } = require("./user-type-restriction.middleware-factory");
 
 const factoryMiddlewares = {
     createAuthValidator,
@@ -17,7 +18,8 @@ const factoryMiddlewares = {
     sanitizeAuthPayload,
     checkFeatureEnabled,
     checkBooleanFeature,
-    checkEnumFeature
+    checkEnumFeature,
+    authorizeUserTypes
 };
 
 module.exports = {

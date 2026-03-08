@@ -15,6 +15,7 @@ HTTP request handlers for internal administrative operations. Provide super admi
 | get-user-device.controller.js | Retrieves device information for users |
 | toggle-device-block-status.controller.js | Blocks/unblocks specific user devices |
 | toggle-user-block-status.controller.js | Blocks/unblocks user accounts |
+| create-user.controller.js | Creates users/admins from Admin Panel Service |
 
 ## 🔗 Key Files
 - **get-user-details.controller.js**: Handles GET /admin/users/:id for retrieving user account details
@@ -22,6 +23,7 @@ HTTP request handlers for internal administrative operations. Provide super admi
 - **get-user-auth-logs.controller.js**: Handles GET /admin/users/:id/logs for authentication history
 - **toggle-user-block-status.controller.js**: Processes PATCH /admin/users/:id/block for account blocking
 - **toggle-device-block-status.controller.js**: Handles PATCH /admin/devices/:id/block for device control
+- **create-user.controller.js**: Processes POST /internal/create-user for user/admin creation from Admin Panel
 - **index.js**: Module exports for internal controllers
 
 ## 📝 Usage Notes

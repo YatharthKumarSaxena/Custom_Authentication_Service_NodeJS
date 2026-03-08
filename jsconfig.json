@@ -12,7 +12,7 @@
       "@rate-limiters/*": ["src/rate-limiters/*"],
       "@services/*": ["src/services/*"],
       "@controllers/*": ["src/controllers/*"],
-      "@routes/*": ["src/routers/*"],
+      "@routes/*": ["src/routes/*"],
       "@models/*": ["src/models/*"],
       "@cron-jobs/*": ["src/cron-jobs/*"],
       "@internals/*": ["src/internals/*"],

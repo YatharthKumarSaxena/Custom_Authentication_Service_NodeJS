@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
-const { service } = require("@/configs/security.config");
+const { ServiceNames } = require("@/configs/security.config");
 
 /**
  * Service Token Schema
@@ -15,7 +15,7 @@ const serviceTokenSchema = new mongoose.Schema(
         type: String,
         required: true,
         trim: true,
-        enum: service.ALLOWED_SERVICE_NAMES
+        enum: Object.values(ServiceNames)
     },
 
     serviceInstanceId: {

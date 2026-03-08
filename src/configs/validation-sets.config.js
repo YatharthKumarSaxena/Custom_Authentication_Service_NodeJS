@@ -11,7 +11,8 @@
  * → Changes will automatically reflect here
  */
 
-const { FieldDefinitions, getValidationSet } = require("./field-definitions.config");
+const { getValidationSet } = require("@/utils/field-definition.util");
+const { FieldDefinitions } = require("./field-definitions.config");
 
 // AUTO-GENERATED VALIDATION SETS
 

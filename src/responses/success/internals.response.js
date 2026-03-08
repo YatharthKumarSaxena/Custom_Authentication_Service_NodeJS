@@ -100,6 +100,19 @@ const postRefreshSuccessResponse = (res, result, device) => {
     });
 };
 
+const convertUserTypeSuccessResponse = (res, userId, result) => {
+    logWithTime(`✅ User (${userId}) type converted from ${result.oldUserType} to ${result.newUserType}`);
+    return res.status(OK).json({
+        success: true,
+        message: result.message,
+        data: {
+            userId,
+            oldUserType: result.oldUserType,
+            newUserType: result.newUserType
+        }
+    });
+};
+
 const internalsSuccessResponses = {
     getUserDetailsAdminSuccessResponse,
     toggleDeviceBlockSuccessResponse,
@@ -107,7 +120,8 @@ const internalsSuccessResponses = {
     getUserSessionsForAdminNoSessionsResponse,
     toggleUserBlockSuccessResponse,
     getUserAuthLogsAdminSuccessResponse,
-    postRefreshSuccessResponse
+    postRefreshSuccessResponse,
+    convertUserTypeSuccessResponse
 }
 
 module.exports = {

@@ -4,7 +4,7 @@ const {
     throwInternalServerError, 
     getLogIdentifiers, 
     throwTooManyRequestsError,
-    throwSpecificInternalServerError
+    throwAccessDeniedError, 
 } = require("@/responses/common/error-handler.response");
 
 const { deactivateAccountSuccessResponse } = require("@/responses/success/index");
@@ -21,6 +21,7 @@ const deactivateMyAccount = async (req, res) => {
         const { password } = req.body;
         const requestId = req.requestId;
 
+        // Call service
         const result = await deactivateAccountService(user, device, password, requestId);
 
         if (!result.success) {
@@ -37,7 +38,7 @@ const deactivateMyAccount = async (req, res) => {
                 return throwInvalidResourceError(res, "Account", result.message);
             }
 
-            return throwSpecificInternalServerError(res, result.message);
+            return throwInternalServerError(res, result.message);
         }
 
         // Best-effort logout

@@ -13,7 +13,6 @@ const {
 const { twoFactorToggleSuccessResponse } = require("@/responses/success/index");
 
 const { logWithTime } = require("@utils/time-stamps.util");
-const { isAdminId } = require("@/utils/auth.util");
 
 const handleTwoFactorToggle = async (req, res, shouldEnable) => {
     try {
@@ -21,14 +20,6 @@ const handleTwoFactorToggle = async (req, res, shouldEnable) => {
         const device = req.device;
         const { password } = req.body;
         const requestId = req.requestId;
-
-        // Admin protection
-        if (isAdminId(user.userId)) {
-            return throwAccessDeniedError(
-                res,
-                "Modifications to Super Admin 2FA are not allowed."
-            );
-        }
 
         // Call service
         const result = await toggleTwoFactorService(

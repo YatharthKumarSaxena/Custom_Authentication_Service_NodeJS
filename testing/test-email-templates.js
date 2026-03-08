@@ -5,7 +5,7 @@
 
 require("module-alias/register");
 require("dotenv").config();
-const { sendEmail } = require("@services/common/mail.service");
+const { sendEmail } = require("@/services/common/mail.service");
 const { generateEmailHtml } = require("@utils/email-generator.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { logWithTime } = require("@utils/time-stamps.util");

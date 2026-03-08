@@ -7,12 +7,12 @@ const { logWithTime } = require("@utils/time-stamps.util");
 /**
  * Returns: { deviceDoc, auditLogPayload (or null) }
  */
-const syncDeviceData = async ( device, { session }) => {
+const syncDeviceData = async ( device ) => {
     try {
 
         const { deviceUUID, deviceName, deviceType } = device;
 
-        let deviceDoc = await DeviceModel.findOne({ deviceUUID: deviceUUID }).session(session); 
+        let deviceDoc = await DeviceModel.findOne({ deviceUUID: deviceUUID }); 
 
         let auditLogPayload = null;
 
@@ -33,7 +33,7 @@ const syncDeviceData = async ( device, { session }) => {
             }
 
             if (shouldUpdate) {
-                const updatedDevice = await deviceDoc.save({ session });
+                const updatedDevice = await deviceDoc.save();
                 
                 // Payload prepare karo, Log mat karo
                 const { oldData, newData } = prepareAuditData(oldDeviceSnapshot, updatedDevice);
@@ -57,7 +57,7 @@ const syncDeviceData = async ( device, { session }) => {
                 deviceType: deviceType || null
             });
             
-            const savedDevice = await newDevice.save({ session });
+            const savedDevice = await newDevice.save();
             const auditData = prepareAuditData(null, savedDevice);
 
             auditLogPayload = {
@@ -77,13 +77,13 @@ const syncDeviceData = async ( device, { session }) => {
 /**
  * Returns: { mappingDoc, auditLogPayload (or null) }
  */
-const syncUserDeviceMapping = async (user, deviceDoc, { session }) => {
+const syncUserDeviceMapping = async (user, deviceDoc) => {
     try {
         const userId = user._id;
         const deviceObjectId = deviceDoc._id;
         let auditLogPayload = null;
 
-        let userDeviceDoc = await UserDeviceModel.findOne({ userId, deviceId: deviceObjectId }).session(session);
+        let userDeviceDoc = await UserDeviceModel.findOne({ userId, deviceId: deviceObjectId });
 
         if (userDeviceDoc) {
             const oldMappingSnapshot = cloneForAudit(userDeviceDoc);
@@ -91,7 +91,7 @@ const syncUserDeviceMapping = async (user, deviceDoc, { session }) => {
             userDeviceDoc.lastLoginAt = new Date();
             userDeviceDoc.loginCount = (userDeviceDoc.loginCount || 0) + 1;
 
-            const updatedMapping = await userDeviceDoc.save({ session });
+            const updatedMapping = await userDeviceDoc.save();
             const { oldData, newData } = prepareAuditData(oldMappingSnapshot, updatedMapping);
 
             auditLogPayload = {
@@ -111,7 +111,7 @@ const syncUserDeviceMapping = async (user, deviceDoc, { session }) => {
                 firstSeenAt: new Date()
             });
 
-            const savedMapping = await newUserDevice.save({ session });
+            const savedMapping = await newUserDevice.save();
             const auditData = prepareAuditData(null, savedMapping);
 
             auditLogPayload = {

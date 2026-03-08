@@ -7,8 +7,7 @@
 const { isValidRegex, validateLength } = require("./validators-factory.util");
 const { 
   UUID_V4_REGEX, 
-  mongoIdRegex, 
-  adminIdRegex 
+  mongoIdRegex
 } = require("@configs/regex.config");
 const { deviceNameLength } = require("@configs/fields-length.config");
 
@@ -22,11 +21,6 @@ const isValidMongoID = (value) => {
   return isValidRegex(value, mongoIdRegex);
 };
 
-// Custom ID validation (e.g., ADM0000001)
-const isValidAdminId = (value) => {
-  return isValidRegex(value, adminIdRegex);
-};
-
 // Device name length validation
 const isValidDeviceNameLength = (value) => {
   const { min, max } = deviceNameLength;
@@ -36,6 +30,5 @@ const isValidDeviceNameLength = (value) => {
 module.exports = {
   isValidUUID,
   isValidMongoID,
-  isValidAdminId,
   isValidDeviceNameLength
 };

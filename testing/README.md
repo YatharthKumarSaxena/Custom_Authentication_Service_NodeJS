@@ -76,7 +76,7 @@ node testing/test-all-templates.js --help
 ## 🔧 How It Works
 
 ### Email Testing (`test-email-templates.js`)
-1. Imports `sendEmail` from `@services/common/mail.service`
+1. Imports `sendEmail` from `@/services/common/mail.service`
 2. Imports `generateEmailHtml` from `@utils/email-generator.util`
 3. Imports email templates from `@services/templates/emailTemplate`
 4. Generates HTML using template + data
@@ -84,7 +84,7 @@ node testing/test-all-templates.js --help
 6. Fire-and-forget pattern (no await)
 
 ### SMS Testing (`test-sms-templates.js`)
-1. Imports `sendSMS` from `@services/common/sms.service`
+1. Imports `sendSMS` from `@/services/common/sms.service`
 2. Imports `generateSmsMessage` from `@utils/sms-generator.util`
 3. Imports SMS templates from `@services/templates/smsTemplate`
 4. Generates message using template + OTP

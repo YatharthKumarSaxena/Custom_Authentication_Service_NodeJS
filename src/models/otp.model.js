@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
-const { VerificationPurpose, ContactModes } = require("@configs/enums.config");
+const { VerificationPurpose } = require("@configs/enums.config");
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
 const otpSchema = new mongoose.Schema({

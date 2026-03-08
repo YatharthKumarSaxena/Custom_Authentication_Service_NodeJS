@@ -11,7 +11,8 @@
  * → Changes will automatically reflect here
  */
 
-const { FieldDefinitions, getRequiredFields } = require("./field-definitions.config");
+const { getRequiredFields } = require("@/utils/field-definition.util");
+const { FieldDefinitions } = require("./field-definitions.config");
 
 // AUTO-GENERATED REQUIRED FIELDS
 
@@ -21,6 +22,7 @@ const activateAccount = getRequiredFields(FieldDefinitions.ACTIVATE_ACCOUNT);
 const deactivateAccount = getRequiredFields(FieldDefinitions.DEACTIVATE_ACCOUNT);
 const hardDeleteAccount = getRequiredFields(FieldDefinitions.HARD_DELETE_ACCOUNT);
 const handle2FA = getRequiredFields(FieldDefinitions.HANDLE_2FA);
+const hardDeleteAccount = getRequiredFields(FieldDefinitions.HARD_DELETE_ACCOUNT);
 const changePassword = getRequiredFields(FieldDefinitions.CHANGE_PASSWORD);
 const resetPassword = getRequiredFields(FieldDefinitions.RESET_PASSWORD);
 const verifyEmail = getRequiredFields(FieldDefinitions.VERIFY_EMAIL);
@@ -38,5 +40,6 @@ module.exports = {
     resetPassword,
     verifyEmail,
     verifyPhone,
-    resendVerification
+    resendVerification,
+    hardDeleteAccount
 };

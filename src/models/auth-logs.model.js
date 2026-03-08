@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { AUTH_LOG_EVENTS }  = require("@configs/auth-log-events.config");
 const { DeviceTypes } = require("@configs/enums.config");
-const { UUID_V4_REGEX, userIdRegex } = require("@configs/regex.config");
+const { UUID_V4_REGEX, customIdRegex } = require("@configs/regex.config");
 const { deviceNameLength } = require("@configs/fields-length.config");
 const { DB_COLLECTIONS } = require("@configs/db-collections.config");
 
@@ -9,7 +9,7 @@ const authLogSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
-    match: userIdRegex,
+    match: customIdRegex,
     index: true
   },
 

@@ -1,49 +1,52 @@
 const { CounterModel } = require("@models/id-generator.model");
 const { userRegistrationCapacity } = require("@configs/app-limits.config");
 const { IP_Address_Code } = require("@configs/ip-address.config");
-const { customerIdPrefix } = require("@configs/id-prefixes.config");
+const { customIdPrefix } = require("@configs/id-prefixes.config");
 const { errorMessage } = require("@/responses/common/error-handler.response");
 const { logWithTime } = require("@utils/time-stamps.util");
+const { UserTypes } = require("@/configs/enums.config");
 
-const makeUserId = async () => {
+/**
+ * Generate user ID with custom prefix
+ * @param {string} userType - Type of user (default: UserTypes.USER)
+ * @returns {Promise<string>} Generated user ID or empty string on failure
+ */
+const makeUserIdWithPrefix = async (userType = UserTypes.USER) => {
     try {
-        // Step 1: Atomic Update (Find & Increment OR Create & Set 1)
-        // Upsert ensures document exists, new:true returns updated val
+        const prefix = customIdPrefix;
+
         const counter = await CounterModel.findOneAndUpdate(
-            { _id: customerIdPrefix },
+            { _id: prefix },
             { $inc: { seq: 1 } },
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
 
         if (!counter) {
-            logWithTime("🛑 Critical: Failed to generate or retrieve user counter.");
-            return ""; 
+            logWithTime(`🛑 Critical: Failed to generate or retrieve counter for prefix ${prefix}.`);
+            return "";
         }
 
         const currentSeq = counter.seq;
 
-        // Step 2: Check Capacity
+        // Check capacity
         if (currentSeq > userRegistrationCapacity) {
-            logWithTime("⚠️ Machine Capacity to Store User Data is full.");
-            return "0"; 
+            logWithTime(`⚠️ Machine Capacity is full for prefix ${prefix}.`);
+            return "0";
         }
 
-        // Step 3: ID Construction
-        // Logic: Offset ID by Adding Capacity (e.g., 10000 + 1 = 10001) for fixed length
-        const numericId = userRegistrationCapacity + currentSeq; 
-        
-        const identityCode = `${customerIdPrefix}${IP_Address_Code}`;
+        // ID Construction
+        const numericId = userRegistrationCapacity + currentSeq;
+        const identityCode = `${prefix}${IP_Address_Code}`;
         const userId = `${identityCode}${numericId}`;
 
         return userId;
-
     } catch (err) {
-        logWithTime("🛑 Error in makeUserId process");
-        errorMessage(err);    
-        return ""; 
+        logWithTime(`🛑 Error in makeUserIdWithPrefix for UserType: ${userType}`);
+        errorMessage(err);
+        return "";
     }
 };
 
 module.exports = {
-    makeUserId
+    makeUserIdWithPrefix
 };

@@ -5,7 +5,14 @@ const { verifyDeviceField } = require("./verify-device-field.middleware");
 const { verifyTokenMiddleware } = require("./verify-token.middleware");
 const { checkUserIsVerified } = require("./check-user-is-verified.middleware");
 const { requestIdMiddleware } = require('./check-request-id.middleware');
-const { protectAdmin } = require('./protect-admin.middleware');
+const {
+    restrictAdmin,
+    allowOnlyRegularUsers,
+    allowPremiumAccounts,
+    allowAdminOnly,
+    allowClientOnly,
+    allowUsersAndClients
+} = require('./authorization.middleware');
 
 const commonMiddlewares = {
     isDeviceBlocked,
@@ -15,7 +22,13 @@ const commonMiddlewares = {
     verifyTokenMiddleware,
     checkUserIsVerified,
     requestIdMiddleware,
-    protectAdmin
+    // Authorization middlewares
+    restrictAdmin,
+    allowOnlyRegularUsers,
+    allowPremiumAccounts,
+    allowAdminOnly,
+    allowClientOnly,
+    allowUsersAndClients
 }
 
 module.exports = {

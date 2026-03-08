@@ -1,6 +1,5 @@
 const { activateAccountService } = require("@services/account-management/account-activation.service");
 const { AuthErrorTypes } = require("@configs/enums.config");
-const { isAdminId } = require("@/utils/auth.util");
 
 const {
     throwInternalServerError,
@@ -21,12 +20,6 @@ const activateMyAccount = async (req, res) => {
         const device = req.device;
         const { password } = req.body;
         const requestId = req.requestId;
-
-        // Admin protection
-        if (isAdminId(user.userId)) {
-            logWithTime(`❌ Admin activation blocked: ${user.userId}`);
-            return throwAccessDeniedError(res, "Admin accounts cannot be activated manually.");
-        }
 
         const result = await activateAccountService(user, device, password, requestId);
 

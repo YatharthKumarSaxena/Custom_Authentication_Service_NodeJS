@@ -14,53 +14,27 @@ if (!guard) {
     return;
 }
 
-const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
 const { getServiceToken } = require('../service-token');
-const { INTERNAL_API, HEADERS, SERVICE_NAMES } = require('../constants');
+const { INTERNAL_API, SERVICE_NAMES } = require('../constants');
 const { logWithTime } = require('@utils/time-stamps.util');
-const { OK, CREATED } = require('@/configs/http-status.config');
-
-// Device configuration
-const DEVICE_UUID = process.env.DEVICE_UUID || '00000000-0000-4000-8000-000000000000';
-const DEVICE_TYPE = process.env.DEVICE_TYPE || 'SERVER';
+const { createInternalServiceClient } = require('@/utils/internal-service-client.util');
+const { SOFTWARE_MANAGEMENT_URIS } = require('@/configs/internal-uri.config');
 
 /**
- * Create axios instance with service authentication
+ * Get authenticated Software Management Service client
+ * @returns {Promise<Object>} Client with callService method
  */
-const createAuthenticatedClient = async () => {
+const getSoftwareManagementClient = async () => {
     const serviceToken = await getServiceToken(SERVICE_NAMES.AUTH_SERVICE);
-
-    return axios.create({
-        baseURL: INTERNAL_API.SOFTWARE_MANAGEMENT_BASE_URL,
-        timeout: INTERNAL_API.TIMEOUT,
-        headers: {
-            [HEADERS.SERVICE_TOKEN]: serviceToken,
-            [HEADERS.SERVICE_NAME]: SERVICE_NAMES.AUTH_SERVICE,
-            [HEADERS.REQUEST_ID]: uuidv4(),
-            [HEADERS.DEVICE_UUID]: DEVICE_UUID,
-            [HEADERS.DEVICE_TYPE]: DEVICE_TYPE,
-            'Content-Type': 'application/json'
-        }
-    });
-};
-
-/**
- * Retry logic for failed requests
- */
-const retryRequest = async (requestFn, retries = INTERNAL_API.RETRY_ATTEMPTS) => {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            return await requestFn();
-        } catch (error) {
-            if (attempt === retries) {
-                throw error;
-            }
-            
-            logWithTime(`⚠️  Request failed (attempt ${attempt}/${retries}). Retrying in ${INTERNAL_API.RETRY_DELAY}ms...`);
-            await new Promise(resolve => setTimeout(resolve, INTERNAL_API.RETRY_DELAY));
-        }
-    }
+    
+    return createInternalServiceClient(
+        INTERNAL_API.SOFTWARE_MANAGEMENT_BASE_URL,
+        serviceToken,
+        SERVICE_NAMES.AUTH_SERVICE,
+        INTERNAL_API.TIMEOUT,
+        INTERNAL_API.RETRY_ATTEMPTS,
+        INTERNAL_API.RETRY_DELAY
+    );
 };
 
 /**
@@ -73,27 +47,22 @@ const notifyUserCreation = async (userId) => {
     try {
         logWithTime(`📢 Notifying Software Management Service about user creation: ${userId.substring(0, 8)}...`);
 
-        const response = await retryRequest(async () => {
-            const client = await createAuthenticatedClient();
-            return await client.post('/internal/users/created', {
-                userId
-            });
+        const client = await getSoftwareManagementClient();
+        const result = await client.callService({
+            method: SOFTWARE_MANAGEMENT_URIS.NOTIFY_USER_CREATED.method,
+            uri: SOFTWARE_MANAGEMENT_URIS.NOTIFY_USER_CREATED.uri,
+            body: { userId }
         });
 
-        logWithTime(`✅ User creation notification sent successfully`);
-        return response.data;
+        if (result.success) {
+            logWithTime(`✅ User creation notification sent successfully`);
+            return result.data;
+        } else {
+            throw new Error(result.error || 'Notification failed');
+        }
     } catch (error) {
         logWithTime(`❌ Failed to notify user creation: ${error.message}`);
-        
-        if (error.response) {
-            throw new Error(
-                `Software Management Service error: ${error.response.status} - ${JSON.stringify(error.response.data)}`
-            );
-        } else if (error.request) {
-            throw new Error('Software Management Service is not reachable');
-        } else {
-            throw error;
-        }
+        throw error;
     }
 };
 
@@ -108,28 +77,22 @@ const syncUserAccountState = async (userId, isActive) => {
     try {
         logWithTime(`🔄 Syncing user account state: ${userId.substring(0, 8)}...`);
 
-        const response = await retryRequest(async () => {
-            const client = await createAuthenticatedClient();
-            return await client.patch('/internal/users/account-state', {
-                userId,
-                isActive
-            });
+        const client = await getSoftwareManagementClient();
+        const result = await client.callService({
+            method: SOFTWARE_MANAGEMENT_URIS.SYNC_USER_ACCOUNT_STATE.method,
+            uri: SOFTWARE_MANAGEMENT_URIS.SYNC_USER_ACCOUNT_STATE.uri,
+            body: { userId, isActive }
         });
 
-        logWithTime(`✅ User account state synced successfully`);
-        return response.data;
+        if (result.success) {
+            logWithTime(`✅ User account state synced successfully`);
+            return result.data;
+        } else {
+            throw new Error(result.error || 'Sync failed');
+        }
     } catch (error) {
         logWithTime(`❌ Failed to sync user account state: ${error.message}`);
-        
-        if (error.response) {
-            throw new Error(
-                `Software Management Service error: ${error.response.status} - ${JSON.stringify(error.response.data)}`
-            );
-        } else if (error.request) {
-            throw new Error('Software Management Service is not reachable');
-        } else {
-            throw error;
-        }
+        throw error;
     }
 };
 
@@ -142,25 +105,27 @@ const healthCheck = async () => {
     try {
         logWithTime('🏥 Checking Software Management Service health...');
         
-        const response = await retryRequest(async () => {
-            const client = await createAuthenticatedClient();
-            return await client.get('/software-management-service/api/v1/internal/auth/health');
+        const client = await getSoftwareManagementClient();
+        const result = await client.callService({
+            method: SOFTWARE_MANAGEMENT_URIS.HEALTH_CHECK.method,
+            uri: SOFTWARE_MANAGEMENT_URIS.HEALTH_CHECK.uri
         });
 
-        const isLive = response.status === 200 && response.data?.success === true;
-        
-        if (isLive) {
+        if (result.success && result.data?.success === true) {
             logWithTime('✅ Software Management Service is live');
+            return {
+                success: true,
+                data: result.data
+            };
         } else {
             logWithTime('⚠️  Software Management Service responded but status is not healthy');
+            return {
+                success: false,
+                error: result.error || 'Service not healthy'
+            };
         }
-        
-        return {
-            success: isLive,
-            data: response.data || null
-        };
     } catch (error) {
-        logWithTime(`❌ Software Management Service is not reachable: ${error.message}`);
+        logWithTime(`❌ Software Management Service health check failed: ${error.message}`);
         return {
             success: false,
             error: error.message
@@ -183,43 +148,33 @@ const createSuperAdminInSoftwareManagement = async (adminData) => {
     try {
         logWithTime(`🚀 Creating super admin in Software Management Service: ${adminData.adminId.substring(0, 8)}...`);
 
-        const response = await retryRequest(async () => {
-            const client = await createAuthenticatedClient();
-            return await client.post('/software-management-service/api/v1/internal/create-super-admin', adminData);
+        const client = await getSoftwareManagementClient();
+        const result = await client.callService({
+            method: SOFTWARE_MANAGEMENT_URIS.CREATE_SUPER_ADMIN.method,
+            uri: SOFTWARE_MANAGEMENT_URIS.CREATE_SUPER_ADMIN.uri,
+            body: adminData
         });
-
-        const success = response.status === OK || response.status === CREATED;
         
-        if (success && response.data?.success) {
+        if (result.success && result.data?.success) {
             logWithTime(`✅ Super admin created successfully in Software Management Service`);
+            return {
+                success: true,
+                data: result.data
+            };
         } else {
             logWithTime(`⚠️  Unexpected response from Software Management Service`);
+            return {
+                success: false,
+                error: result.error || 'Creation failed',
+                details: result.data
+            };
         }
-        
-        return {
-            success: success && (response.data?.success === true),
-            data: response.data || null
-        };
     } catch (error) {
         logWithTime(`❌ Failed to create super admin in Software Management Service: ${error.message}`);
-        
-        if (error.response) {
-            return {
-                success: false,
-                error: `Software Management Service error: ${error.response.status}`,
-                details: error.response.data
-            };
-        } else if (error.request) {
-            return {
-                success: false,
-                error: 'Software Management Service is not reachable'
-            };
-        } else {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+        return {
+            success: false,
+            error: error.message
+        };
     }
 };
 

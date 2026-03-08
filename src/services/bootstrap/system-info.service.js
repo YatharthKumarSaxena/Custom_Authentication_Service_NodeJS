@@ -329,8 +329,8 @@ function logMicroserviceConfig() {
     console.log(`   Service Instance:         ${instanceName}`);
     console.log(`   Admin Panel Service:      ${adminPanelUrl}`);
     console.log(`   Software Mgmt Service:    ${softwareManagementUrl}`);
-    console.log(`   Service Token:            ${maskSecret(process.env.CUSTOM_AUTH_SERVICE_TOKEN_SECRET || "")}`);
-    console.log(`   Redis Key Salt:           ${maskSecret(process.env.REDIS_KEY_SALT || "")}`)
+    console.log(`   Service Token Secret:     ${maskSecret(process.env.CUSTOM_AUTH_SERVICE_TOKEN_SECRET || "")}`);
+    console.log(`   Redis Key Salt:           ${maskSecret(process.env.REDIS_KEY_SALT || "")}`);
     console.log(`\n   Features:`);
     console.log(`      ✅ Redis Session Management`);
     console.log(`      ✅ Service-to-Service Auth`);

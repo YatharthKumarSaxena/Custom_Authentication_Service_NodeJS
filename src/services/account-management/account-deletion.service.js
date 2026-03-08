@@ -32,20 +32,11 @@ const hardDeleteAccountService = async (user, device, plainPassword, requestId) 
 
     try {
 
-        const session = await UserModel.startSession();
-
-        try {
-            await session.withTransaction(async () => {
-                // Delete in order: dependencies first, then user
-                await UserDeviceModel.deleteMany({ userId }, { session });
-                await VerificationLinkModel.deleteMany({ userId }, { session });
-                await OTPModel.deleteMany({ userId }, { session });
-                await UserModel.deleteOne({ _id: userId }, { session });
-            });
-
-        } finally {
-            await session.endSession();
-        }
+        // Delete in order: dependencies first, then user
+        await UserDeviceModel.deleteMany({ userId });
+        await VerificationLinkModel.deleteMany({ userId });
+        await OTPModel.deleteMany({ userId });
+        await UserModel.deleteOne({ _id: userId });
 
         // ===== SUCCESS FLOW =====
 

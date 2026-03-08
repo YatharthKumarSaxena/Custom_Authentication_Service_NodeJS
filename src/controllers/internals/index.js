@@ -2,7 +2,9 @@ const { getUserAuthLogs } = require("./get-user-auth-logs.controller");
 const { getUserDetailsAdmin } = require("./get-user-details.controller");
 const { getUserSessionsForAdmin } = require("./get-user-device.controller");
 const { blockDevice, unblockDevice } = require("./toggle-device-block-status.controller");
-const { blockUser, unblockUser } = require("./toggle-user-block-status.controller")
+const { blockUser, unblockUser } = require("./toggle-user-block-status.controller");
+const { createUser } = require("./create-user.controller");
+const { convertUserType } = require("./convert-user-type.controller");
 
 
 const internalControllers = {
@@ -12,7 +14,9 @@ const internalControllers = {
     blockDevice,
     unblockDevice,
     blockUser,
-    unblockUser
+    unblockUser,
+    createUser,
+    convertUserType
 };
 
 module.exports = {

@@ -1,5 +1,5 @@
 const { logWithTime } = require("@utils/time-stamps.util");
-const { OK } = require("@configs/http-status.config");
+const { OK, CREATED } = require("@configs/http-status.config");
 
 /**
  * Common Response Handlers for Internal Routes
@@ -46,8 +46,32 @@ const sendSoftwareServiceHealthSuccess = (res, serviceAuth) => {
     });
 };
 
+/**
+ * Success Response - Create User/Admin from Admin Panel
+ * @param {Object} res - Express response object
+ * @param {Object} result - Service result object
+ * @param {string} type - User type ("admin" or "user")
+ */
+const sendCreateUserSuccessResponse = (res, result, type) => {
+    logWithTime(`✅ ${type.toUpperCase()} created successfully via Admin Panel: ${result.userId}`);
+    return res.status(CREATED).json({
+        success: true,
+        message: `${type === "admin" ? "Admin" : "User"} created successfully`,
+        data: {
+            userId: result.userId,
+            contactMode: result.contactMode,
+            verificationSent: result.verificationSent,
+            message: result.message
+        },
+        timestamp: new Date().toISOString()
+    });
+};
+
 module.exports = {
     // Health checks
     sendAdminPanelServiceHealthSuccess,
-    sendSoftwareServiceHealthSuccess
+    sendSoftwareServiceHealthSuccess,
+    
+    // User management
+    sendCreateUserSuccessResponse
 };

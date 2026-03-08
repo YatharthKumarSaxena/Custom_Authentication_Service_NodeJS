@@ -77,10 +77,6 @@ const blockDeviceService = async (targetDeviceUUID, requestingAdminId) => {
     };
 };
 
-const { DeviceModel } = require("@models/device.model");
-const { AuthErrorTypes } = require("@configs/enums.config");
-const { logWithTime } = require("@utils/time-stamps.util");
-
 /**
  * Service to Unblock a Device
  * @param {String} targetDeviceUUID - UUID of device to unblock

@@ -17,8 +17,10 @@ const {
     sendSoftwareServiceHealthSuccess
 } = require("@/responses/internals/common.response");
 const { INTERNAL_ROUTES } = require("@configs/uri.config");
-const { adminPanelInternalMiddlewares, softwareManagementInternalMiddlewares } = require("./middleware.gateway.routes");
-const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE } = INTERNAL_ROUTES;
+const { adminPanelInternalMiddlewares, softwareManagementInternalMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
+const { authController } = require("@controllers/auth/index");
+const { internalControllers } = require("@controllers/internals/index");
+const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE, POST_REFRESH, CREATE_USER, CONVERT_USER_TYPE } = INTERNAL_ROUTES;
 
 // Check if microservice mode is enabled
 if (!microserviceConfig.enabled) {
@@ -52,8 +54,35 @@ if (!microserviceConfig.enabled) {
             return sendSoftwareServiceHealthSuccess(res, req.serviceAuth);
         });
 
+        // ==================== Token Management Routes ====================
+
+        /**
+         * @route   POST /internal/post-refresh
+         * @desc    Refresh access token for Admin Panel and Software Management services
+         * @access  Internal (All microservices)
+         */
+        internalRouter.post(POST_REFRESH, baseMiddlewares, authController.postRefresh);
+
+        // ==================== User Management Routes ====================
+
+        /**
+         * @route   POST /internal/create-user
+         * @desc    Create user or admin from Admin Panel Service
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.post(CREATE_USER, adminPanelInternalMiddlewares, internalControllers.createUser);
+
+        /**
+         * @route   PATCH /internal/convert-user-type/:userId
+         * @desc    Convert user type (USER, CLIENT, ADMIN)
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.patch(CONVERT_USER_TYPE, adminPanelInternalMiddlewares, internalControllers.convertUserType);
+
         module.exports = {
             internalRouter
         }
     }
 }
+
+
