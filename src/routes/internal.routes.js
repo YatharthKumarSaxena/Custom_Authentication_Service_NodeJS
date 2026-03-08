@@ -20,7 +20,7 @@ const { INTERNAL_ROUTES } = require("@configs/uri.config");
 const { adminPanelInternalMiddlewares, softwareManagementInternalMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
 const { authController } = require("@controllers/auth/index");
 const { internalControllers } = require("@controllers/internals/index");
-const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE, POST_REFRESH, CREATE_USER } = INTERNAL_ROUTES;
+const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE, POST_REFRESH, CREATE_USER, CONVERT_USER_TYPE } = INTERNAL_ROUTES;
 
 // Check if microservice mode is enabled
 if (!microserviceConfig.enabled) {
@@ -71,6 +71,13 @@ if (!microserviceConfig.enabled) {
          * @access  Internal (Admin Panel Service ONLY)
          */
         internalRouter.post(CREATE_USER, adminPanelInternalMiddlewares, internalControllers.createUser);
+
+        /**
+         * @route   PATCH /internal/convert-user-type/:userId
+         * @desc    Convert user type (USER, CLIENT, ADMIN)
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.patch(CONVERT_USER_TYPE, adminPanelInternalMiddlewares, internalControllers.convertUserType);
 
         module.exports = {
             internalRouter

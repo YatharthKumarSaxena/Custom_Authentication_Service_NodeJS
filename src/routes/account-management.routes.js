@@ -33,7 +33,7 @@ accountManagementRouter.post(ACTIVATE_ACCOUNT, [
 accountManagementRouter.post(DEACTIVATE_ACCOUNT, [
     rateLimiters.deactivateAccountRateLimiter,
     ...baseAuthMiddlewares,
-    commonMiddlewares.protectAdmin,
+    commonMiddlewares.restrictAdmin,  // ✅ Updated: Block admin from deactivation
     accountManagementMiddlewares.checkSoftDeleteAllowed,
     accountManagementMiddlewares.deactivateAccountFieldPresenceMiddleware
 ], accountManagementControllers.deactivateMyAccount);
@@ -42,7 +42,7 @@ accountManagementRouter.post(DEACTIVATE_ACCOUNT, [
 accountManagementRouter.delete(HARD_DELETE_ACCOUNT, [
     rateLimiters.hardDeleteAccountRateLimiter,
     ...baseAuthMiddlewares,
-    commonMiddlewares.protectAdmin,
+    commonMiddlewares.restrictAdmin,  // ✅ Updated: Block admin from deletion
     accountManagementMiddlewares.checkHardDeleteAllowed,
     accountManagementMiddlewares.hardDeleteAccountFieldPresenceMiddleware
 ], accountManagementControllers.hardDeleteMyAccount);
@@ -51,6 +51,7 @@ accountManagementRouter.delete(HARD_DELETE_ACCOUNT, [
 accountManagementRouter.post(ENABLE_2FA, [
     rateLimiters.enable2FARateLimiter,
     ...baseAuthMiddlewares,
+    commonMiddlewares.restrictAdmin,  // ✅ Updated: Block admin from 2FA toggle
     accountManagementMiddlewares.check2FAEnabled,
     accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.enable2FA);
@@ -59,6 +60,7 @@ accountManagementRouter.post(ENABLE_2FA, [
 accountManagementRouter.post(DISABLE_2FA, [
     rateLimiters.disable2FARateLimiter,
     ...baseAuthMiddlewares,
+    commonMiddlewares.restrictAdmin,  // ✅ Updated: Block admin from 2FA toggle
     accountManagementMiddlewares.check2FAEnabled,
     accountManagementMiddlewares.handle2FAFieldPresenceMiddleware
 ], accountManagementControllers.disable2FA);
