@@ -157,11 +157,15 @@ const logoutUserCompletely = async (user, device, requestId, context = "general 
         return true;
 
     } catch (error) {
-        // Rollback
-        await session.abortTransaction();
+        // Rollback only if transaction is still active
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+            logWithTime(`❌ Transaction aborted for user (${user.userId}): ${error.message}`);
+        } else {
+            logWithTime(`❌ Error occurred after transaction commit for user (${user.userId}): ${error.message}`);
+        }
+        
         session.endSession();
-
-        logWithTime(`❌ Error in logoutUserCompletely for user (${user.userId})`);
         errorMessage(error);
         return false;
     }
@@ -191,6 +195,11 @@ const loginUserOnDevice = async (user, device, requestId, refreshToken, context 
         // STORE SESSION IN REDIS (MICROSERVICE MODE)
 
         // 5. COMMIT TRANSACTION (Data Safe Now)
+        // Check if transaction is still active before committing
+        if (!session.inTransaction()) {
+            throw new Error("Transaction was aborted by a previous operation");
+        }
+        
         await session.commitTransaction();
         session.endSession(); // Close session immediately
 
@@ -218,11 +227,20 @@ const loginUserOnDevice = async (user, device, requestId, refreshToken, context 
         return true;
 
     } catch (error) {
-        // Rollback
-        await session.abortTransaction();
+        // Determine where the error occurred for better diagnostics
+        const errorContext = session.inTransaction() 
+            ? "during transaction operations" 
+            : "during commit or post-commit operations";
+        
+        // Rollback only if transaction is still active
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+            logWithTime(`❌ Transaction aborted ${errorContext}: ${error.message}`);
+        } else {
+            logWithTime(`❌ Error occurred ${errorContext}: ${error.message}`);
+        }
+        
         session.endSession();
-
-        logWithTime(`❌ Transaction aborted: ${error.message}`);
         errorMessage(error);
 
         // Optional: Fail hone ka log alag se record kar sakte ho (without transaction)
