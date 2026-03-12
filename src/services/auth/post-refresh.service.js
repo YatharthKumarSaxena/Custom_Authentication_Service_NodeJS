@@ -7,7 +7,7 @@
 const mongoose = require("mongoose");
 const { verifyToken } = require("@utils/verify-token.util");
 const { Token, AuthErrorTypes } = require("@configs/enums.config");
-const { UserDeviceModel } = require("@models/index"); 
+const { UserDeviceModel, UserModel, DeviceModel } = require("@models/index"); 
 const { logWithTime } = require("@utils/time-stamps.util");
 
 // Audit & Logging
@@ -85,17 +85,53 @@ const performPostRefresh = async (refreshToken, device) => {
             };
         }
         
-        // 2. START TRANSACTION
+        // 2. RESOLVE userId STRING → MongoDB _id & deviceUUID → deviceDoc._id
+
+        const userDoc = await UserModel.findOne({ userId }).lean();
+        if (!userDoc) {
+            logSystemEvent({
+                eventType: SYSTEM_LOG_EVENTS.SESSION_NOT_FOUND,
+                action: 'SESSION_NOT_FOUND',
+                description: `User not found for userId: ${userId}`,
+                status: STATUS_TYPES.WARNING,
+                targetId: userId,
+                metadata: { deviceUUID: device.deviceUUID }
+            });
+            return {
+                success: false,
+                type: AuthErrorTypes.SESSION_NOT_FOUND,
+                message: "Session not found. Please login again."
+            };
+        }
+
+        const deviceDoc = await DeviceModel.findOne({ deviceUUID: device.deviceUUID }).lean();
+        if (!deviceDoc) {
+            logSystemEvent({
+                eventType: SYSTEM_LOG_EVENTS.SESSION_NOT_FOUND,
+                action: 'SESSION_NOT_FOUND',
+                description: `Device not found for UUID: ${device.deviceUUID}`,
+                status: STATUS_TYPES.WARNING,
+                targetId: userId,
+                metadata: { deviceUUID: device.deviceUUID }
+            });
+            return {
+                success: false,
+                type: AuthErrorTypes.SESSION_NOT_FOUND,
+                message: "Session not found. Please login again."
+            };
+        }
+
+        // 3. START TRANSACTION
         
         session = await mongoose.startSession();
         session.startTransaction();
         
-        // 3. VERIFY & RETRIEVE SESSION (With Lock)
+        // 4. VERIFY & RETRIEVE SESSION (With Lock)
         
         const userDevice = await UserDeviceModel.findOne({
-            userId,
-            deviceUUID: device.deviceUUID
-        }).session(session);
+            userId: userDoc._id,
+            deviceId: deviceDoc._id
+        }).select("+refreshToken").session(session);
 
         if (!userDevice) {
             await session.abortTransaction();
