@@ -54,6 +54,31 @@ const storeAuthSession = async (userId, deviceUUID, refreshToken) => {
 };
 
 /**
+ * Rotate session after refresh token rotation
+ * In microservice mode: Update Redis session
+ * In monolithic mode: No-op
+ *
+ * @param {string} userId - User ID
+ * @param {string} deviceUUID - Device UUID
+ * @param {string} refreshToken - Rotated refresh token
+ */
+const rotateAuthSession = async (userId, deviceUUID, refreshToken) => {
+    if (!microserviceConfig.enabled || !redisSession) {
+        return;
+    }
+
+    try {
+        await redisSession.rotateSession({
+            userId,
+            deviceUUID,
+            refreshToken
+        });
+    } catch (error) {
+        logWithTime(`⚠️  Failed to rotate session in Redis: ${error.message}`);
+    }
+};
+
+/**
  * Delete session on logout
  * In microservice mode: Delete from Redis
  * In monolithic mode: No-op
@@ -144,6 +169,7 @@ const isMicroserviceMode = () => {
 
 module.exports = {
     storeAuthSession,
+    rotateAuthSession,
     deleteAuthSession,
     deleteAllAuthSessions,
     syncAdminIdentity,
