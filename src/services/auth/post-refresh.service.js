@@ -1,12 +1,13 @@
 /**
  * Post-Refresh Service
- * * Business logic for distributed token refresh.
+ * * Business logic for distributed token refresh using Atomic Transactions.
  * Follows the architecture of auth-session.service
  */
 
+const mongoose = require("mongoose");
 const { verifyToken } = require("@utils/verify-token.util");
 const { Token, AuthErrorTypes } = require("@configs/enums.config");
-const { UserDeviceModel, UserModel } = require("@models/index"); 
+const { UserDeviceModel, UserModel, DeviceModel } = require("@models/index"); 
 const { logWithTime } = require("@utils/time-stamps.util");
 
 // Audit & Logging
@@ -22,14 +23,18 @@ const { logSystemEvent } = require("../system/system-log.service");
  * Perform post-refresh token operation
  * * Flow:
  * 1. Verify Token Signature (Stateless)
- * 2. Verify Session in DB
- * 3. Update DB (Rotate Token)
- * 4. Update Redis & Fire Audit Logs (Async)
+ * 2. Start DB Transaction
+ * 3. Verify Session in DB
+ * 4. Update DB (Rotate Token)
+ * 5. Commit Transaction
+ * 6. Update Redis & Fire Audit Logs (Async)
  * * @param {string} refreshToken - Current refresh token
  * @param {Object} device - Device information
  * @returns {Promise<Object>} Result object
  */
 const performPostRefresh = async (refreshToken, device) => {
+    let session = null;
+
     try {
         
         // 1. VERIFY REFRESH TOKEN (Stateless Check)
@@ -80,34 +85,56 @@ const performPostRefresh = async (refreshToken, device) => {
             };
         }
         
-        // 2. FETCH USER OBJECTID
-        
-        const user = await UserModel.findOne({ userId }).lean();
-        if (!user) {
-            // Log user not found
+        // 2. RESOLVE userId STRING → MongoDB _id & deviceUUID → deviceDoc._id
+
+        const userDoc = await UserModel.findOne({ userId }).lean();
+        if (!userDoc) {
             logSystemEvent({
-                eventType: SYSTEM_LOG_EVENTS.USER_NOT_FOUND,
-                action: 'USER_NOT_FOUND',
+                eventType: SYSTEM_LOG_EVENTS.SESSION_NOT_FOUND,
+                action: 'SESSION_NOT_FOUND',
                 description: `User not found for userId: ${userId}`,
                 status: STATUS_TYPES.WARNING,
-                targetId: userId
+                targetId: userId,
+                metadata: { deviceUUID: device.deviceUUID }
             });
-            
             return {
                 success: false,
-                type: AuthErrorTypes.INVALID_TOKEN,
-                message: "User not found. Please login again."
+                type: AuthErrorTypes.SESSION_NOT_FOUND,
+                message: "Session not found. Please login again."
             };
         }
+
+        const deviceDoc = await DeviceModel.findOne({ deviceUUID: device.deviceUUID }).lean();
+        if (!deviceDoc) {
+            logSystemEvent({
+                eventType: SYSTEM_LOG_EVENTS.SESSION_NOT_FOUND,
+                action: 'SESSION_NOT_FOUND',
+                description: `Device not found for UUID: ${device.deviceUUID}`,
+                status: STATUS_TYPES.WARNING,
+                targetId: userId,
+                metadata: { deviceUUID: device.deviceUUID }
+            });
+            return {
+                success: false,
+                type: AuthErrorTypes.SESSION_NOT_FOUND,
+                message: "Session not found. Please login again."
+            };
+        }
+
+        // 3. START TRANSACTION
         
-        // 3. VERIFY & RETRIEVE SESSION
+        session = await mongoose.startSession();
+        session.startTransaction();
+        
+        // 4. VERIFY & RETRIEVE SESSION (With Lock)
         
         const userDevice = await UserDeviceModel.findOne({
-            userId: user._id,
-            deviceId: device._id
-        }).select("+refreshToken");
+            userId: userDoc._id,
+            deviceId: deviceDoc._id
+        }).select("+refreshToken").session(session);
 
         if (!userDevice) {
+            await session.abortTransaction();
             
             // Log session not found
             logSystemEvent({
@@ -130,6 +157,8 @@ const performPostRefresh = async (refreshToken, device) => {
 
         // Security Check: Token Mismatch (Reuse Attack)
         if (userDevice.refreshToken !== refreshToken) {
+            await session.abortTransaction();
+            
             // Log potential token reuse attack (CRITICAL SECURITY EVENT)
             logSystemEvent({
                 eventType: SYSTEM_LOG_EVENTS.TOKEN_REUSE_DETECTED,
@@ -154,7 +183,8 @@ const performPostRefresh = async (refreshToken, device) => {
         
         const newRefreshToken = createToken(userId, expiryTimeOfRefreshToken, device.deviceUUID);
 
-        if (!newRefreshToken) {
+        if (!refreshToken) {
+            await session.abortTransaction();
             return {
                 success: false,
                 type: AuthErrorTypes.SERVER_ERROR,
@@ -170,7 +200,7 @@ const performPostRefresh = async (refreshToken, device) => {
         // Optional: Update token version if you use it for invalidation
         userDevice.tokenVersion = (userDevice.tokenVersion || 0) + 1;
         
-        await userDevice.save();
+        await userDevice.save({ session });
 
         // --------------------------------------------------
         // ✅ ACCESS TOKEN
@@ -181,7 +211,12 @@ const performPostRefresh = async (refreshToken, device) => {
             device.deviceUUID
         );
         
-        // 6. EXTERNAL SYSTEMS (Redis & Audit)
+        // 6. COMMIT TRANSACTION
+        
+        await session.commitTransaction();
+        session.endSession(); // End session immediately after commit
+        
+        // 7. EXTERNAL SYSTEMS (Redis & Audit) - Post Commit
              
         // A. Rotate Session in Redis (Microservice Mode)
         // We use the helper similar to 'storeAuthSession'
@@ -211,7 +246,7 @@ const performPostRefresh = async (refreshToken, device) => {
 
         logWithTime(`✅ Tokens refreshed for User (${userId}) on Device (${device.deviceUUID})`);
  
-        // 7. RETURN SUCCESS
+        // 8. RETURN SUCCESS
         
         return {
             success: true,
@@ -220,7 +255,12 @@ const performPostRefresh = async (refreshToken, device) => {
         };
 
     } catch (error) {
-        // Catch-all for unexpected errors
+        // Catch-all for transaction errors
+        if (session) {
+            await session.abortTransaction();
+            session.endSession();
+        }
+
         logWithTime(`❌ Post-refresh fatal error: ${error.message}`);
         
         // Log system error
