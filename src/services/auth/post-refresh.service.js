@@ -183,7 +183,7 @@ const performPostRefresh = async (refreshToken, device) => {
         
         const newRefreshToken = createToken(userId, expiryTimeOfRefreshToken, device.deviceUUID);
 
-        if (!refreshToken) {
+        if (!newRefreshToken) {
             await session.abortTransaction();
             return {
                 success: false,
@@ -251,7 +251,8 @@ const performPostRefresh = async (refreshToken, device) => {
         return {
             success: true,
             userId: userId,
-            accessToken: accessToken
+            accessToken: accessToken,
+            refreshToken: newRefreshToken
         };
 
     } catch (error) {
