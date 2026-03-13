@@ -96,7 +96,8 @@ const postRefreshSuccessResponse = (res, result, device) => {
     return res.status(OK).json({
         success: true,
         message: "Tokens refreshed successfully",
-        accessToken: result.accessToken
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken
     });
 };
 
