@@ -4,19 +4,24 @@ const { logWithTime } = require("@utils/time-stamps.util");
 /**
  * Fetch paginated auth logs for a user
  */
-const getAuthLogService = async (user, page = 1, limit = 10) => {
+const getAuthLogService = async (user, page = 1, limit = 10, options = {}) => {
     try {
         const skip = (page - 1) * limit;
+        const query = { userId: user.userId };
+
+        if (Array.isArray(options.visibleEvents) && options.visibleEvents.length > 0) {
+            query.eventType = { $in: options.visibleEvents };
+        } 
 
         // 1. Parallel execution for Logs and Total Count (Performance boost)
         const [logs, totalCount] = await Promise.all([
-            AuthLogModel.find({ userId: user.userId })
+            AuthLogModel.find(query)
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
-                .select("eventType createdAt deviceName deviceType ipAddress message")
+                .select("eventType createdAt deviceName deviceType description")
                 .lean(),
-            AuthLogModel.countDocuments({ userId: user._id })
+            AuthLogModel.countDocuments(query)
         ]);
 
         const formattedLogs = logs.map(log => ({

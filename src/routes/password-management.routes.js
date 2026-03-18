@@ -12,6 +12,7 @@ const { commonMiddlewares } = require("@middlewares/common/index");
 
 const {
     FORGOT_PASSWORD,
+    VERIFY_RESET_PASSWORD,
     RESET_PASSWORD
 } = PASSWORD_MANAGEMENT_ROUTES;
 
@@ -24,6 +25,16 @@ passwordManagementRouter.post(FORGOT_PASSWORD, [
     commonMiddlewares.checkUserIsVerified
 ], passwordManagementController.forgotPassword);
 
+// Verify Reset Password (OTP/Token verification before reset)
+passwordManagementRouter.post(VERIFY_RESET_PASSWORD, [
+    rateLimiters.verifyResetPasswordRateLimiter,
+    ...authExistingUserMiddlewares,
+    commonMiddlewares.isUserAccountBlocked,
+    commonMiddlewares.isUserAccountActive,
+    commonMiddlewares.checkUserIsVerified,
+    accountVerificationMiddlewares.validateVerificationInput
+], passwordManagementController.verifyResetPassword);
+
 // Reset Password (Verify OTP/Token & Change Password)
 passwordManagementRouter.post(RESET_PASSWORD, [
     rateLimiters.resetPasswordRateLimiter,
@@ -31,7 +42,6 @@ passwordManagementRouter.post(RESET_PASSWORD, [
     commonMiddlewares.isUserAccountBlocked,
     commonMiddlewares.isUserAccountActive,
     commonMiddlewares.checkUserIsVerified,
-    accountVerificationMiddlewares.validateVerificationInput,
     passwordManagementMiddlewares.resetPasswordFieldPresenceMiddleware,
     passwordManagementMiddlewares.resetPasswordFieldValidationMiddleware
 ], passwordManagementController.resetPassword);

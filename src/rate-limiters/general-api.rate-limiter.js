@@ -33,6 +33,8 @@ const enable2FARateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.enabl
 
 const disable2FARateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.disable2FA);
 
+const verifyResetPasswordRateLimiter = createRedisDeviceRateLimiter(perUserAndDevice.verifyResetPassword);
+
 const userAndDeviceBasedRateLimiters = {
     signOutRateLimiter,
     deactivateAccountRateLimiter,
@@ -44,7 +46,8 @@ const userAndDeviceBasedRateLimiters = {
     getMyAccountRateLimiter,
     signOutDeviceRateLimiter,
     enable2FARateLimiter,
-    disable2FARateLimiter
+    disable2FARateLimiter,
+    verifyResetPasswordRateLimiter
 };
 
 module.exports = {

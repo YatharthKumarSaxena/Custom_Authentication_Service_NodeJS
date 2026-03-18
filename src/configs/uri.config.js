@@ -57,6 +57,7 @@ module.exports = {
     },
     PASSWORD_MANAGEMENT_ROUTES: {
         FORGOT_PASSWORD: `/forgot-password`,
+        VERIFY_RESET_PASSWORD: `/verify-reset-password`,
         RESET_PASSWORD: `/reset-password`
     },
 
