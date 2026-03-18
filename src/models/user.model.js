@@ -175,7 +175,14 @@ const userSchema = new mongoose.Schema({
 
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorEnabledAt: { type: Date, default: null },
-    twoFactorDisabledAt: { type: Date, default: null }
+    twoFactorDisabledAt: { type: Date, default: null },
+
+    // Password Reset Verification Window
+    resetPasswordEnabledAt: {
+        type: Date,
+        default: null,
+        index: true
+    }
 
 }, { timestamps: true, versionKey: false });
 

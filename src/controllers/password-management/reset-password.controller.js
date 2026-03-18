@@ -25,6 +25,10 @@ const resetPassword = async (req, res) => {
         }
 
         // 2. Call Service
+        // The service will check:
+        // - resetPasswordEnabledAt is set
+        // - Reset window is not expired
+        // - Then update password
         const result = await resetPasswordService(user, device, newPassword, requestId);
 
         if (!result.success) {
