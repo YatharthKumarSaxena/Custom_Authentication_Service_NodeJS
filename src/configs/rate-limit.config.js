@@ -173,6 +173,14 @@ module.exports = {
       prefix: "disable_2fa",
       reason: "Disable 2FA abuse",
       message: "Too many disable 2FA attempts."
+    },
+
+    verifyResetPassword: {
+      maxRequests: 5,
+      windowMs: 10 * 60 * 1000,
+      prefix: "verify_reset_password",
+      reason: "Verify reset password abuse",
+      message: "Too many verify reset password attempts."
     }
   }
 };

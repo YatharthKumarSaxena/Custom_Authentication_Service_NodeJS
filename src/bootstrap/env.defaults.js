@@ -29,6 +29,8 @@ function applyEnvDefaults() {
   process.env.AUTO_PHONE_VERIFICATION ||= "false";
   process.env.IS_2FA_FEATURE_ENABLED ||= "false";
   process.env.ENABLE_DEVICE_SOFT_REPLACE ||= "false";
+  process.env.ENABLE_AUTH_SESSION_LOGGING ||= "true";
+  process.env.RESET_PASSWORD_WINDOW_MINUTES ||= "10";
 
   // Account Deletion Settings
   process.env.DELETION_POLICY ||= DeletionPolicy.SOFT_DELETE;
