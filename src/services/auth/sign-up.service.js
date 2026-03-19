@@ -192,35 +192,40 @@ const signUpService = async (deviceInput, userPayload, requestId, userType = Use
         try {
 
             if (isMicroserviceMode) {
-                // Create Client In Auth Service and get Client Id
-                logWithTime(`🔄 Creating New User account in Admin Panel Service...`);
 
-                const serviceToken = await getServiceToken(SERVICE_NAMES.ADMIN_PANEL_SERVICE);
-                const authClient = createInternalServiceClient(
-                    INTERNAL_API.ADMIN_PANEL_BASE_URL,
-                    serviceToken,
-                    SERVICE_NAMES.ADMIN_PANEL_SERVICE,
-                    INTERNAL_API.TIMEOUT,
-                    INTERNAL_API.RETRY_ATTEMPTS,
-                    INTERNAL_API.RETRY_DELAY
-                );
+                if (userType === UserTypes.ADMIN) {
+                    logWithTime(`🔄 Stopped Syncing New Admin to Admin Panel Service as Admin Panel Service can create its own Admin accounts.`);
+                } else {
+                    // Create User In Admin Panel Service 
+                    logWithTime(`🔄 Creating New User account in Admin Panel Service...`);
 
-                const authResult = await authClient.callService({
-                    method: ADMIN_PANEL_URIS.CREATE_USER.method,
-                    uri: ADMIN_PANEL_URIS.CREATE_USER.uri,
-                    body: {
-                        firstName,
-                        userId: newUser.userId
+                    const serviceToken = await getServiceToken(SERVICE_NAMES.ADMIN_PANEL_SERVICE);
+                    const authClient = createInternalServiceClient(
+                        INTERNAL_API.ADMIN_PANEL_BASE_URL,
+                        serviceToken,
+                        SERVICE_NAMES.ADMIN_PANEL_SERVICE,
+                        INTERNAL_API.TIMEOUT,
+                        INTERNAL_API.RETRY_ATTEMPTS,
+                        INTERNAL_API.RETRY_DELAY
+                    );
+
+                    const authResult = await authClient.callService({
+                        method: ADMIN_PANEL_URIS.CREATE_USER.method,
+                        uri: ADMIN_PANEL_URIS.CREATE_USER.uri,
+                        body: {
+                            firstName,
+                            userId: newUser.userId
+                        }
+                    });
+
+                    if (!authResult.success) {
+                        logWithTime(`❌ Auth Service failed to create client: ${authResult.error}`);
+                        return {
+                            success: false,
+                            type: AdminErrorTypes.INVALID_DATA,
+                            message: authResult.error || "Failed to create client account in Auth Service"
+                        };
                     }
-                });
-
-                if (!authResult.success) {
-                    logWithTime(`❌ Auth Service failed to create client: ${authResult.error}`);
-                    return {
-                        success: false,
-                        type: AdminErrorTypes.INVALID_DATA,
-                        message: authResult.error || "Failed to create client account in Auth Service"
-                    };
                 }
             }
         } catch (syncError) {
