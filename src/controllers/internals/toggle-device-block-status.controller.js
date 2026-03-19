@@ -7,6 +7,7 @@ const {
     throwDBResourceNotFoundError,
     throwAccessDeniedError,
     throwConflictError,
+    throwBadRequestError,
     getLogIdentifiers
 } = require("@/responses/common/error-handler.response");
 const { toggleDeviceBlockSuccessResponse } = require("@/responses/success/index");
@@ -18,24 +19,22 @@ const { logWithTime } = require("@utils/time-stamps.util");
  */
 const blockDevice = async (req, res) => {
     try {
-        // Admin Middleware se req.admin ya req.user (as Admin) aayega
-        const admin = req.foundUser;
-        const { deviceUUID } = req.body;
+        const { deviceUUID, adminId } = req.body;
 
-        // 2. Service Call
-        // Pass Admin ID for logging purposes inside service
-        const result = await blockDeviceService(deviceUUID, admin.adminId);
+        // 2. Service Call with request context
+        // Pass Admin ID and request for logging purposes inside service
+        const result = await blockDeviceService(deviceUUID, adminId, { req });
 
-        // 3. Success Response
-        // Note: Service ke andar already deep logging ho rahi hai, 
-        // par controller level par bhi ek confirmation log achha rehta hai.
-
+        // 3. Handle Result - Check Success BEFORE Responding
         if (result.success === false) {
             logWithTime(`⚠️ Block Action Skipped: Device ${deviceUUID} is already blocked.`);
             return throwConflictError(res, result.message);
         }
 
-        return toggleDeviceBlockSuccessResponse(res, admin, deviceUUID, result.message);
+        // 4. Log Success ONLY when action actually completed
+        logWithTime(`🚫 Device (${deviceUUID}) blocked by Admin (${adminId}).`);
+
+        return toggleDeviceBlockSuccessResponse(res, { adminId }, deviceUUID, result.message);
 
     } catch (err) {
         
@@ -62,28 +61,26 @@ const blockDevice = async (req, res) => {
 const unblockDevice = async (req, res) => {
     try {
         // Admin Middleware se populated user
-        const admin = req.admin; 
-        const { deviceUUID } = req.body; 
+        const { deviceUUID, adminId } = req.body; 
 
         // 1. Validation
         if (!deviceUUID) {
             return throwBadRequestError(res, "Target Device UUID is required.");
         }
 
-        // 2. Service Call
-        const result = await unblockDeviceService(deviceUUID, admin.adminId);
+        // 2. Service Call with request context
+        const result = await unblockDeviceService(deviceUUID, adminId, { req });
       
-        // 3. HANDLE CONFLICT (Already Unblocked) 
-        
-        // Agar service ne { success: false } diya matlab device already unblocked tha
+        // 3. Handle Result - Check Success BEFORE Responding
         if (result.success === false) {
             logWithTime(`⚠️ Unblock Action Skipped: Device ${deviceUUID} is already unblocked.`);
             return throwConflictError(res, result.message);
         }
 
-        // 4. Success Response
+        // 4. Log Success ONLY when action actually completed
+        logWithTime(`✅ Device (${deviceUUID}) unblocked by Admin (${adminId}).`);
 
-        return toggleDeviceBlockSuccessResponse(res, admin, deviceUUID, result.message);
+        return toggleDeviceBlockSuccessResponse(res, { adminId }, deviceUUID, result.message);
 
     } catch (err) {
         

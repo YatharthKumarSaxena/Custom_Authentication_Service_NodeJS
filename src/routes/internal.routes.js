@@ -20,7 +20,7 @@ const { INTERNAL_ROUTES } = require("@configs/uri.config");
 const { adminPanelInternalMiddlewares, softwareManagementInternalMiddlewares, baseMiddlewares } = require("./middleware.gateway.routes");
 const { authController } = require("@controllers/auth/index");
 const { internalControllers } = require("@controllers/internals/index");
-const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE, POST_REFRESH, CREATE_USER, CONVERT_USER_TYPE } = INTERNAL_ROUTES;
+const { PROVIDE_HEALTH_CHECK_TO_ADMIN_PANEL_SERVICE, PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE, POST_REFRESH, CREATE_USER, CONVERT_USER_TYPE, BLOCK_USER, UNBLOCK_USER, BLOCK_DEVICE, UNBLOCK_DEVICE } = INTERNAL_ROUTES;
 
 // Check if microservice mode is enabled
 if (!microserviceConfig.enabled) {
@@ -79,10 +79,37 @@ if (!microserviceConfig.enabled) {
          */
         internalRouter.patch(CONVERT_USER_TYPE, adminPanelInternalMiddlewares, internalControllers.convertUserType);
 
+        /**
+         * @route   PATCH /internal/block-user/:userId
+         * @desc    Block a user from Admin Panel Service
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.patch(BLOCK_USER, adminPanelInternalMiddlewares, internalControllers.blockUser);
+
+        /**
+         * @route   PATCH /internal/unblock-user/:userId
+         * @desc    Unblock a user from Admin Panel Service
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.patch(UNBLOCK_USER, adminPanelInternalMiddlewares, internalControllers.unblockUser);
+
+        /**
+         * @route   PATCH /internal/block-device/:deviceId
+         * @desc    Block a device from Admin Panel Service
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.patch(BLOCK_DEVICE, adminPanelInternalMiddlewares, internalControllers.blockDevice);
+
+        /**
+         * @route   PATCH /internal/unblock-device/:deviceId
+         * @desc    Unblock a device from Admin Panel Service
+         * @access  Internal (Admin Panel Service ONLY)
+         */
+        internalRouter.patch(UNBLOCK_DEVICE, adminPanelInternalMiddlewares, internalControllers.unblockDevice);
+
         module.exports = {
             internalRouter
         }
     }
 }
-
 

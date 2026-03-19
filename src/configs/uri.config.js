@@ -67,6 +67,10 @@ module.exports = {
         PROVIDE_HEALTH_CHECK_TO_SOFTWARE_SERVICE: `/software-management/health`, // /software-management-service/api/v1/internal/software/health
         POST_REFRESH: `/post-refresh`, // POST /custom-auth-service/api/v1/internal/post-refresh
         CREATE_USER: `/create-user`, // POST /custom-auth-service/api/v1/internal/create-user (from Admin Panel)
-        CONVERT_USER_TYPE: `/convert-user-type/:userId` // PATCH /custom-auth-service/api/v1/internal/convert-user-type/:userId
+        CONVERT_USER_TYPE: `/convert-user-type/:userId`, // PATCH /custom-auth-service/api/v1/internal/convert-user-type/:userId
+        BLOCK_USER: `/block-user`, // POST /custom-auth-service/api/v1/internal/block-user
+        UNBLOCK_USER: `/unblock-user`, // POST /custom-auth-service/api/v1/internal/unblock-user
+        BLOCK_DEVICE: `/block-device`, // POST /custom-auth-service/api/v1/internal/block-device
+        UNBLOCK_DEVICE: `/unblock-device` // POST /custom-auth-service/api/v1/internal/unblock-device
     }
 }
