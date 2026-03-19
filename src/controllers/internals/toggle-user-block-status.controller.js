@@ -3,6 +3,7 @@ const { AuthErrorTypes } = require("@configs/enums.config");
 const {
     throwInternalServerError,
     throwDBResourceNotFoundError,
+    throwConflictError,
     getLogIdentifiers
 } = require("@/responses/common/error-handler.response");
 const { toggleUserBlockSuccessResponse } = require("@/responses/success/index");
@@ -13,24 +14,26 @@ const { logWithTime } = require("@utils/time-stamps.util");
  */
 const handleBlockToggle = async (req, res, shouldBlock) => {
     try {
-        const admin = req.admin; // Admin Middleware se aayega
-        const userId = req.foundUser.userId; // Target User ID
+        const adminId = req.body.adminId; // Admin Middleware se aayega
+        const userId = req.body.userId; // Target User ID
 
-        // 1. Service Call
-        const result = await updateUserBlockStatusService(userId, shouldBlock);
+        // 1. Service Call with admin context
+        const result = await updateUserBlockStatusService(userId, shouldBlock, {
+            adminId: adminId,
+            req: req
+        });
 
-        // 2. Logging with Admin Context
-        const action = shouldBlock ? "BLOCKED" : "UNBLOCKED";
-
-        // Admin ID log kar rahe hain taaki pata chale kisne block kiya
-        logWithTime(`👮 Admin (${admin.adminId}) ${action} User (${userId}) from IP: ${req.ip} by Admin Panel Service`);
-
+        // 2. Handle Result - Check Success BEFORE Logging
         if (result.success === false) {
             logWithTime(`⚠️ Block Action Skipped: User ${userId} is already ${shouldBlock ? "blocked" : "unblocked"}.`);
             return throwConflictError(res, result.message);
         }
 
-        return toggleUserBlockSuccessResponse(res, admin, userId, result.message);
+        // 3. Log Success ONLY when action actually completed
+        const action = shouldBlock ? "BLOCKED" : "UNBLOCKED";
+        logWithTime(`👮 Admin (${adminId}) ${action} User (${userId}) from IP: ${req.ip} by Admin Panel Service`);
+
+        return toggleUserBlockSuccessResponse(res, {adminId}, userId, result.message);
 
     } catch (err) {
         if (err.type === AuthErrorTypes.RESOURCE_NOT_FOUND) {
