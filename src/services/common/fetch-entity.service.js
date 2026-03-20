@@ -27,7 +27,7 @@ const fetchEntity = async (
   try {
     // Priority 1: userId (direct fetch)
     if (userId) {
-      const query = { [userIdField]: userId };
+      const query = { [userIdField]: userId, isDeleted: false };
       const entity = await Model.findOne(query).lean();
       
       if (entity) {
@@ -56,8 +56,9 @@ const fetchEntity = async (
       return null;
     }
 
-    // Query with $or to match any provided identifier
-    const query = conditions.length === 1 ? conditions[0] : { $or: conditions };
+    // Query with $or to match any provided identifier and ensure not deleted
+    const baseQuery = conditions.length === 1 ? conditions[0] : { $or: conditions };
+    const query = { ...baseQuery, isDeleted: false };
     const entity = await Model.findOne(query).lean();
 
     if (entity) {

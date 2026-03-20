@@ -42,10 +42,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         minlength: emailLength.min,
         maxlength: emailLength.max,
-        match: emailRegex,
-        unique: true,
-        sparse: true,
-        index: true
+        match: emailRegex
     },
 
     countryCode: {
@@ -67,10 +64,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         minlength: phoneNumberLength.min,
         maxlength: phoneNumberLength.max,
-        match: phoneNumberRegex,
-        unique: true,
-        sparse: true,
-        index: true
+        match: phoneNumberRegex
     },
 
     password: {
@@ -101,6 +95,11 @@ const userSchema = new mongoose.Schema({
     },
 
     isBlocked: {         // Admin controlled
+        type: Boolean,
+        default: false
+    },
+
+    isDeleted: {
         type: Boolean,
         default: false
     },
@@ -185,6 +184,28 @@ const userSchema = new mongoose.Schema({
     }
 
 }, { timestamps: true, versionKey: false });
+
+userSchema.index(
+  { email: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: false,
+      email: { $exists: true, $ne: null }
+    }
+  }
+);
+
+userSchema.index(
+  { phone: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: false,
+      phone: { $exists: true, $ne: null }
+    }
+  }
+);
 
 /* Centralized AUTH_MODE Validation */
 

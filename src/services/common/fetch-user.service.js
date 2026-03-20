@@ -1,5 +1,5 @@
 const { UserModel } = require("@models/user.model");
-const { fetchEntity } = require("./fetch-entity.util");
+const { fetchEntity } = require("./fetch-entity.service");
 
 /**
  * Fetches a user from the database based on auth mode or userId
