@@ -193,7 +193,7 @@ const signUpService = async (deviceInput, userPayload, requestId, userType = Use
 
             if (isMicroserviceMode) {
 
-                if (userType === UserTypes.ADMIN) {
+                if (userType === UserTypes.ADMIN || userType === UserTypes.CLIENT) {
                     logWithTime(`🔄 Stopped Syncing New Admin to Admin Panel Service as Admin Panel Service can create its own Admin accounts.`);
                 } else {
                     // Create User In Admin Panel Service 
