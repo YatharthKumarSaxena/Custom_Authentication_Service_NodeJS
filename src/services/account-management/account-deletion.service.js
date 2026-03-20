@@ -7,8 +7,19 @@ const { getUserContacts } = require("@utils/contact-selector.util");
 const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { SecurityContext } = require("@configs/security.config");
-const { AuthErrorTypes } = require("@configs/enums.config");
+const { AuthErrorTypes, UserTypes } = require("@configs/enums.config");
 const { OTPModel, VerificationLinkModel, UserDeviceModel, UserModel } = require("@models/index");
+
+// Import internal service clients
+let adminPanelClient = null;
+let softwareManagementClient = null;
+
+try {
+    adminPanelClient = require("@internals/internal-client/admin-panel.client");
+    softwareManagementClient = require("@internals/internal-client/software-management.client");
+} catch (err) {
+    logWithTime(`⚠️  Internal service clients not available: ${err.message}`);
+}
 
 /**
  * Hard Delete Account Service
@@ -32,11 +43,12 @@ const hardDeleteAccountService = async (user, device, plainPassword, requestId) 
 
     try {
 
-        // Delete in order: dependencies first, then user
+        // Soft delete: Mark user as deleted, clean up device sessions
+        // Keep user record for data integrity and audit purposes
         await UserDeviceModel.deleteMany({ userId });
         await VerificationLinkModel.deleteMany({ userId });
         await OTPModel.deleteMany({ userId });
-        await UserModel.deleteOne({ _id: userId });
+        await UserModel.updateOne({ _id: userId }, { isDeleted: true });
 
         // ===== SUCCESS FLOW =====
 
@@ -64,6 +76,25 @@ const hardDeleteAccountService = async (user, device, plainPassword, requestId) 
                 userId: userIdStr
             }
         });
+
+        // ===== FIRE-AND-FORGET: Notify internal services about user deletion =====
+        // Based on user type, call appropriate internal services
+        if (adminPanelClient || softwareManagementClient) {
+            // If Admin: call both Admin Panel and Software Management
+            if (user.userType === UserTypes.ADMIN || user.userType === UserTypes.CLIENT) {
+                if (softwareManagementClient && softwareManagementClient.deleteUser) {
+                    softwareManagementClient.deleteUser(userIdStr, user.userType).catch(err => {
+                        logWithTime(`⚠️  Failed to notify Software Management Service about deletion: ${err.message}`);
+                    });
+                }
+            }
+            if (adminPanelClient && adminPanelClient.deleteUser) {
+                adminPanelClient.deleteUser(userIdStr, user.userType).catch(err => {
+                    logWithTime(`⚠️  Failed to notify Admin Panel Service about deletion: ${err.message}`);
+                });
+            }
+            // For regular USER type, no notifications needed to these services
+        }
 
         return {
             success: true,

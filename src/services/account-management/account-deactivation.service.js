@@ -8,8 +8,19 @@ const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { SecurityContext, DELETION_POLICY } = require("@configs/security.config");
 const { UserModel } = require("@models/user.model");
-const { AuthErrorTypes, DeletionPolicy } = require("@configs/enums.config");
+const { AuthErrorTypes, DeletionPolicy, UserTypes } = require("@configs/enums.config");
 const cronConfig = require("@configs/cron.config");
+
+// Import internal service clients
+let adminPanelClient = null;
+let softwareManagementClient = null;
+
+try {
+    adminPanelClient = require("@internals/internal-client/admin-panel.client");
+    softwareManagementClient = require("@internals/internal-client/software-management.client");
+} catch (err) {
+    logWithTime(`⚠️  Internal service clients not available: ${err.message}`);
+}
 
 const deactivateAccountService = async (user, device, plainPassword, requestId) => {
 
@@ -65,6 +76,9 @@ const deactivateAccountService = async (user, device, plainPassword, requestId) 
         `🚫 Account deactivated for UserID: ${updatedUser.userId} from device: ${device.deviceUUID}`
     );
 
+    const currentPolicy = DELETION_POLICY;
+    const isSoftDeletePolicy = currentPolicy === DeletionPolicy.SOFT_DELETE || currentPolicy === DeletionPolicy.HYBRID;
+ 
     logAuthEvent(
         updatedUser,
         device,
@@ -76,9 +90,6 @@ const deactivateAccountService = async (user, device, plainPassword, requestId) 
 
     // Notification - use soft delete template if policy is SOFT_DELETE or HYBRID
     const contactInfo = getUserContacts(updatedUser);
-    
-    const currentPolicy = DELETION_POLICY;
-    const isSoftDeletePolicy = currentPolicy === DeletionPolicy.SOFT_DELETE || currentPolicy === DeletionPolicy.HYBRID;
 
     sendNotification({
         contactInfo,
@@ -89,6 +100,24 @@ const deactivateAccountService = async (user, device, plainPassword, requestId) 
             recoveryDays: recoveryDays
         }
     });
+
+    // ===== FIRE-AND-FORGET: Notify internal services about account deactivation =====
+    if (adminPanelClient || softwareManagementClient) {
+        // Always call Admin Panel Service when account is deactivated
+        if (adminPanelClient && adminPanelClient.toggleActiveStatus) {
+            adminPanelClient.toggleActiveStatus(updatedUser.userId, false, updatedUser.userType).catch(err => {
+                logWithTime(`⚠️  Failed to notify Admin Panel Service about account deactivation: ${err.message}`);
+            });
+        }
+        
+        // Call Software Management Service only if user type is CLIENT or ADMIN
+        if ((updatedUser.userType === UserTypes.CLIENT || updatedUser.userType === UserTypes.ADMIN) && 
+            softwareManagementClient && softwareManagementClient.toggleActiveStatus) {
+            softwareManagementClient.toggleActiveStatus(updatedUser.userId, false, updatedUser.userType).catch(err => {
+                logWithTime(`⚠️  Failed to notify Software Management Service about account deactivation: ${err.message}`);
+            });
+        }
+    }
 
     return {
         success: true,

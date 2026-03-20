@@ -8,7 +8,18 @@ const { userTemplate } = require("@services/templates/emailTemplate");
 const { userSmsTemplate } = require("@services/templates/smsTemplate");
 const { SecurityContext } = require("@configs/security.config");
 const { verifyPasswordWithRateLimit } = require("../password-management/password-verification.service");
-const { AuthErrorTypes } = require("@/configs/enums.config");
+const { AuthErrorTypes, UserTypes } = require("@/configs/enums.config");
+
+// Import internal service clients
+let adminPanelClient = null;
+let softwareManagementClient = null;
+
+try {
+    adminPanelClient = require("@internals/internal-client/admin-panel.client");
+    softwareManagementClient = require("@internals/internal-client/software-management.client");
+} catch (err) {
+    logWithTime(`⚠️  Internal service clients not available: ${err.message}`);
+}
 
 const activateAccountService = async (user, device, plainPassword, requestId) => {
 
@@ -73,6 +84,24 @@ const activateAccountService = async (user, device, plainPassword, requestId) =>
         smsTemplate: userSmsTemplate.accountReactivated,
         data: { name: updatedUser.firstName || "User" }
     });
+
+    // ===== FIRE-AND-FORGET: Notify internal services about account activation =====
+    if (adminPanelClient || softwareManagementClient) {
+        // Always call Admin Panel Service when account is activated
+        if (adminPanelClient && adminPanelClient.toggleActiveStatus) {
+            adminPanelClient.toggleActiveStatus(updatedUser.userId, true, updatedUser.userType).catch(err => {
+                logWithTime(`⚠️  Failed to notify Admin Panel Service about account activation: ${err.message}`);
+            });
+        }
+        
+        // Call Software Management Service only if user type is CLIENT or ADMIN
+        if ((updatedUser.userType === UserTypes.CLIENT || updatedUser.userType === UserTypes.ADMIN) && 
+            softwareManagementClient && softwareManagementClient.toggleActiveStatus) {
+            softwareManagementClient.toggleActiveStatus(updatedUser.userId, true, updatedUser.userType).catch(err => {
+                logWithTime(`⚠️  Failed to notify Software Management Service about account activation: ${err.message}`);
+            });
+        }
+    }
 
     return {
         success: true,
