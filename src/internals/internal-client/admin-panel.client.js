@@ -242,11 +242,144 @@ const createSuperAdminInAdminPanel = async (adminData) => {
     }
 };
 
+/**
+ * Delete user from Admin Panel Service
+ * Notifies Admin Panel Service about permanent user deletion
+ * 
+ * @param {string} userId - User ID to delete
+ * @param {string} userType - Type of user (from UserTypes enum)
+ * @returns {Promise<Object>} Response from Admin Panel Service
+ */
+const deleteUser = async (userId, userType) => {
+    try {
+        logWithTime(`🗑️  Deleting user from Admin Panel Service: ${userId.substring(0, 8)}...`);
+
+        const client = await getAdminPanelClient();
+        const uri = ADMIN_PANEL_URIS.DELETE_USER.uri.replace(':userId', userId);
+        
+        const result = await client.callService({
+            method: ADMIN_PANEL_URIS.DELETE_USER.method,
+            uri: uri,
+            body: { type: userType }
+        });
+
+        if (result.success) {
+            logWithTime(`✅ User deleted successfully from Admin Panel Service`);
+            return {
+                success: true,
+                data: result.data
+            };
+        } else {
+            logWithTime(`⚠️  Unexpected response from Admin Panel Service: ${result.error}`);
+            return {
+                success: false,
+                error: result.error || 'Deletion failed'
+            };
+        }
+    } catch (error) {
+        logWithTime(`❌ Failed to delete user from Admin Panel Service: ${error.message}`);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
+/**
+ * Update user details in Admin Panel Service
+ * Only called when user firstName actually changes
+ * 
+ * @param {string} userId - User ID to update
+ * @param {string} firstName - New first name value
+ * @param {string} userType - Type of user (from UserTypes enum)
+ * @returns {Promise<Object>} Response from Admin Panel Service
+ */
+const updateUserDetails = async (userId, firstName, userType) => {
+    try {
+        logWithTime(`📝 Updating user details in Admin Panel Service: ${userId.substring(0, 8)}...`);
+
+        const client = await getAdminPanelClient();
+        const uri = ADMIN_PANEL_URIS.UPDATE_USER_DETAILS.uri.replace(':userId', userId);
+        
+        const result = await client.callService({
+            method: ADMIN_PANEL_URIS.UPDATE_USER_DETAILS.method,
+            uri: uri,
+            body: { firstName, type: userType }
+        });
+
+        if (result.success) {
+            logWithTime(`✅ User details updated successfully in Admin Panel Service`);
+            return {
+                success: true,
+                data: result.data
+            };
+        } else {
+            logWithTime(`⚠️  Unexpected response from Admin Panel Service: ${result.error}`);
+            return {
+                success: false,
+                error: result.error || 'Update failed'
+            };
+        }
+    } catch (error) {
+        logWithTime(`❌ Failed to update user details in Admin Panel Service: ${error.message}`);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
+/**
+ * Toggle user active status in Admin Panel Service
+ * 
+ * @param {string} userId - User ID
+ * @param {boolean} isActive - New active status value
+ * @param {string} userType - Type of user (from UserTypes enum)
+ * @returns {Promise<Object>} Response from Admin Panel Service
+ */
+const toggleActiveStatus = async (userId, isActive, userType) => {
+    try {
+        logWithTime(`🔄 Toggling active status in Admin Panel Service: ${userId.substring(0, 8)}...`);
+
+        const client = await getAdminPanelClient();
+        const uri = ADMIN_PANEL_URIS.TOGGLE_ACTIVE_STATUS.uri.replace(':userId', userId);
+        
+        const result = await client.callService({
+            method: ADMIN_PANEL_URIS.TOGGLE_ACTIVE_STATUS.method,
+            uri: uri,
+            body: { isActive, type: userType }
+        });
+
+        if (result.success) {
+            logWithTime(`✅ Active status toggled successfully in Admin Panel Service`);
+            return {
+                success: true,
+                data: result.data
+            };
+        } else {
+            logWithTime(`⚠️  Unexpected response from Admin Panel Service: ${result.error}`);
+            return {
+                success: false,
+                error: result.error || 'Toggle failed'
+            };
+        }
+    } catch (error) {
+        logWithTime(`❌ Failed to toggle active status in Admin Panel Service: ${error.message}`);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
 module.exports = {
     bootstrapSuperAdmin,
     syncIdentityState,
     syncAccountState,
     rollbackAdminCreation,
     healthCheck,
-    createSuperAdminInAdminPanel
+    createSuperAdminInAdminPanel,
+    deleteUser,
+    updateUserDetails,
+    toggleActiveStatus
 };
