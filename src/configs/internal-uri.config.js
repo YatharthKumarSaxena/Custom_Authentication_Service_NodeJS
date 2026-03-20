@@ -32,6 +32,18 @@ const ADMIN_PANEL_URIS = {
     CREATE_USER: {
         method: requestMethod.POST,
         uri: "/admin-panel-service/api/v1/internal/create-user"
+    },
+    UPDATE_USER_DETAILS: {
+        method: requestMethod.PATCH,
+        uri: "/admin-panel-service/api/v1/internal/update-user/:userId"
+    },
+    DELETE_USER: {
+        method: requestMethod.DELETE,
+        uri: "/admin-panel-service/api/v1/internal/delete-user/:userId"
+    },
+    TOGGLE_ACTIVE_STATUS: {
+        method: requestMethod.PATCH,
+        uri: "/admin-panel-service/api/v1/internal/toggle-active/:userId"
     }
 };
 
@@ -46,6 +58,18 @@ const SOFTWARE_MANAGEMENT_URIS = {
     CREATE_SUPER_ADMIN: {
         method: requestMethod.POST,
         uri: "/software-management-service/api/v1/internal/create-super-admin"
+    },
+    UPDATE_USER_DETAILS: {
+        method: requestMethod.PATCH,
+        uri: "/software-management-service/api/v1/internal/update-user/:userId"
+    },
+    DELETE_USER: {
+        method: requestMethod.DELETE,
+        uri: "/software-management-service/api/v1/internal/delete-user/:userId"
+    },
+    TOGGLE_ACTIVE_STATUS: {
+        method: requestMethod.PATCH,
+        uri: "/software-management-service/api/v1/internal/toggle-active/:userId"
     }
 };
 

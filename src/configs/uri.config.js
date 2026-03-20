@@ -71,6 +71,7 @@ module.exports = {
         BLOCK_USER: `/block-user`, // POST /custom-auth-service/api/v1/internal/block-user
         UNBLOCK_USER: `/unblock-user`, // POST /custom-auth-service/api/v1/internal/unblock-user
         BLOCK_DEVICE: `/block-device`, // POST /custom-auth-service/api/v1/internal/block-device
-        UNBLOCK_DEVICE: `/unblock-device` // POST /custom-auth-service/api/v1/internal/unblock-device
+        UNBLOCK_DEVICE: `/unblock-device`, // POST /custom-auth-service/api/v1/internal/unblock-device
+        PROVIDE_CONTACT_DETAILS: `/contact-details`, // GET /custom-auth-service/api/v1/internal/contact-details
     }
 }
