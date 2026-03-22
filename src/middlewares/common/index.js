@@ -5,6 +5,7 @@ const { verifyDeviceField } = require("./verify-device-field.middleware");
 const { verifyTokenMiddleware } = require("./verify-token.middleware");
 const { checkUserIsVerified } = require("./check-user-is-verified.middleware");
 const { requestIdMiddleware } = require('./check-request-id.middleware');
+const { corsMiddleware } = require('./cors.middleware');
 const {
     restrictAdmin,
     allowOnlyRegularUsers,
@@ -15,6 +16,7 @@ const {
 } = require('./authorization.middleware');
 
 const commonMiddlewares = {
+    corsMiddleware,
     isDeviceBlocked,
     isUserAccountActive,
     isUserAccountBlocked,
