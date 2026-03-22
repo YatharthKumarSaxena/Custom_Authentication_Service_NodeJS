@@ -13,8 +13,10 @@ const {
     allowClientOnly,
     allowUsersAndClients
 } = require('./authorization.middleware');
+const { corsMiddleware } = require("./cors.middleware");
 
 const commonMiddlewares = {
+    corsMiddleware,
     isDeviceBlocked,
     isUserAccountActive,
     isUserAccountBlocked,
