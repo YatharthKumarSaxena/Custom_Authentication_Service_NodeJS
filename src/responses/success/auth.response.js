@@ -32,6 +32,7 @@ const signInSuccessResponse = (res, user, device) => {
     );
     return res.status(OK).json({
         success: true,
+        userType: user.userType,
         message: `Welcome ${user.firstName || "User"}, you are logged in successfully.`
     });
 };
