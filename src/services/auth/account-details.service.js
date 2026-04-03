@@ -48,6 +48,8 @@ const getAccountDetailsService = async (user) => {
         "Account Status": user.isActive ? "Activated" : "Deactivated",
         "Blocked Account": user.isBlocked ? "Yes" : "No",
 
+        "User Type": user.userType,
+
         // Timeline clarity
         "Account Created At": user.createdAt,
         "Last Login At": lastLoginAt,
