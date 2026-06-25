@@ -29,6 +29,7 @@ const sanitizeAuthPayload = (location = RequestLocation.BODY) => {
         }
         delete payload.countryCode;
         delete payload.localNumber;
+        delete payload.phone;
         break;
 
       case AuthModes.PHONE:
