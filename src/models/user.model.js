@@ -186,25 +186,31 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false });
 
 userSchema.index(
-  { email: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      isDeleted: false,
-      email: { $exists: true, $ne: null }
+    { email: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            isDeleted: false,
+            email: {
+                $exists: true,
+                $type: "string"
+            }
+        }
     }
-  }
 );
 
 userSchema.index(
-  { phone: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      isDeleted: false,
-      phone: { $exists: true, $ne: null }
+    { phone: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            isDeleted: false,
+            phone: {
+                $exists: true,
+                $type: "string"
+            }
+        }
     }
-  }
 );
 
 /* Centralized AUTH_MODE Validation */
