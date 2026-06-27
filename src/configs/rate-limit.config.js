@@ -60,6 +60,14 @@ module.exports = {
       message: "Too many invalid or unauthorized requests."
     },
 
+    duplicateQueryParameter: {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      prefix: "duplicate_query_parameter",
+      reason: "Duplicate query parameter detected",
+      message: "Too many requests containing duplicate query parameters."
+    },
+
     verifyEmail: {
       maxRequests: 50,
       windowMs: 10 * 60 * 1000,

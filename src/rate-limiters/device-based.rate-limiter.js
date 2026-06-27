@@ -7,6 +7,8 @@ const malformedAndWrongRequestRateLimiter = createRedisDeviceRateLimiter(perDevi
 // middlewares/rateLimit_unknownRoute.js
 const unknownRouteLimiter = createRedisDeviceRateLimiter(perDevice.unknownRoute);
 
+const duplicateQueryParameterRateLimiter = createRedisDeviceRateLimiter(perDevice.duplicateQueryParameter);
+
 // middlewares/rateLimit_signup.js
 const signUpRateLimiter = createRedisDeviceRateLimiter(perDevice.signup)
 
@@ -42,7 +44,8 @@ const deviceBasedRateLimiters = {
     resendVerificationRateLimiter,
     verifyEmailRateLimiter,
     verifyPhoneRateLimiter,
-    verifyDeviceRateLimiter
+    verifyDeviceRateLimiter,
+    duplicateQueryParameterRateLimiter
 };
 
 module.exports = {
