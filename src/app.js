@@ -2,8 +2,8 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 
 const { globalLimiter } = require("@rate-limiters/global.rate-limiter");
-const { malformedJsonHandler } = require("@middlewares/handlers/malformed-json-handler.middleware");
-const { unknownRouteHandler } = require("@middlewares/handlers/unknown-route-handler.middleware");
+const { handlers } = require("@/middlewares/handlers/index");
+const { unknownRouteHandler, malformedJsonHandler, duplicateQueryParameterHandler } = handlers;
 const { corsMiddleware } = require("@middlewares/common/cors.middleware");
 
 const app = express();
@@ -27,10 +27,13 @@ app.use(cookieParser());
 // 5. Malformed JSON handler (should come AFTER express.json)
 app.use(malformedJsonHandler);
 
-// 6. Routes
+// 6. Duplicate query parameter handler
+app.use(duplicateQueryParameterHandler);
+
+// 7. Routes
 require("@/routes/index")(app);
 
-// 7. Unknown route fallback
+// 8. Unknown route fallback
 app.use(unknownRouteHandler);
 
 module.exports = { app };
